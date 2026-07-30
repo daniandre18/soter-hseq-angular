@@ -46,6 +46,12 @@ const NAV_ITEMS: NavItem[] = [
     roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
   },
   {
+    path: '/tecnicos',
+    label: 'Técnicos',
+    icon: 'hard-hat',
+    roles: ['ADMIN'],
+  },
+  {
     path: '/mis-ordenes',
     label: 'Mis Órdenes',
     icon: 'hard-hat',

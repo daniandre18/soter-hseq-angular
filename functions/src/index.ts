@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
@@ -267,4 +268,65 @@ export const closeOrder = onCall(async (request) => {
   await batch.commit();
 
   return { pdfPath };
+});
+
+interface CreateUserRequest {
+  email: string;
+  password: string;
+  displayName: string;
+  phone?: string;
+  role: Role;
+}
+
+/**
+ * Crea una cuenta de Firebase Auth + su documento en `users` en el mismo
+ * paso. No se puede crear un usuario de Auth para otra persona desde el
+ * cliente (el SDK solo gestiona la sesión propia) — por eso pasa por acá,
+ * con el Admin SDK, igual que `scripts/seed-emulator.ts` para los usuarios
+ * de demo. `firestore.rules` bloquea `create` en `users` a propósito
+ * (`if false`, ver el comentario ahí) — esta función es el único camino.
+ */
+export const createUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para crear usuarios.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN']);
+
+  const { email, password, displayName, phone, role } = (request.data ?? {}) as Partial<CreateUserRequest>;
+  if (!email || !password || !displayName || !role) {
+    throw new HttpsError('invalid-argument', 'Faltan datos obligatorios para crear el usuario.');
+  }
+  if (password.length < 6) {
+    throw new HttpsError('invalid-argument', 'La contraseña debe tener al menos 6 caracteres.');
+  }
+
+  let authUser;
+  try {
+    authUser = await getAuth().createUser({ email, password, displayName, emailVerified: true });
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === 'auth/email-already-exists') {
+      throw new HttpsError('already-exists', 'Ya existe una cuenta con ese correo.');
+    }
+    throw new HttpsError('invalid-argument', 'No se pudo crear la cuenta con esos datos.');
+  }
+
+  const now = FieldValue.serverTimestamp();
+  await getFirestore()
+    .collection('users')
+    .doc(authUser.uid)
+    .set({
+      uid: authUser.uid,
+      displayName,
+      email,
+      phone: phone ?? null,
+      role,
+      status: 'ACTIVE',
+      createdAt: now,
+      createdBy: request.auth.uid,
+      updatedAt: now,
+      updatedBy: request.auth.uid,
+    });
+
+  return { uid: authUser.uid };
 });

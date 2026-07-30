@@ -1,0 +1,45 @@
+<app-modal [open]="open()" [title]="title()" size="md" (closeRequested)="close()">
+  <form class="technician-form" (submit)="onSubmit(); $event.preventDefault()">
+    @if (errorMessage()) {
+      <p class="form-error field--full">{{ errorMessage() }}</p>
+    }
+
+    <label class="field field--full">
+      Nombre completo *
+      <input [formField]="technicianForm.displayName" placeholder="Ej: Andrés Morales" />
+      @if (technicianForm.displayName().touched() && technicianForm.displayName().errors().length) {
+        <span class="field-error">{{ technicianForm.displayName().errors()[0].message }}</span>
+      }
+    </label>
+
+    @if (!editingTechnician()) {
+      <label class="field">
+        Correo *
+        <input type="email" [formField]="technicianForm.email" placeholder="tecnico@soterhseq.demo" />
+        @if (technicianForm.email().touched() && technicianForm.email().errors().length) {
+          <span class="field-error">{{ technicianForm.email().errors()[0].message }}</span>
+        }
+      </label>
+
+      <label class="field">
+        Contraseña *
+        <input type="password" [formField]="technicianForm.password" placeholder="Mínimo 6 caracteres" />
+        @if (technicianForm.password().touched() && technicianForm.password().errors().length) {
+          <span class="field-error">{{ technicianForm.password().errors()[0].message }}</span>
+        }
+      </label>
+    }
+
+    <label class="field field--full">
+      Teléfono (opcional)
+      <input type="tel" [formField]="technicianForm.phone" placeholder="+57 300 000 0000" />
+    </label>
+  </form>
+
+  <div modalFooter>
+    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button (click)="onSubmit()" [disabled]="technicianForm().invalid() || saving()">
+      {{ saving() ? 'Guardando…' : editingTechnician() ? 'Guardar Cambios' : 'Crear Técnico' }}
+    </app-button>
+  </div>
+</app-modal>

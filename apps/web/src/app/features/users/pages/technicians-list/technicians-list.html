@@ -1,0 +1,78 @@
+<section class="technicians-page">
+  <div class="technicians-toolbar">
+    <input
+      type="search"
+      class="search-input"
+      placeholder="Buscar técnico..."
+      aria-label="Buscar técnicos"
+      [value]="search()"
+      (input)="onSearchInput($event)"
+    />
+    <span class="technicians-summary">{{ filtered().length }} técnicos</span>
+    <app-button class="new-technician-btn" (click)="openCreate()">+ Nuevo Técnico</app-button>
+  </div>
+
+  @if (techniciansFacade.loading()) {
+    <app-card class="empty-card">
+      <p>Cargando técnicos…</p>
+    </app-card>
+  } @else if (filtered().length === 0) {
+    <app-card class="empty-card">
+      <p>No hay técnicos registrados</p>
+    </app-card>
+  } @else {
+    <app-card padding="none">
+      <div class="table-scroll">
+        <table class="technicians-table">
+          <thead>
+            <tr>
+              <th>Técnico</th>
+              <th>Correo</th>
+              <th>Teléfono</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (technician of filtered(); track technician.id) {
+              <tr>
+                <td>
+                  <div class="technician-cell">
+                    <app-avatar [name]="technician.displayName" size="sm" />
+                    <span>{{ technician.displayName }}</span>
+                  </div>
+                </td>
+                <td>{{ technician.email }}</td>
+                <td>{{ technician.phone || '—' }}</td>
+                <td>
+                  <app-status-badge
+                    [label]="technician.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
+                    [color]="technician.status === 'ACTIVE' ? 'green' : 'gray'"
+                  />
+                </td>
+                <td class="actions-cell">
+                  <button type="button" class="edit-link" (click)="openEdit(technician)">Editar</button>
+                  <button
+                    type="button"
+                    class="toggle-link"
+                    [class.toggle-link--danger]="technician.status === 'ACTIVE'"
+                    [disabled]="togglingId() === technician.id"
+                    (click)="toggleStatus(technician)"
+                  >
+                    {{ technician.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  }
+</section>
+
+<app-technician-form-modal
+  [open]="formOpen()"
+  [editingTechnician]="editingTechnician()"
+  (closeRequested)="closeForm()"
+/>
