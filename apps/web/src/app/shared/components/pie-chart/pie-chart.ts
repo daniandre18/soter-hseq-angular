@@ -1,4 +1,6 @@
 import { Component, computed, input } from '@angular/core';
+import type { ChartConfiguration, ChartData } from 'chart.js';
+import { BaseChartDirective } from 'ng2-charts';
 
 export interface PieSlice {
   key: string;
@@ -7,17 +9,9 @@ export interface PieSlice {
   color: string;
 }
 
-interface RenderedSlice extends PieSlice {
-  dashArray: string;
-  dashOffset: number;
-}
-
-const RADIUS = 45;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
 @Component({
   selector: 'app-pie-chart',
-  imports: [],
+  imports: [BaseChartDirective],
   templateUrl: './pie-chart.html',
   styleUrl: './pie-chart.scss',
 })
@@ -26,27 +20,38 @@ export class PieChart {
   readonly unit = input('');
   readonly emptyMessage = input('Sin datos');
 
-  protected readonly radius = RADIUS;
-
   protected readonly total = computed(() =>
     this.slices().reduce((sum, slice) => sum + slice.value, 0),
   );
 
-  protected readonly renderedSlices = computed<RenderedSlice[]>(() => {
-    const total = this.total();
-    if (total === 0) {
-      return [];
-    }
-    let offset = 0;
-    return this.slices().map((slice) => {
-      const dash = (slice.value / total) * CIRCUMFERENCE;
-      const rendered: RenderedSlice = {
-        ...slice,
-        dashArray: `${dash} ${CIRCUMFERENCE - dash}`,
-        dashOffset: -offset,
-      };
-      offset += dash;
-      return rendered;
-    });
+  protected readonly chartType = 'doughnut' as const;
+
+  protected readonly chartData = computed<ChartData<'doughnut', number[], string>>(() => ({
+    labels: this.slices().map((slice) => slice.label),
+    datasets: [
+      {
+        data: this.slices().map((slice) => slice.value),
+        backgroundColor: this.slices().map((slice) => slice.color),
+        borderWidth: 0,
+        hoverOffset: 6,
+      },
+    ],
+  }));
+
+  protected readonly chartOptions = computed<ChartConfiguration<'doughnut'>['options']>(() => {
+    const unit = this.unit();
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context) => ` ${context.label}: ${context.formattedValue} ${unit}`.trimEnd(),
+          },
+        },
+      },
+    };
   });
 }

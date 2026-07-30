@@ -2,24 +2,16 @@
   <p class="pie-chart-empty">{{ emptyMessage() }}</p>
 } @else {
   <div class="pie-chart">
-    <svg viewBox="0 0 100 100" class="pie-chart-svg" role="img" aria-hidden="true">
-      <circle cx="50" cy="50" [attr.r]="radius" fill="none" stroke="var(--color-gray-100)" stroke-width="12" />
-      @for (slice of renderedSlices(); track slice.key) {
-        <circle
-          cx="50"
-          cy="50"
-          [attr.r]="radius"
-          fill="none"
-          [attr.stroke]="slice.color"
-          stroke-width="12"
-          [attr.stroke-dasharray]="slice.dashArray"
-          [attr.stroke-dashoffset]="slice.dashOffset"
-          transform="rotate(-90 50 50)"
-        />
-      }
-    </svg>
+    <div class="pie-chart-canvas">
+      <canvas
+        baseChart
+        [type]="chartType"
+        [data]="chartData()"
+        [options]="chartOptions()"
+      ></canvas>
+    </div>
     <div class="pie-chart-legend">
-      @for (slice of renderedSlices(); track slice.key) {
+      @for (slice of slices(); track slice.key) {
         <div class="pie-chart-legend-item">
           <span class="pie-chart-dot" [style.background]="slice.color"></span>
           <span class="pie-chart-legend-label">{{ slice.label }}</span>

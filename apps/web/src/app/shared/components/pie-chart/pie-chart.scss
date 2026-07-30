@@ -12,7 +12,8 @@
   flex-wrap: wrap;
 }
 
-.pie-chart-svg {
+.pie-chart-canvas {
+  position: relative;
   width: 8rem;
   height: 8rem;
   flex-shrink: 0;
