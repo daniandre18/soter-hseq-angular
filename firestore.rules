@@ -52,6 +52,18 @@ service cloud.firestore {
       }
     }
 
+    match /services/{serviceId} {
+      // Catálogo de servicios: se selecciona al armar una cotización, así
+      // que el mismo alcance de roles que ya lee/escribe cotizaciones.
+      // A diferencia de clients/quotes/orders, sí se permite `delete` real
+      // (§29 no define retención de historial para esta colección, y un
+      // ítem de cotización ya guarda `description`/`unitPrice` por su
+      // cuenta al crearse, así que borrar el servicio del catálogo no deja
+      // cotizaciones existentes con datos huérfanos).
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+      allow create, update, delete: if hasRole(['ADMIN', 'COMMERCIAL']);
+    }
+
     match /quotes/{quoteId} {
       allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
       allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);

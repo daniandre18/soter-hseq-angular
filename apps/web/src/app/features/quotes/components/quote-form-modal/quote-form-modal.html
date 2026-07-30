@@ -39,7 +39,14 @@
         <tbody>
           @for (item of quoteForm.items; track $index; let i = $index) {
             <tr>
-              <td><input [formField]="item.description" placeholder="Descripción del servicio" /></td>
+              <td>
+                <select [formField]="item.serviceId" (change)="onServiceSelected(i, $any($event.target).value)">
+                  <option value="">Seleccionar servicio...</option>
+                  @for (service of activeServices(); track service.id) {
+                    <option [value]="service.id">{{ service.name }}</option>
+                  }
+                </select>
+              </td>
               <td><input type="number" aria-label="Cantidad" [formField]="item.quantity" /></td>
               <td><input type="number" aria-label="Valor unitario" [formField]="item.unitPrice" /></td>
               <td class="row-total">{{ formatCurrency(rowTotal(i)) }}</td>

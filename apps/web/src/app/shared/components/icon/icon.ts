@@ -22,7 +22,8 @@ export type IconName =
   | 'layout-dashboard'
   | 'log-out'
   | 'chart-pie'
-  | 'tag';
+  | 'tag'
+  | 'wrench';
 
 @Component({
   selector: 'app-icon',

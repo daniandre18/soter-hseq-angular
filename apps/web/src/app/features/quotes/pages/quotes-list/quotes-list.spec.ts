@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { QuotesList } from './quotes-list';
 import { QuotesFacade } from '../../facades/quotes.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
+import { ServicesFacade } from '../../../services/facades/services.facade';
 
 describe('QuotesList', () => {
   let component: QuotesList;
@@ -27,6 +28,10 @@ describe('QuotesList', () => {
             clients: signal([]),
             init: () => undefined,
           },
+        },
+        {
+          provide: ServicesFacade,
+          useValue: { activeServices: signal([]), byId: () => undefined, init: () => undefined },
         },
       ],
     }).compileComponents();

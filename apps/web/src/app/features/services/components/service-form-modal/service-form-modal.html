@@ -1,0 +1,60 @@
+<app-modal [open]="open()" [title]="title()" size="lg" (closeRequested)="close()">
+  <form class="service-form" (submit)="onSubmit(); $event.preventDefault()">
+    <label class="field field--full">
+      Nombre *
+      <input [formField]="serviceForm.name" placeholder="Capacitación SST - Trabajo en Alturas" />
+      @if (serviceForm.name().touched() && serviceForm.name().errors().length) {
+        <span class="field-error">{{ serviceForm.name().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field">
+      Categoría
+      <select [formField]="serviceForm.category">
+        @for (key of categoryKeys; track key) {
+          <option [value]="key">{{ categoryLabels[key] }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      Unidad *
+      <input [formField]="serviceForm.unit" placeholder="visita, hora, empleado..." />
+      @if (serviceForm.unit().touched() && serviceForm.unit().errors().length) {
+        <span class="field-error">{{ serviceForm.unit().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field">
+      Precio *
+      <input type="number" [formField]="serviceForm.price" />
+      @if (serviceForm.price().touched() && serviceForm.price().errors().length) {
+        <span class="field-error">{{ serviceForm.price().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field">
+      Estado
+      <select [formField]="serviceForm.status">
+        <option value="ACTIVE">Activo</option>
+        <option value="INACTIVE">Inactivo</option>
+      </select>
+    </label>
+
+    <label class="field field--full">
+      Descripción (opcional)
+      <textarea
+        [formField]="serviceForm.description"
+        rows="3"
+        placeholder="Alcance, requisitos, entregables..."
+      ></textarea>
+    </label>
+  </form>
+
+  <div modalFooter>
+    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button (click)="onSubmit()" [disabled]="serviceForm().invalid() || saving()">
+      {{ saving() ? 'Guardando…' : 'Guardar' }}
+    </app-button>
+  </div>
+</app-modal>

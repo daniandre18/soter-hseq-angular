@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 
 import { QuoteFormModal } from './quote-form-modal';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
+import { ServicesFacade } from '../../../services/facades/services.facade';
 import { QuotesFacade } from '../../facades/quotes.facade';
 
 describe('QuoteFormModal', () => {
@@ -14,6 +15,10 @@ describe('QuoteFormModal', () => {
       imports: [QuoteFormModal],
       providers: [
         { provide: ClientsFacade, useValue: { clients: signal([]) } },
+        {
+          provide: ServicesFacade,
+          useValue: { activeServices: signal([]), byId: () => undefined, init: () => undefined },
+        },
         { provide: QuotesFacade, useValue: { addQuote: async () => 'new-id' } },
       ],
     }).compileComponents();

@@ -1,0 +1,92 @@
+<section class="services-page">
+  <div class="services-toolbar">
+    <div class="services-filters">
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Buscar servicio..."
+        aria-label="Buscar servicios"
+        [value]="search()"
+        (input)="onSearchInput($event)"
+      />
+      <select
+        class="category-select"
+        aria-label="Filtrar por categoría"
+        [value]="categoryFilter()"
+        (change)="onCategoryChange($event)"
+      >
+        <option value="all">Todas las categorías</option>
+        @for (key of categoryKeys; track key) {
+          <option [value]="key">{{ categoryLabels[key] }}</option>
+        }
+      </select>
+    </div>
+    <app-button (click)="openCreate()">+ Nuevo Servicio</app-button>
+  </div>
+
+  <p class="services-summary">{{ filtered().length }} servicios</p>
+
+  @if (filtered().length === 0) {
+    <app-card class="empty-card">
+      <p>No hay servicios registrados</p>
+    </app-card>
+  } @else {
+    <app-card padding="none">
+      <div class="table-scroll">
+        <table class="services-table">
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Unidad</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (service of filtered(); track service.id) {
+              <tr tabindex="0" role="button" (click)="openEdit(service)" (keydown.enter)="openEdit(service)">
+                <td>
+                  <p class="service-name">{{ service.name }}</p>
+                  @if (service.description) {
+                    <p class="service-description">{{ service.description }}</p>
+                  }
+                </td>
+                <td>{{ categoryLabels[service.category] }}</td>
+                <td class="nowrap">{{ formatCurrency(service.price) }}</td>
+                <td>{{ service.unit }}</td>
+                <td>
+                  <app-status-badge
+                    [label]="service.active ? 'Activo' : 'Inactivo'"
+                    [color]="service.active ? 'green' : 'gray'"
+                  />
+                </td>
+                <td class="actions-cell">
+                  <button type="button" class="edit-link" (click)="openEdit(service); $event.stopPropagation()">
+                    Editar
+                  </button>
+                  <button type="button" class="delete-link" (click)="confirmDelete(service, $event)">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  }
+</section>
+
+<app-service-form-modal [open]="formOpen()" [editingService]="editingService()" (closeRequested)="closeForm()" />
+
+<app-modal [open]="!!deletingId()" title="¿Eliminar este servicio?" size="sm" (closeRequested)="cancelDelete()">
+  <p class="confirm-text">
+    Esta acción no se puede deshacer. Las cotizaciones ya creadas con este servicio no se ven afectadas.
+  </p>
+  <div modalFooter>
+    <app-button variant="outline" (click)="cancelDelete()">Cancelar</app-button>
+    <app-button variant="danger" (click)="deleteConfirmed()">Eliminar</app-button>
+  </div>
+</app-modal>

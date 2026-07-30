@@ -34,6 +34,12 @@ const NAV_ITEMS: NavItem[] = [
     roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
   },
   {
+    path: '/servicios',
+    label: 'Servicios',
+    icon: 'wrench',
+    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+  },
+  {
     path: '/ordenes',
     label: 'Órdenes',
     icon: 'clipboard-list',

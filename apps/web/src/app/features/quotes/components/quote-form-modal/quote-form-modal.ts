@@ -4,11 +4,12 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { formatCurrency } from '../../../../shared/utils/format-currency';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
+import { ServicesFacade } from '../../../services/facades/services.facade';
 import { QuotesFacade } from '../../facades/quotes.facade';
 import type { NewQuoteItem } from '../../models/quote.model';
 
 interface QuoteItemRow {
-  description: string;
+  serviceId: string;
   quantity: number;
   unitPrice: number;
 }
@@ -21,7 +22,7 @@ interface QuoteFormModel {
 }
 
 function emptyItemRow(): QuoteItemRow {
-  return { description: '', quantity: 1, unitPrice: 0 };
+  return { serviceId: '', quantity: 1, unitPrice: 0 };
 }
 
 function defaultValidUntil(): string {
@@ -47,6 +48,7 @@ function emptyModel(): QuoteFormModel {
 })
 export class QuoteFormModal {
   private readonly clientsFacade = inject(ClientsFacade);
+  private readonly servicesFacade = inject(ServicesFacade);
   private readonly quotesFacade = inject(QuotesFacade);
 
   readonly open = input(false);
@@ -59,13 +61,15 @@ export class QuoteFormModal {
     this.clientsFacade.clients().filter((client) => client.status === 'ACTIVE'),
   );
 
+  protected readonly activeServices = this.servicesFacade.activeServices;
+
   protected readonly model = signal<QuoteFormModel>(emptyModel());
 
   protected readonly quoteForm = form(this.model, (schemaPath) => {
     required(schemaPath.clientId, { message: 'Selecciona un cliente.' });
     required(schemaPath.validUntil, { message: 'La fecha de vigencia es obligatoria.' });
     applyEach(schemaPath.items, (item) => {
-      required(item.description, { message: 'Describe el servicio.' });
+      required(item.serviceId, { message: 'Selecciona un servicio.' });
       min(item.quantity, 1, { message: 'La cantidad debe ser mayor a 0.' });
     });
   });
@@ -73,6 +77,10 @@ export class QuoteFormModal {
   protected readonly subtotal = computed(() =>
     this.model().items.reduce((sum, row) => sum + row.quantity * row.unitPrice, 0),
   );
+
+  constructor() {
+    this.servicesFacade.init();
+  }
 
   protected addRow(): void {
     this.model.update((m) => ({ ...m, items: [...m.items, emptyItemRow()] }));
@@ -85,6 +93,19 @@ export class QuoteFormModal {
   protected rowTotal(index: number): number {
     const row = this.model().items[index];
     return row.quantity * row.unitPrice;
+  }
+
+  /** El precio se autocompleta desde el catálogo pero sigue siendo un
+   *  campo editable después — permite un valor negociado puntual sin
+   *  tener que crear un servicio nuevo solo para esa cotización. */
+  protected onServiceSelected(index: number, serviceId: string): void {
+    const service = this.servicesFacade.byId(serviceId);
+    this.model.update((m) => ({
+      ...m,
+      items: m.items.map((row, i) =>
+        i === index ? { ...row, serviceId, unitPrice: service?.price ?? row.unitPrice } : row,
+      ),
+    }));
   }
 
   protected close(): void {
@@ -104,9 +125,10 @@ export class QuoteFormModal {
       try {
         const total = this.subtotal();
         const items: NewQuoteItem[] = value.items
-          .filter((row) => row.description.trim() && row.quantity > 0)
+          .filter((row) => row.serviceId && row.quantity > 0)
           .map((row, index) => ({
-            description: row.description,
+            serviceCode: row.serviceId,
+            description: this.servicesFacade.byId(row.serviceId)?.name ?? '',
             quantity: row.quantity,
             unitPrice: row.unitPrice,
             taxRate: 0,

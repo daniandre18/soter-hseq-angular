@@ -1,7 +1,7 @@
 import type { Provider } from '@angular/core';
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
+import { connectFirestoreEmulator, initializeFirestore } from 'firebase/firestore';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { environment } from '../../../environments/environment';
@@ -23,7 +23,10 @@ function createAuth() {
 }
 
 function createFirestore() {
-  const firestore = getFirestore(firebaseApp);
+  // `ignoreUndefinedProperties`: varios formularios opcionales escriben
+  // `campo: value || undefined` para omitir strings vacíos; el SDK rechaza
+  // por defecto cualquier `undefined` en un write (`addDoc`/`updateDoc`).
+  const firestore = initializeFirestore(firebaseApp, { ignoreUndefinedProperties: true });
   if (environment.useEmulators && environment.emulators) {
     connectFirestoreEmulator(
       firestore,

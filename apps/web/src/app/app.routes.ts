@@ -12,6 +12,7 @@ import { ClientsList } from './features/clients/pages/clients-list/clients-list'
 import { QuotesList } from './features/quotes/pages/quotes-list/quotes-list';
 import { OrdersList } from './features/orders/pages/orders-list/orders-list';
 import { MyOrders } from './features/orders/pages/my-orders/my-orders';
+import { ServicesList } from './features/services/pages/services-list/services-list';
 
 export const routes: Routes = [
   { path: 'login', component: Login, title: 'Iniciar sesión — SOTER HSEQ' },
@@ -53,6 +54,13 @@ export const routes: Routes = [
         component: OrdersList,
         title: 'Órdenes — SOTER HSEQ',
         data: { title: 'Órdenes' },
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
+      },
+      {
+        path: 'servicios',
+        component: ServicesList,
+        title: 'Servicios — SOTER HSEQ',
+        data: { title: 'Servicios' },
         canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
       },
       {
