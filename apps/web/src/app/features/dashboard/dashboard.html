@@ -137,6 +137,18 @@
     }
   </div>
 
+  <div class="dashboard-card status-pie-card">
+    <div class="dashboard-card-header">
+      <h2>Órdenes por Estado</h2>
+      <p>{{ ordersFacade.orders().length }} órdenes en total</p>
+    </div>
+    <app-pie-chart
+      [slices]="ordersFacade.statusBreakdown()"
+      unit="órdenes"
+      emptyMessage="Sin órdenes registradas"
+    />
+  </div>
+
   <div class="lists-row">
     <div class="dashboard-card">
       <div class="dashboard-card-header dashboard-card-header--divided">

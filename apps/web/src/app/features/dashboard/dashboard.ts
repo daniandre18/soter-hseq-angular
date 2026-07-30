@@ -5,6 +5,7 @@ import { ClientsFacade } from '../clients/facades/clients.facade';
 import { ORDER_STATUS_CONFIG } from '../orders/models/order-status-config';
 import type { ServiceOrder } from '../orders/models/order.model';
 import { StatCard } from '../../shared/components/stat-card/stat-card';
+import { PieChart } from '../../shared/components/pie-chart/pie-chart';
 import { BarList } from '../../shared/components/bar-list/bar-list';
 import { StatusBadge } from '../../shared/components/status-badge/status-badge';
 import { Avatar } from '../../shared/components/avatar/avatar';
@@ -13,7 +14,7 @@ import { formatDateNumeric } from '../../shared/utils/format-date';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [StatCard, BarList, StatusBadge, Avatar, Icon, RouterLink],
+  imports: [StatCard, PieChart, BarList, StatusBadge, Avatar, Icon, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

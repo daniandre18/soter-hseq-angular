@@ -11,11 +11,16 @@
       ></canvas>
     </div>
     <div class="pie-chart-legend">
-      @for (slice of slices(); track slice.key) {
+      @for (slice of renderedSlices(); track slice.key) {
         <div class="pie-chart-legend-item">
-          <span class="pie-chart-dot" [style.background]="slice.color"></span>
-          <span class="pie-chart-legend-label">{{ slice.label }}</span>
-          <span class="pie-chart-legend-value">{{ slice.value }} {{ unit() }}</span>
+          <span class="pie-chart-legend-left">
+            <span class="pie-chart-dot" [style.background]="slice.color"></span>
+            <span class="pie-chart-legend-label">{{ slice.label }}</span>
+          </span>
+          <span class="pie-chart-legend-right">
+            <span class="pie-chart-legend-value">{{ slice.value }}</span>
+            <span class="pie-chart-legend-percentage">{{ slice.percentage }}%</span>
+          </span>
         </div>
       }
     </div>

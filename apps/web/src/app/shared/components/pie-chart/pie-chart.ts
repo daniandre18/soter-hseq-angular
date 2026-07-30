@@ -9,6 +9,10 @@ export interface PieSlice {
   color: string;
 }
 
+interface RenderedSlice extends PieSlice {
+  percentage: number;
+}
+
 @Component({
   selector: 'app-pie-chart',
   imports: [BaseChartDirective],
@@ -24,26 +28,37 @@ export class PieChart {
     this.slices().reduce((sum, slice) => sum + slice.value, 0),
   );
 
-  protected readonly chartType = 'doughnut' as const;
+  protected readonly renderedSlices = computed<RenderedSlice[]>(() => {
+    const total = this.total();
+    if (total === 0) {
+      return [];
+    }
+    return this.slices().map((slice) => ({
+      ...slice,
+      percentage: Math.round((slice.value / total) * 100),
+    }));
+  });
 
-  protected readonly chartData = computed<ChartData<'doughnut', number[], string>>(() => ({
+  protected readonly chartType = 'pie' as const;
+
+  protected readonly chartData = computed<ChartData<'pie', number[], string>>(() => ({
     labels: this.slices().map((slice) => slice.label),
     datasets: [
       {
         data: this.slices().map((slice) => slice.value),
         backgroundColor: this.slices().map((slice) => slice.color),
-        borderWidth: 0,
+        borderWidth: 2,
+        borderColor: '#ffffff',
         hoverOffset: 6,
       },
     ],
   }));
 
-  protected readonly chartOptions = computed<ChartConfiguration<'doughnut'>['options']>(() => {
+  protected readonly chartOptions = computed<ChartConfiguration<'pie'>['options']>(() => {
     const unit = this.unit();
     return {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '65%',
       plugins: {
         legend: { display: false },
         tooltip: {
