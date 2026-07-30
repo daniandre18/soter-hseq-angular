@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { Dashboard } from './dashboard';
 import { OrdersFacade } from '../orders/facades/orders.facade';
+import { ClientsFacade } from '../clients/facades/clients.facade';
 
 describe('Dashboard', () => {
   let component: Dashboard;
@@ -21,6 +22,24 @@ describe('Dashboard', () => {
             inProgressCount: signal(0),
             underReviewCount: signal(0),
             closedCount: signal(0),
+            openCount: signal(0),
+            overdueCount: signal(0),
+            pendingCount: signal(0),
+            todayVisitsCount: signal(0),
+            techniciansInFieldCount: signal(0),
+            recentOrders: signal([]),
+            upcomingVisits: signal([]),
+            statusBreakdown: signal([]),
+            topServices: signal([]),
+            init: () => undefined,
+          },
+        },
+        {
+          provide: ClientsFacade,
+          useValue: {
+            clients: signal([]),
+            loading: signal(false),
+            activeCount: signal(0),
             init: () => undefined,
           },
         },

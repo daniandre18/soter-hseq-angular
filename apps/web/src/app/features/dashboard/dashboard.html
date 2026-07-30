@@ -1,51 +1,92 @@
 <section class="dashboard">
-  <h1>Dashboard de órdenes</h1>
-
   <div class="kpi-row">
-    <div class="kpi-card">
-      <span class="kpi-value">{{ ordersFacade.assignedCount() }}</span>
-      <span class="kpi-label">Asignadas</span>
+    <app-stat-card label="Órdenes Abiertas" [value]="ordersFacade.openCount()" color="brand" />
+    <app-stat-card label="Órdenes Cerradas" [value]="ordersFacade.closedCount()" color="green" />
+    <app-stat-card label="Vencidas" [value]="ordersFacade.overdueCount()" color="red" />
+    <app-stat-card label="En Proceso" [value]="ordersFacade.inProgressCount()" color="orange" />
+    <app-stat-card label="Clientes Activos" [value]="clientsFacade.activeCount()" color="blue" />
+    <app-stat-card label="Visitas Hoy" [value]="ordersFacade.todayVisitsCount()" color="purple" />
+    <app-stat-card label="Técnicos en Campo" [value]="ordersFacade.techniciansInFieldCount()" color="orange" />
+    <app-stat-card label="Órdenes Pendientes" [value]="ordersFacade.pendingCount()" color="brand" />
+  </div>
+
+  @if (ordersFacade.error()) {
+    <p class="dashboard-error">{{ ordersFacade.error() }}</p>
+  }
+
+  <div class="charts-row">
+    <div class="dashboard-card">
+      <div class="dashboard-card-header">
+        <h2>Órdenes por Estado</h2>
+        <p>{{ ordersFacade.orders().length }} órdenes en total</p>
+      </div>
+      <app-pie-chart
+        [slices]="ordersFacade.statusBreakdown()"
+        unit="órdenes"
+        emptyMessage="Sin órdenes registradas"
+      />
     </div>
-    <div class="kpi-card">
-      <span class="kpi-value">{{ ordersFacade.inProgressCount() }}</span>
-      <span class="kpi-label">En progreso</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-value">{{ ordersFacade.underReviewCount() }}</span>
-      <span class="kpi-label">En revisión</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-value">{{ ordersFacade.closedCount() }}</span>
-      <span class="kpi-label">Cerradas</span>
+
+    <div class="dashboard-card">
+      <div class="dashboard-card-header">
+        <h2>Servicios más Solicitados</h2>
+        <p>Top 5 por número de órdenes</p>
+      </div>
+      <app-bar-list
+        [items]="ordersFacade.topServices()"
+        unit="órdenes"
+        emptyMessage="Sin servicios con órdenes"
+      />
     </div>
   </div>
 
-  @if (ordersFacade.loading()) {
-    <p class="state-message">Cargando órdenes…</p>
-  } @else if (ordersFacade.error()) {
-    <p class="state-message state-message--error">{{ ordersFacade.error() }}</p>
-  } @else if (ordersFacade.orders().length === 0) {
-    <p class="state-message">No hay órdenes registradas.</p>
-  } @else {
-    <table class="orders-table">
-      <thead>
-        <tr>
-          <th>Orden</th>
-          <th>Cliente</th>
-          <th>Estado</th>
-          <th>Técnicos asignados</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (order of ordersFacade.orders(); track order.id) {
-          <tr>
-            <td>{{ order.orderNumber }}</td>
-            <td>{{ order.clientBusinessName }}</td>
-            <td>{{ order.status }}</td>
-            <td>{{ order.assignedTechnicianIds.length }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
+  <div class="lists-row">
+    <div class="dashboard-card dashboard-card--flush">
+      <div class="dashboard-card-header">
+        <h2>Órdenes Recientes</h2>
+      </div>
+      @if (ordersFacade.recentOrders().length === 0) {
+        <p class="dashboard-empty">Sin órdenes recientes</p>
+      } @else {
+        <div class="list">
+          @for (order of ordersFacade.recentOrders(); track order.id) {
+            <div class="list-row">
+              <div class="list-row-main">
+                <p class="list-row-title">{{ order.serviceSummary || order.orderNumber }}</p>
+                <p class="list-row-subtitle">{{ order.clientBusinessName }} · {{ order.orderNumber }}</p>
+              </div>
+              <div class="list-row-side">
+                <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
+                <app-progress-bar [value]="statusProgress(order.status)" class="list-row-progress" />
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="dashboard-card dashboard-card--flush">
+      <div class="dashboard-card-header">
+        <h2>Próximas Visitas</h2>
+      </div>
+      @if (ordersFacade.upcomingVisits().length === 0) {
+        <p class="dashboard-empty">Sin visitas próximas</p>
+      } @else {
+        <div class="list">
+          @for (order of ordersFacade.upcomingVisits(); track order.id) {
+            <div class="list-row">
+              <div class="visit-date">
+                <span class="visit-day">{{ formatVisitDay(order.scheduledStart!) }}</span>
+                <span class="visit-month">{{ formatVisitMonth(order.scheduledStart!) }}</span>
+              </div>
+              <div class="list-row-main">
+                <p class="list-row-title">{{ order.serviceSummary || order.orderNumber }}</p>
+                <p class="list-row-subtitle">{{ order.clientBusinessName }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
 </section>

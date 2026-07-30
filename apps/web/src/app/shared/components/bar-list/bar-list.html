@@ -1,0 +1,15 @@
+@if (items().length === 0) {
+  <p class="bar-list-empty">{{ emptyMessage() }}</p>
+} @else {
+  <div class="bar-list">
+    @for (item of items(); track item.key) {
+      <div class="bar-list-row">
+        <span class="bar-list-label">{{ item.label }}</span>
+        <div class="bar-list-track">
+          <div class="bar-list-fill" [style.width.%]="widthFor(item.value)"></div>
+        </div>
+        <span class="bar-list-value">{{ item.value }} {{ unit() }}</span>
+      </div>
+    }
+  </div>
+}
