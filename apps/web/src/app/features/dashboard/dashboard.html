@@ -1,0 +1,51 @@
+<section class="dashboard">
+  <h1>Dashboard de órdenes</h1>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <span class="kpi-value">{{ ordersFacade.assignedCount() }}</span>
+      <span class="kpi-label">Asignadas</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ ordersFacade.inProgressCount() }}</span>
+      <span class="kpi-label">En progreso</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ ordersFacade.underReviewCount() }}</span>
+      <span class="kpi-label">En revisión</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ ordersFacade.closedCount() }}</span>
+      <span class="kpi-label">Cerradas</span>
+    </div>
+  </div>
+
+  @if (ordersFacade.loading()) {
+    <p class="state-message">Cargando órdenes…</p>
+  } @else if (ordersFacade.error()) {
+    <p class="state-message state-message--error">{{ ordersFacade.error() }}</p>
+  } @else if (ordersFacade.orders().length === 0) {
+    <p class="state-message">No hay órdenes registradas.</p>
+  } @else {
+    <table class="orders-table">
+      <thead>
+        <tr>
+          <th>Orden</th>
+          <th>Cliente</th>
+          <th>Estado</th>
+          <th>Técnicos asignados</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of ordersFacade.orders(); track order.id) {
+          <tr>
+            <td>{{ order.orderNumber }}</td>
+            <td>{{ order.clientBusinessName }}</td>
+            <td>{{ order.status }}</td>
+            <td>{{ order.assignedTechnicianIds.length }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

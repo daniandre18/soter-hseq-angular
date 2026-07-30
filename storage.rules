@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('^image/(jpeg|png|webp)$')
+             && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    function isValidPdf() {
+      return request.resource.contentType == 'application/pdf'
+             && request.resource.size <= 20 * 1024 * 1024;
+    }
+
+    match /orders/{orderId}/evidence/{evidenceId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isValidImage() || isValidPdf());
+    }
+
+    match /closing-acts/{actId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if false; // el PDF final lo escribe Cloud Functions
+    }
+
+    // Denegar por defecto cualquier otra ruta.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

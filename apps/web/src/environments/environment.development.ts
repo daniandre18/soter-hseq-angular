@@ -1,0 +1,25 @@
+import type { AppEnvironment } from '../app/core/models/app-environment.model';
+
+// Config ficticia: el proyecto "demo-soter-hseq" solo existe para el Firebase
+// Emulator Suite y no requiere una cuenta ni credenciales reales.
+export const environment: AppEnvironment = {
+  production: false,
+  useEmulators: true,
+  firebase: {
+    apiKey: 'demo-api-key',
+    authDomain: 'demo-soter-hseq.firebaseapp.com',
+    projectId: 'demo-soter-hseq',
+    storageBucket: 'demo-soter-hseq.appspot.com',
+    messagingSenderId: '000000000000',
+    appId: '1:000000000000:web:0000000000000000000000',
+  },
+  emulators: {
+    authUrl: 'http://127.0.0.1:9099',
+    firestoreHost: '127.0.0.1',
+    firestorePort: 8080,
+    storageHost: '127.0.0.1',
+    storagePort: 9199,
+  },
+  // Se actualizará cuando exista el Functions Emulator (Fase 6 — IA y acta).
+  functionsBaseUrl: 'http://127.0.0.1:5001/demo-soter-hseq/us-central1',
+};

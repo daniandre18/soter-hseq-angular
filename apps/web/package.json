@@ -18,6 +18,8 @@
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "@datorama/akita": "^8.0.1",
+    "firebase": "^12.16.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
+import { OrdersFacade } from './features/orders/facades/orders.facade';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [{ provide: OrdersFacade, useValue: { init: () => undefined } }],
     }).compileComponents();
   });
 

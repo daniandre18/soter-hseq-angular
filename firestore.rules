@@ -1,0 +1,100 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function currentRole() {
+      return currentUserDoc().data.role;
+    }
+
+    function hasRole(roles) {
+      return isSignedIn() && currentRole() in roles;
+    }
+
+    function isAdmin() {
+      return hasRole(['ADMIN']);
+    }
+
+    // Un usuario no puede cambiar su propio rol ni el de otros desde el frontend.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if false; // los usuarios se crean desde Cloud Functions
+      allow update: if isAdmin() && request.resource.data.role == resource.data.role
+                    || (isSignedIn() && request.auth.uid == userId
+                        && request.resource.data.role == resource.data.role);
+      allow delete: if false;
+    }
+
+    match /clients/{clientId} {
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
+      allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);
+      allow delete: if false; // no se eliminan clientes con historial
+
+      match /contacts/{contactId} {
+        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
+        allow write: if hasRole(['ADMIN', 'COMMERCIAL']);
+      }
+    }
+
+    match /quotes/{quoteId} {
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+      allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);
+      allow delete: if false;
+
+      match /items/{itemId} {
+        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+        allow write: if hasRole(['ADMIN', 'COMMERCIAL']);
+      }
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin()
+                   || hasRole(['COORDINATOR'])
+                   || (hasRole(['TECHNICIAN']) && request.auth.uid in resource.data.assignedTechnicianIds);
+      allow create: if hasRole(['ADMIN', 'COORDINATOR']);
+      allow update: if isAdmin()
+                     || hasRole(['COORDINATOR'])
+                     || (hasRole(['TECHNICIAN'])
+                         && request.auth.uid in resource.data.assignedTechnicianIds
+                         && resource.data.status != 'CLOSED');
+      allow delete: if false;
+
+      match /notes/{noteId} {
+        allow read: if isSignedIn();
+        allow create: if hasRole(['ADMIN', 'COORDINATOR', 'TECHNICIAN']);
+        allow update, delete: if false;
+      }
+
+      match /evidence/{evidenceId} {
+        allow read: if isSignedIn();
+        allow create: if hasRole(['ADMIN', 'COORDINATOR', 'TECHNICIAN']);
+        allow update: if hasRole(['ADMIN', 'COORDINATOR']);
+        allow delete: if false;
+      }
+
+      match /events/{eventId} {
+        allow read: if isSignedIn();
+        allow write: if false; // la bitácora solo la escribe el backend
+      }
+    }
+
+    match /closingActs/{actId} {
+      allow read: if isSignedIn();
+      allow create, update: if hasRole(['ADMIN', 'COORDINATOR']);
+      allow delete: if false;
+    }
+
+    match /auditEvents/{eventId} {
+      allow read: if hasRole(['ADMIN', 'COORDINATOR']);
+      allow write: if false; // solo el backend escribe bitácora de auditoría
+    }
+  }
+}

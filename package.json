@@ -1,0 +1,13 @@
+{
+  "name": "soter-hseq-angular",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tooling de repo (Firebase CLI, emuladores, seeds) para el MVP SOTER HSEQ",
+  "scripts": {
+    "emulators": "firebase emulators:start --project demo-soter-hseq",
+    "emulators:export": "firebase emulators:start --project demo-soter-hseq --export-on-exit=./.emulator-data --import=./.emulator-data"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.25.0"
+  }
+}
