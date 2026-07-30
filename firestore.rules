@@ -56,10 +56,15 @@ service cloud.firestore {
     }
 
     match /orders/{orderId} {
+      // COMMERCIAL incluido: CLAUDE.md §3.2 permite "consultar las órdenes
+      // asociadas a sus clientes"; sin una relación cliente↔comercial
+      // modelada todavía, se concede lectura general para el MVP.
       allow read: if isAdmin()
-                   || hasRole(['COORDINATOR'])
+                   || hasRole(['COORDINATOR', 'COMMERCIAL'])
                    || (hasRole(['TECHNICIAN']) && request.auth.uid in resource.data.assignedTechnicianIds);
-      allow create: if hasRole(['ADMIN', 'COORDINATOR']);
+      // COMMERCIAL también puede convertir una cotización aprobada en
+      // orden (CLAUDE.md §3.2), lo que crea el documento de la orden.
+      allow create: if hasRole(['ADMIN', 'COORDINATOR', 'COMMERCIAL']);
       allow update: if isAdmin()
                      || hasRole(['COORDINATOR'])
                      || (hasRole(['TECHNICIAN'])

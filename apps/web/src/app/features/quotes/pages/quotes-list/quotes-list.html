@@ -1,0 +1,75 @@
+<section class="quotes-page">
+  <div class="quotes-toolbar">
+    <div class="quotes-filters">
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Buscar por número o cliente..."
+        aria-label="Buscar cotizaciones"
+        [value]="search()"
+        (input)="onSearchInput($event)"
+      />
+      <select
+        class="status-select"
+        aria-label="Filtrar por estado"
+        [value]="statusFilter()"
+        (change)="onStatusChange($event)"
+      >
+        <option value="all">Todos los estados</option>
+        @for (entry of statusOptions; track entry[0]) {
+          <option [value]="entry[0]">{{ entry[1].label }}</option>
+        }
+      </select>
+    </div>
+    <app-button (click)="openCreate()">+ Nueva Cotización</app-button>
+  </div>
+
+  <p class="quotes-summary">{{ filtered().length }} cotizaciones</p>
+
+  @if (filtered().length === 0) {
+    <app-card class="empty-card">
+      <p>No hay cotizaciones registradas</p>
+    </app-card>
+  } @else {
+    <app-card padding="none">
+      <div class="table-scroll">
+        <table class="quotes-table">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Cliente</th>
+              <th class="align-right">Total</th>
+              <th>Estado</th>
+              <th>Válida hasta</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (quote of filtered(); track quote.id) {
+              <tr
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Ver detalle de la cotización ' + quote.quoteNumber"
+                (click)="openDetail(quote)"
+                (keydown.enter)="openDetail(quote)"
+              >
+                <td class="quote-number">{{ quote.quoteNumber }}</td>
+                <td>{{ quote.clientBusinessName }}</td>
+                <td class="align-right">{{ formatCurrency(quote.total) }}</td>
+                <td>
+                  <app-status-badge
+                    [label]="statusLabel(quote.status)"
+                    [color]="statusColor(quote.status)"
+                  />
+                </td>
+                <td>{{ quote.validUntil ? formatDate(quote.validUntil) : '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  }
+</section>
+
+<app-quote-form-modal [open]="formOpen()" (closeRequested)="closeForm()" />
+<app-quote-detail-modal [quote]="liveDetailQuote()" (closeRequested)="closeDetail()" />

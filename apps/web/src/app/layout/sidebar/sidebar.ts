@@ -15,6 +15,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard', label: 'Panel', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
   { path: '/clientes', label: 'Clientes', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
+  { path: '/cotizaciones', label: 'Cotizaciones', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
 ];
 
 @Component({

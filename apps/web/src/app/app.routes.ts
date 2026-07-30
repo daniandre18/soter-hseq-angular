@@ -8,6 +8,7 @@ import { AccessDenied } from './shared/pages/access-denied/access-denied';
 import { NotFound } from './shared/pages/not-found/not-found';
 import { Dashboard } from './features/dashboard/dashboard';
 import { ClientsList } from './features/clients/pages/clients-list/clients-list';
+import { QuotesList } from './features/quotes/pages/quotes-list/quotes-list';
 
 export const routes: Routes = [
   { path: 'login', component: Login, title: 'Iniciar sesión — SOTER HSEQ' },
@@ -35,6 +36,13 @@ export const routes: Routes = [
         component: ClientsList,
         title: 'Clientes — SOTER HSEQ',
         data: { title: 'Clientes' },
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
+      },
+      {
+        path: 'cotizaciones',
+        component: QuotesList,
+        title: 'Cotizaciones — SOTER HSEQ',
+        data: { title: 'Cotizaciones' },
         canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
       },
     ],

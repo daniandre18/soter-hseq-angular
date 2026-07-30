@@ -1,0 +1,87 @@
+<app-modal [open]="open()" title="Nueva Cotización" size="xl" (closeRequested)="close()">
+  <form class="quote-form" (submit)="onSubmit(); $event.preventDefault()">
+    <div class="quote-form-grid">
+      <label class="field">
+        Cliente *
+        <select [formField]="quoteForm.clientId">
+          <option value="">Seleccionar cliente...</option>
+          @for (client of activeClients(); track client.id) {
+            <option [value]="client.id">{{ client.businessName }}</option>
+          }
+        </select>
+        @if (quoteForm.clientId().touched() && quoteForm.clientId().errors().length) {
+          <span class="field-error">{{ quoteForm.clientId().errors()[0].message }}</span>
+        }
+      </label>
+
+      <label class="field">
+        Válida hasta *
+        <input type="date" [formField]="quoteForm.validUntil" />
+      </label>
+    </div>
+
+    <div class="items-section">
+      <div class="items-header">
+        <h4>Servicios</h4>
+        <button type="button" class="add-row-btn" (click)="addRow()">+ Agregar servicio</button>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Servicio</th>
+            <th>Cant.</th>
+            <th>Valor Unit.</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of quoteForm.items; track $index; let i = $index) {
+            <tr>
+              <td><input [formField]="item.description" placeholder="Descripción del servicio" /></td>
+              <td><input type="number" aria-label="Cantidad" [formField]="item.quantity" /></td>
+              <td><input type="number" aria-label="Valor unitario" [formField]="item.unitPrice" /></td>
+              <td class="row-total">{{ formatCurrency(rowTotal(i)) }}</td>
+              <td>
+                @if (quoteForm.items.length > 1) {
+                  <button
+                    type="button"
+                    class="remove-row-btn"
+                    (click)="removeRow(i)"
+                    aria-label="Quitar servicio"
+                  >
+                    ✕
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="total-label">Total</td>
+            <td class="total-value">{{ formatCurrency(subtotal()) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <label class="field field--full">
+      Notas (opcional)
+      <textarea
+        [formField]="quoteForm.notes"
+        rows="3"
+        placeholder="Condiciones, alcance, observaciones..."
+      ></textarea>
+    </label>
+  </form>
+
+  <div modalFooter>
+    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button (click)="onSubmit()" [disabled]="quoteForm().invalid() || saving()">
+      {{ saving() ? 'Creando…' : 'Crear Cotización' }}
+    </app-button>
+  </div>
+</app-modal>

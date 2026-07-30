@@ -1,0 +1,69 @@
+@if (quote(); as q) {
+  <app-modal [open]="true" [title]="q.quoteNumber" size="lg" (closeRequested)="close()">
+    <div class="detail-sections">
+      <div class="detail-header">
+        <div>
+          <p class="client-name">{{ q.clientBusinessName }}</p>
+          @if (q.validUntil) {
+            <p class="valid-until">Válida hasta {{ formatDate(q.validUntil) }}</p>
+          }
+        </div>
+        <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+      </div>
+
+      <div>
+        <h4>Servicios</h4>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th class="align-right">Cant.</th>
+              <th class="align-right">Valor Unit.</th>
+              <th class="align-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr>
+                <td>{{ item.description }}</td>
+                <td class="align-right">{{ item.quantity }}</td>
+                <td class="align-right">{{ formatCurrency(item.unitPrice) }}</td>
+                <td class="align-right total-cell">{{ formatCurrency(item.total) }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="total-label">Total</td>
+              <td class="align-right total-cell">{{ formatCurrency(q.total) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      @if (q.notes) {
+        <div class="notes-box">
+          <p class="notes-label">Notas</p>
+          <p>{{ q.notes }}</p>
+        </div>
+      }
+    </div>
+
+    <div modalFooter>
+      @if (q.status === 'APPROVED') {
+        <app-button (click)="convertToOrder()" [disabled]="saving()">
+          {{ saving() ? 'Convirtiendo…' : 'Convertir a Orden' }}
+        </app-button>
+      }
+      @for (status of nextStatuses(); track status) {
+        <app-button
+          [variant]="status === 'REJECTED' ? 'danger' : 'primary'"
+          (click)="setStatus(status)"
+          [disabled]="saving()"
+        >
+          Marcar como {{ statusButtonLabel(status) }}
+        </app-button>
+      }
+    </div>
+  </app-modal>
+}
