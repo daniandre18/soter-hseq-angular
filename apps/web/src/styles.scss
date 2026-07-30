@@ -1,1 +1,106 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * Tokens de diseño calcados del proyecto Next.js (soter-hseq/tailwind.config.ts)
+ * para que ambas demos compartan la misma identidad visual.
+ */
+:root {
+  // Brand — rojo primario de soterhseq.com
+  --color-brand-50: #fef2f2;
+  --color-brand-100: #fde2e1;
+  --color-brand-200: #fbc8c7;
+  --color-brand-300: #f7a19f;
+  --color-brand-400: #f66f68;
+  --color-brand-500: #f54742;
+  --color-brand-600: #f42626;
+  --color-brand-700: #dd1e1e;
+  --color-brand-800: #b91818;
+  --color-brand-900: #8f1414;
+  --color-brand-950: #4a0a0a;
+
+  // Navy — fondo del sidebar
+  --color-navy-800: #21195a;
+  --color-navy-900: #171144;
+  --color-navy-950: #0d0a2a;
+
+  // Accent — amarillo de acento
+  --color-accent-50: #fffbeb;
+  --color-accent-100: #fff3c4;
+  --color-accent-200: #ffe680;
+  --color-accent-300: #ffd93d;
+  --color-accent-400: #ffcf14;
+  --color-accent-500: #ffc400;
+  --color-accent-600: #e0ac00;
+  --color-accent-700: #b98700;
+  --color-accent-800: #8f6900;
+  --color-accent-900: #6b4f00;
+
+  // Safety — estados HSEQ
+  --color-safety-green: #16a34a;
+  --color-safety-orange: #ea580c;
+  --color-safety-yellow: #ca8a04;
+  --color-safety-red: #dc2626;
+
+  // Gray — escala neutra (Tailwind default)
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  // Colores auxiliares usados en StatCard/Badge del demo Next.js
+  --color-green-50: #f0fdf4;
+  --color-green-600: #16a34a;
+  --color-orange-50: #fff7ed;
+  --color-orange-600: #ea580c;
+  --color-red-50: #fef2f2;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-blue-50: #eff6ff;
+  --color-blue-600: #2563eb;
+  --color-purple-50: #faf5ff;
+  --color-purple-600: #9333ea;
+
+  // Colores del Avatar (soter-hseq/src/components/ui/avatar.tsx)
+  --color-green-100: #dcfce7;
+  --color-green-700: #15803d;
+  --color-orange-100: #ffedd5;
+  --color-orange-700: #c2410c;
+  --color-purple-100: #f3e8ff;
+  --color-purple-700: #7e22ce;
+  --color-pink-100: #fce7f3;
+  --color-pink-700: #be185d;
+  --color-teal-100: #ccfbf1;
+  --color-teal-700: #0f766e;
+
+  --font-sans:
+    'Poppins',
+    system-ui,
+    -apple-system,
+    sans-serif;
+
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-900);
+}

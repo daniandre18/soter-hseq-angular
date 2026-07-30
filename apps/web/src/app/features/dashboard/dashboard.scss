@@ -1,0 +1,78 @@
+.dashboard {
+  h1 {
+    margin: 0 0 1.5rem;
+    font-size: 1.5rem;
+    color: var(--color-gray-900);
+  }
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  background: white;
+  border: 1px solid var(--color-gray-200);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  .kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-brand-700);
+  }
+
+  .kpi-label {
+    font-size: 0.8125rem;
+    color: var(--color-gray-500);
+  }
+}
+
+.state-message {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--color-gray-500);
+  font-size: 0.875rem;
+
+  &--error {
+    background: var(--color-red-50);
+    color: var(--color-red-700);
+  }
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-gray-200);
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+  }
+
+  th {
+    background: var(--color-gray-50);
+    color: var(--color-gray-500);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  tbody tr {
+    border-top: 1px solid var(--color-gray-200);
+    color: var(--color-gray-800);
+  }
+}

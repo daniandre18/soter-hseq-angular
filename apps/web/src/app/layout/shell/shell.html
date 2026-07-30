@@ -1,0 +1,10 @@
+<div class="shell">
+  <app-sidebar [mobileOpen]="mobileNavOpen()" (closeRequested)="closeMobileNav()" />
+
+  <div class="shell-main">
+    <app-header [title]="pageTitle()" (menuClick)="openMobileNav()" />
+    <main class="shell-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

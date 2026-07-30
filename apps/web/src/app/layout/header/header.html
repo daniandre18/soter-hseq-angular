@@ -1,0 +1,18 @@
+<header class="header">
+  <div class="header-left">
+    <button type="button" class="header-menu-btn" (click)="openMenu()" aria-label="Abrir menú">
+      ☰
+    </button>
+    <h1 class="header-title">{{ title() }}</h1>
+  </div>
+
+  @if (currentUser(); as user) {
+    <div class="header-user">
+      <app-avatar [name]="user.displayName" size="sm" />
+      <div class="header-user-info">
+        <p class="header-user-name">{{ user.displayName }}</p>
+        <p class="header-user-role">{{ roleLabel() }}</p>
+      </div>
+    </div>
+  }
+</header>

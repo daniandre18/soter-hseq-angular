@@ -1,0 +1,72 @@
+@if (mobileOpen()) {
+  <button
+    type="button"
+    class="sidebar-backdrop"
+    (click)="close()"
+    aria-label="Cerrar menú"
+  ></button>
+}
+
+<aside class="sidebar" [class.sidebar--open]="mobileOpen()" [class.sidebar--collapsed]="collapsed()">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">S</div>
+    @if (!collapsed()) {
+      <div class="sidebar-brand-text">
+        <p class="sidebar-brand-name">SOTER HSEQ</p>
+        <p class="sidebar-brand-tagline">Gestión HSEQ &amp; SST</p>
+      </div>
+    }
+    <button
+      type="button"
+      class="sidebar-icon-btn sidebar-collapse-btn"
+      (click)="toggleCollapsed()"
+      [attr.aria-label]="collapsed() ? 'Expandir menú' : 'Colapsar menú'"
+    >
+      {{ collapsed() ? '»' : '«' }}
+    </button>
+    <button
+      type="button"
+      class="sidebar-icon-btn sidebar-close-btn"
+      (click)="close()"
+      aria-label="Cerrar menú"
+    >
+      ✕
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul>
+      @for (item of navItems(); track item.path) {
+        <li>
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="sidebar-link--active"
+            (click)="close()"
+            class="sidebar-link"
+            [title]="collapsed() ? item.label : null"
+          >
+            <span class="sidebar-link-label">{{ item.label }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    @if (currentUser(); as user) {
+      <div class="sidebar-user" [class.sidebar-user--collapsed]="collapsed()">
+        <app-avatar [name]="user.displayName" size="sm" />
+        @if (!collapsed()) {
+          <div class="sidebar-user-info">
+            <p class="sidebar-user-name">{{ user.displayName }}</p>
+            <p class="sidebar-user-role">{{ roleLabel() }}</p>
+          </div>
+        }
+      </div>
+    }
+
+    <button type="button" class="sidebar-logout" (click)="logout()">
+      Cerrar sesión
+    </button>
+  </div>
+</aside>

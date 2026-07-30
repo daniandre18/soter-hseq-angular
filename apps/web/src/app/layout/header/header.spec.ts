@@ -1,31 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
 
-import { Login } from './login';
-import { AuthFacade } from '../../facades/auth.facade';
+import { Header } from './header';
+import { AuthFacade } from '../../features/auth/facades/auth.facade';
 
-describe('Login', () => {
-  let component: Login;
-  let fixture: ComponentFixture<Login>;
+describe('Header', () => {
+  let component: Header;
+  let fixture: ComponentFixture<Header>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Login],
+      imports: [Header],
       providers: [
-        provideRouter([]),
         {
           provide: AuthFacade,
           useValue: {
-            loading: signal(false),
-            error: signal(null),
-            login: async () => true,
+            currentUser: signal(null),
+            currentRole: signal(null),
           },
         },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Login);
+    fixture = TestBed.createComponent(Header);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

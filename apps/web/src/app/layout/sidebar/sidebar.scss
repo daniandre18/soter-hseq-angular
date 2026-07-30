@@ -1,0 +1,218 @@
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: var(--color-navy-900);
+  color: white;
+  width: 15rem;
+  transition: width 300ms ease-in-out;
+
+  &--collapsed {
+    width: 4rem;
+  }
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  .sidebar-logo {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-md);
+    background: var(--color-brand-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+
+  .sidebar-brand-text {
+    overflow: hidden;
+
+    .sidebar-brand-name {
+      margin: 0;
+      font-weight: 700;
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+
+    .sidebar-brand-tagline {
+      margin: 0;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+      white-space: nowrap;
+    }
+  }
+
+  .sidebar-icon-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-md);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+  }
+
+  .sidebar-close-btn {
+    display: none;
+  }
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 0.5rem;
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-md);
+  border-left: 4px solid transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 150ms, color 150ms;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  &--active {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-left-color: var(--color-accent-500);
+  }
+}
+
+.sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+
+  &--collapsed {
+    justify-content: center;
+  }
+
+  .sidebar-user-info {
+    overflow: hidden;
+    min-width: 0;
+
+    .sidebar-user-name {
+      margin: 0;
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-user-role {
+      margin: 0;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+}
+
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms, color 150ms;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-red-400);
+  }
+}
+
+// Mobile: off-canvas por defecto, desliza al abrir
+@media (max-width: 767px) {
+  .sidebar-backdrop {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset-block: 0;
+    left: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 300ms ease-in-out;
+
+    &--open {
+      transform: translateX(0);
+    }
+  }
+
+  .sidebar-close-btn {
+    display: inline-flex !important;
+  }
+
+  .sidebar-collapse-btn {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    position: static;
+    transform: none;
+  }
+}

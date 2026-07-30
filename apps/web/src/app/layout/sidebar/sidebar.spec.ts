@@ -2,30 +2,30 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
-import { ForgotPassword } from './forgot-password';
-import { AuthFacade } from '../../facades/auth.facade';
+import { Sidebar } from './sidebar';
+import { AuthFacade } from '../../features/auth/facades/auth.facade';
 
-describe('ForgotPassword', () => {
-  let component: ForgotPassword;
-  let fixture: ComponentFixture<ForgotPassword>;
+describe('Sidebar', () => {
+  let component: Sidebar;
+  let fixture: ComponentFixture<Sidebar>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ForgotPassword],
+      imports: [Sidebar],
       providers: [
         provideRouter([]),
         {
           provide: AuthFacade,
           useValue: {
-            loading: signal(false),
-            error: signal(null),
-            resetPassword: async () => true,
+            currentUser: signal(null),
+            currentRole: signal(null),
+            logout: async () => undefined,
           },
         },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ForgotPassword);
+    fixture = TestBed.createComponent(Sidebar);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

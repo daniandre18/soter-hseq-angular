@@ -1,1 +1,42 @@
-<p>login works!</p>
+<div class="login-page">
+  <div class="login-brand">
+    <div class="login-logo">S</div>
+    <h1>SOTER HSEQ</h1>
+    <p class="login-tagline">Gestión Integral HSEQ &amp; SST</p>
+  </div>
+
+  <form class="login-card" (submit)="onSubmit(); $event.preventDefault()">
+    <div class="login-card-header">
+      <h2>Inicia sesión</h2>
+      <p class="subtitle">Ingresa tus credenciales para continuar</p>
+    </div>
+
+    <label>
+      Correo
+      <input type="email" [formField]="loginForm.email" autocomplete="username" />
+      @if (loginForm.email().touched() && loginForm.email().errors().length) {
+        <span class="field-error">{{ loginForm.email().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label>
+      Contraseña
+      <input type="password" [formField]="loginForm.password" autocomplete="current-password" />
+      @if (loginForm.password().touched() && loginForm.password().errors().length) {
+        <span class="field-error">{{ loginForm.password().errors()[0].message }}</span>
+      }
+    </label>
+
+    @if (authError()) {
+      <p class="form-error">{{ authError() }}</p>
+    }
+
+    <button type="submit" [disabled]="loginForm().invalid() || loading()">
+      {{ loading() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+
+    <a routerLink="/recuperar-contrasena" class="forgot-link">¿Olvidaste tu contraseña?</a>
+  </form>
+
+  <p class="login-footer">SOTER HSEQ · administracion&#64;soterhseq.com · Cobertura Nacional, Colombia</p>
+</div>

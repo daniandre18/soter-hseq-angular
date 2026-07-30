@@ -5,7 +5,8 @@
   "description": "Tooling de repo (Firebase CLI, emuladores, seeds) para el MVP SOTER HSEQ",
   "scripts": {
     "emulators": "firebase emulators:start --project demo-soter-hseq",
-    "emulators:export": "firebase emulators:start --project demo-soter-hseq --export-on-exit=./.emulator-data --import=./.emulator-data"
+    "emulators:export": "firebase emulators:start --project demo-soter-hseq --export-on-exit=./.emulator-data --import=./.emulator-data",
+    "seed": "npm --prefix scripts run seed"
   },
   "devDependencies": {
     "firebase-tools": "^15.25.0"
