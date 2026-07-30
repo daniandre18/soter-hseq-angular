@@ -2,25 +2,42 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
 import { Avatar } from '../../shared/components/avatar/avatar';
+import { Icon, type IconName } from '../../shared/components/icon/icon';
 import { USER_ROLE_LABELS, type UserRole } from '../../core/models/user-role.model';
 
 interface NavItem {
   path: string;
   label: string;
+  icon: IconName;
   roles: UserRole[];
 }
 
 // Se irá completando a medida que existan las rutas de cada fase
 // (CLAUDE.md §14): clientes, cotizaciones, órdenes, mis órdenes, etc.
 const NAV_ITEMS: NavItem[] = [
-  { path: '/dashboard', label: 'Panel', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
-  { path: '/clientes', label: 'Clientes', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
-  { path: '/cotizaciones', label: 'Cotizaciones', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
+  {
+    path: '/dashboard',
+    label: 'Panel',
+    icon: 'layout-dashboard',
+    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+  },
+  {
+    path: '/clientes',
+    label: 'Clientes',
+    icon: 'building-2',
+    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+  },
+  {
+    path: '/cotizaciones',
+    label: 'Cotizaciones',
+    icon: 'file-text',
+    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+  },
 ];
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, Avatar],
+  imports: [RouterLink, RouterLinkActive, Avatar, Icon],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })

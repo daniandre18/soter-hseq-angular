@@ -1,4 +1,9 @@
-<div class="stat-card" [class]="'stat-card--' + color()">
-  <p class="stat-card-label">{{ label() }}</p>
-  <p class="stat-card-value">{{ value() }}</p>
+<div class="stat-card">
+  <div>
+    <p class="stat-card-label">{{ label() }}</p>
+    <p class="stat-card-value">{{ value() }}</p>
+  </div>
+  <div class="stat-card-icon" [class]="'stat-card-icon--' + color()">
+    <app-icon [name]="icon()" />
+  </div>
 </div>

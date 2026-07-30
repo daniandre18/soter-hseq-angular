@@ -9,10 +9,21 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
+// El host (<app-sidebar>) es `inline` por defecto: aunque como hijo flex
+// de `.shell` se estira en altura, un elemento inline no propaga esa
+// altura a sus hijos de bloque. Al hacerlo `flex` acá, `.sidebar` (su
+// único hijo) sí se estira al 100% del alto real, en vez de encogerse
+// a su contenido — por eso se veía "cortado".
+:host {
+  display: flex;
+  min-height: 0;
+}
+
 .sidebar {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
   background: var(--color-navy-900);
   color: white;
   width: 15rem;
@@ -29,6 +40,12 @@
   gap: 0.75rem;
   padding: 1.25rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  &--collapsed {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.25rem 0.5rem;
+  }
 
   .sidebar-logo {
     flex-shrink: 0;
@@ -64,17 +81,24 @@
   .sidebar-icon-btn {
     flex-shrink: 0;
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 0.375rem;
     border-radius: var(--radius-md);
 
     &:hover {
       background: rgba(255, 255, 255, 0.1);
       color: white;
     }
+  }
+
+  &--collapsed .sidebar-icon-btn {
+    margin-left: 0;
   }
 
   .sidebar-close-btn {
@@ -120,6 +144,16 @@
     color: white;
     border-left-color: var(--color-accent-500);
   }
+}
+
+.sidebar-link-icon {
+  flex-shrink: 0;
+}
+
+.sidebar--collapsed .sidebar-link {
+  justify-content: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .sidebar-footer {
@@ -180,6 +214,16 @@
     background: rgba(255, 255, 255, 0.1);
     color: var(--color-red-400);
   }
+}
+
+.sidebar-logout-icon {
+  flex-shrink: 0;
+}
+
+.sidebar--collapsed .sidebar-logout {
+  justify-content: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 // Mobile: off-canvas por defecto, desliza al abrir

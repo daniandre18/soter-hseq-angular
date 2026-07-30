@@ -1,41 +1,78 @@
 .stat-card {
-  padding: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.5rem;
   border-radius: var(--radius-lg);
   background: white;
   border: 1px solid var(--color-gray-200);
-  border-top: 3px solid transparent;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 200ms;
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .stat-card-label {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-gray-500);
 }
 
 .stat-card-value {
   margin: 0.25rem 0 0;
-  font-size: 1.75rem;
+  font-size: 1.875rem;
   font-weight: 700;
   color: var(--color-gray-900);
 }
 
-.stat-card--brand {
-  border-top-color: var(--color-brand-600);
+.stat-card-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 1px var(--ring-color, var(--color-brand-100));
+  background: var(--bg-color, var(--color-brand-50));
+  color: var(--icon-color, var(--color-brand-600));
+
+  app-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 }
-.stat-card--green {
-  border-top-color: var(--color-safety-green);
+
+.stat-card-icon--brand {
+  --bg-color: var(--color-brand-50);
+  --ring-color: var(--color-brand-100);
+  --icon-color: var(--color-brand-600);
 }
-.stat-card--red {
-  border-top-color: var(--color-red-600);
+.stat-card-icon--green {
+  --bg-color: var(--color-green-50);
+  --ring-color: var(--color-green-100);
+  --icon-color: var(--color-safety-green);
 }
-.stat-card--orange {
-  border-top-color: var(--color-orange-600);
+.stat-card-icon--red {
+  --bg-color: var(--color-red-50);
+  --ring-color: var(--color-red-400);
+  --icon-color: var(--color-red-600);
 }
-.stat-card--blue {
-  border-top-color: var(--color-blue-600);
+.stat-card-icon--orange {
+  --bg-color: var(--color-orange-50);
+  --ring-color: var(--color-orange-100);
+  --icon-color: var(--color-orange-600);
 }
-.stat-card--purple {
-  border-top-color: var(--color-purple-600);
+.stat-card-icon--blue {
+  --bg-color: var(--color-blue-50);
+  --ring-color: var(--color-blue-100);
+  --icon-color: var(--color-blue-600);
+}
+.stat-card-icon--purple {
+  --bg-color: var(--color-purple-50);
+  --ring-color: var(--color-purple-100);
+  --icon-color: var(--color-purple-600);
 }

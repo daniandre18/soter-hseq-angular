@@ -14,6 +14,7 @@ describe('StatCard', () => {
     fixture = TestBed.createComponent(StatCard);
     fixture.componentRef.setInput('label', 'Órdenes Abiertas');
     fixture.componentRef.setInput('value', 5);
+    fixture.componentRef.setInput('icon', 'clipboard-list');
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

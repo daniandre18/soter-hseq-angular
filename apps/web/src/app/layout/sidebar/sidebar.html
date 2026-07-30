@@ -8,7 +8,7 @@
 }
 
 <aside class="sidebar" [class.sidebar--open]="mobileOpen()" [class.sidebar--collapsed]="collapsed()">
-  <div class="sidebar-brand">
+  <div class="sidebar-brand" [class.sidebar-brand--collapsed]="collapsed()">
     <div class="sidebar-logo">S</div>
     @if (!collapsed()) {
       <div class="sidebar-brand-text">
@@ -21,8 +21,9 @@
       class="sidebar-icon-btn sidebar-collapse-btn"
       (click)="toggleCollapsed()"
       [attr.aria-label]="collapsed() ? 'Expandir menú' : 'Colapsar menú'"
+      [title]="collapsed() ? 'Expandir menú' : 'Colapsar menú'"
     >
-      {{ collapsed() ? '»' : '«' }}
+      <app-icon [name]="collapsed() ? 'chevron-right' : 'chevron-left'" />
     </button>
     <button
       type="button"
@@ -30,7 +31,7 @@
       (click)="close()"
       aria-label="Cerrar menú"
     >
-      ✕
+      <app-icon name="x" />
     </button>
   </div>
 
@@ -45,7 +46,10 @@
             class="sidebar-link"
             [title]="collapsed() ? item.label : null"
           >
-            <span class="sidebar-link-label">{{ item.label }}</span>
+            <app-icon [name]="item.icon" class="sidebar-link-icon" />
+            @if (!collapsed()) {
+              <span class="sidebar-link-label">{{ item.label }}</span>
+            }
           </a>
         </li>
       }
@@ -65,8 +69,16 @@
       </div>
     }
 
-    <button type="button" class="sidebar-logout" (click)="logout()">
-      Cerrar sesión
+    <button
+      type="button"
+      class="sidebar-logout"
+      (click)="logout()"
+      [title]="collapsed() ? 'Cerrar sesión' : null"
+    >
+      <app-icon name="log-out" class="sidebar-logout-icon" />
+      @if (!collapsed()) {
+        <span>Cerrar sesión</span>
+      }
     </button>
   </div>
 </aside>
