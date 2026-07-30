@@ -1,20 +1,37 @@
 import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import {
   DocumentData,
   Timestamp,
   Unsubscribe,
+  arrayUnion,
   collection,
   doc,
+  increment,
   onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
+import {
+  getDownloadURL,
+  ref,
+  uploadBytesResumable,
+  type UploadTaskSnapshot,
+} from 'firebase/storage';
 import { httpsCallable } from 'firebase/functions';
-import { FIREBASE_FIRESTORE, FIREBASE_FUNCTIONS } from '../../../core/firebase/firebase.tokens';
+import {
+  FIREBASE_FIRESTORE,
+  FIREBASE_FUNCTIONS,
+  FIREBASE_STORAGE,
+} from '../../../core/firebase/firebase.tokens';
 import { OrdersStore } from './orders.store';
 import type { OrderStatus, ServiceOrder } from '../models/order.model';
+import type { NoteType, TechnicalNote } from '../models/note.model';
+import type { Evidence, EvidenceCategory, EvidenceType } from '../models/evidence.model';
 
 interface GenerateClosingActResponse {
   closingActId: string;
@@ -23,9 +40,53 @@ interface GenerateClosingActResponse {
 type OrderUpdate = Partial<
   Pick<
     ServiceOrder,
-    'scheduledStart' | 'scheduledEnd' | 'assignedTechnicianIds' | 'status' | 'actualStart' | 'actualEnd'
+    | 'scheduledStart'
+    | 'scheduledEnd'
+    | 'assignedTechnicianIds'
+    | 'status'
+    | 'actualStart'
+    | 'actualEnd'
+    | 'findings'
+    | 'recommendations'
+    | 'evidenceCount'
   >
 >;
+
+function toTechnicalNote(id: string, orderId: string, data: DocumentData): TechnicalNote {
+  return {
+    id,
+    orderId,
+    content: data['content'],
+    noteType: data['noteType'],
+    createdAt: toDate(data['createdAt']) ?? new Date(0),
+    createdBy: data['createdBy'],
+  };
+}
+
+function toEvidence(id: string, orderId: string, data: DocumentData): Evidence {
+  return {
+    id,
+    orderId,
+    type: data['type'],
+    category: data['category'] ?? undefined,
+    fileName: data['fileName'],
+    storagePath: data['storagePath'],
+    downloadUrl: data['downloadUrl'],
+    contentType: data['contentType'],
+    size: data['size'],
+    description: data['description'] ?? undefined,
+    uploadedAt: toDate(data['uploadedAt']) ?? new Date(0),
+    uploadedBy: data['uploadedBy'],
+    status: data['status'],
+  };
+}
+
+function evidenceTypeFor(contentType: string): EvidenceType {
+  if (contentType === 'application/pdf') {
+    return 'PDF';
+  }
+  return contentType.startsWith('image/') ? 'PHOTO' : 'OTHER';
+}
 
 function toDate(value: Timestamp | undefined): Date | undefined {
   return value ? value.toDate() : undefined;
@@ -70,6 +131,7 @@ export class OrdersService {
   private readonly store = inject(OrdersStore);
   private readonly firestore = inject(FIREBASE_FIRESTORE);
   private readonly functions = inject(FIREBASE_FUNCTIONS);
+  private readonly storage = inject(FIREBASE_STORAGE);
 
   private unsubscribeFromOrders: Unsubscribe | null = null;
 
@@ -150,12 +212,15 @@ export class OrdersService {
 
   /**
    * Transición genérica de estado (CLAUDE.md §10.2). Al iniciar ejecución se
-   * registra la marca de tiempo real de inicio.
+   * registra la marca de tiempo real de inicio; al enviar a revisión, la de
+   * fin real (cierra la ventana de "ejecución en campo" de CLAUDE.md §11.4).
    */
   async updateStatus(orderId: string, status: OrderStatus, updatedBy: string): Promise<void> {
     const changes: OrderUpdate = { status };
     if (status === 'IN_PROGRESS') {
       changes.actualStart = new Date();
+    } else if (status === 'UNDER_REVIEW') {
+      changes.actualEnd = new Date();
     }
     await this.updateOrder(orderId, changes, updatedBy);
   }
@@ -166,6 +231,118 @@ export class OrdersService {
       updatedAt: serverTimestamp(),
       updatedBy,
     });
+  }
+
+  watchNotes(orderId: string): Observable<TechnicalNote[]> {
+    return new Observable<TechnicalNote[]>((subscriber) => {
+      const notesQuery = query(
+        collection(this.firestore, 'orders', orderId, 'notes'),
+        orderBy('createdAt', 'desc'),
+      );
+      return onSnapshot(
+        notesQuery,
+        (snapshot) => {
+          subscriber.next(
+            snapshot.docs.map((docSnapshot) => toTechnicalNote(docSnapshot.id, orderId, docSnapshot.data())),
+          );
+        },
+        (error) => subscriber.error(error),
+      );
+    });
+  }
+
+  /**
+   * Registra una nota técnica en la bitácora de la orden (inmutable, solo
+   * `create`). Los hallazgos y recomendaciones también se acumulan en los
+   * arreglos del documento de la orden (CLAUDE.md §9.5), que es lo que el
+   * prompt de IA de la Fase 6 leerá para redactar el borrador del acta.
+   */
+  async addNote(orderId: string, noteType: NoteType, content: string, createdBy: string): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    const noteRef = doc(collection(this.firestore, 'orders', orderId, 'notes'));
+    batch.set(noteRef, { content, noteType, createdAt: serverTimestamp(), createdBy });
+
+    if (noteType === 'FINDING' || noteType === 'RECOMMENDATION') {
+      const field = noteType === 'FINDING' ? 'findings' : 'recommendations';
+      batch.update(doc(this.firestore, 'orders', orderId), {
+        [field]: arrayUnion(content),
+        updatedAt: serverTimestamp(),
+        updatedBy: createdBy,
+      });
+    }
+
+    await batch.commit();
+  }
+
+  watchEvidence(orderId: string): Observable<Evidence[]> {
+    return new Observable<Evidence[]>((subscriber) => {
+      const evidenceQuery = query(
+        collection(this.firestore, 'orders', orderId, 'evidence'),
+        orderBy('uploadedAt', 'desc'),
+      );
+      return onSnapshot(
+        evidenceQuery,
+        (snapshot) => {
+          subscriber.next(
+            snapshot.docs.map((docSnapshot) => toEvidence(docSnapshot.id, orderId, docSnapshot.data())),
+          );
+        },
+        (error) => subscriber.error(error),
+      );
+    });
+  }
+
+  /**
+   * Sube el archivo a Storage bajo la convención de `storagePath` de
+   * CLAUDE.md §9.6 (nunca se confía en el nombre original para la ruta),
+   * reporta el progreso, y solo al terminar crea el documento de evidencia
+   * e incrementa `evidenceCount` en la orden.
+   */
+  async uploadEvidence(
+    orderId: string,
+    file: File,
+    category: EvidenceCategory | undefined,
+    description: string | undefined,
+    uploadedBy: string,
+    onProgress?: (percent: number) => void,
+  ): Promise<void> {
+    const evidenceRef = doc(collection(this.firestore, 'orders', orderId, 'evidence'));
+    const safeFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+    const storagePath = `orders/${orderId}/evidence/${evidenceRef.id}/${safeFileName}`;
+    const storageRef = ref(this.storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    const finalSnapshot = await new Promise<UploadTaskSnapshot>((resolve, reject) => {
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => onProgress?.(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
+        reject,
+        () => resolve(uploadTask.snapshot),
+      );
+    });
+    const downloadUrl = await getDownloadURL(finalSnapshot.ref);
+
+    const batch = writeBatch(this.firestore);
+    batch.set(evidenceRef, {
+      orderId,
+      type: evidenceTypeFor(file.type),
+      category: category ?? null,
+      fileName: file.name,
+      storagePath,
+      downloadUrl,
+      contentType: file.type,
+      size: file.size,
+      description: description || null,
+      uploadedAt: serverTimestamp(),
+      uploadedBy,
+      status: 'ACTIVE',
+    });
+    batch.update(doc(this.firestore, 'orders', orderId), {
+      evidenceCount: increment(1),
+      updatedAt: serverTimestamp(),
+      updatedBy: uploadedBy,
+    });
+    await batch.commit();
   }
 
   /**

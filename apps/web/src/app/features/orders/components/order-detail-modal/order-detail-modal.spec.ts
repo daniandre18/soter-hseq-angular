@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 
 import { OrderDetailModal } from './order-detail-modal';
 import { OrdersFacade } from '../../facades/orders.facade';
@@ -18,6 +19,8 @@ describe('OrderDetailModal', () => {
           useValue: {
             technicians: signal([]),
             technicianName: () => '',
+            watchNotes: () => of([]),
+            watchEvidence: () => of([]),
           },
         },
         {

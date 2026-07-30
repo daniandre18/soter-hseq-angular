@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 
 import { OrdersList } from './orders-list';
 import { OrdersFacade } from '../../facades/orders.facade';
@@ -21,6 +22,8 @@ describe('OrdersList', () => {
             technicians: signal([]),
             technicianName: () => '',
             init: () => undefined,
+            watchNotes: () => of([]),
+            watchEvidence: () => of([]),
           },
         },
         {

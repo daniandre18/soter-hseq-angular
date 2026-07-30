@@ -136,3 +136,226 @@
     height: 1rem;
   }
 }
+
+.review-hint {
+  margin: -1rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  text-align: right;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.tab {
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+
+  &:hover {
+    color: var(--color-gray-700);
+  }
+
+  &--active {
+    color: var(--color-brand-700);
+    border-bottom-color: var(--color-brand-600);
+  }
+}
+
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+
+  .info-label {
+    width: 100%;
+  }
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-gray-600);
+  background: var(--color-gray-100);
+
+  &--finding {
+    color: var(--color-red-700);
+    background: var(--color-red-50);
+  }
+
+  &--recommendation {
+    color: var(--color-blue-700);
+    background: var(--color-blue-100);
+  }
+}
+
+.note-form,
+.evidence-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+
+  select,
+  input[type='text'],
+  input[type='file'] {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    font-family: inherit;
+    color: var(--color-gray-900);
+    background: white;
+  }
+
+  textarea {
+    flex: 1 1 12rem;
+    min-width: 12rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    font-family: inherit;
+    color: var(--color-gray-900);
+    resize: vertical;
+  }
+}
+
+.field-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-red-500);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 0.75rem;
+
+  &:last-child .timeline-marker::after {
+    display: none;
+  }
+}
+
+.timeline-marker {
+  flex-shrink: 0;
+  width: 0.5rem;
+  display: flex;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-top: 0.375rem;
+    border-radius: 999px;
+    background: var(--color-brand-400);
+    display: block;
+  }
+
+  &::after {
+    content: '';
+    display: block;
+    width: 1px;
+    flex: 1;
+    background: var(--color-gray-100);
+    margin: 0.25rem auto;
+  }
+}
+
+.timeline-content {
+  flex: 1;
+  padding-bottom: 1rem;
+}
+
+.timeline-text {
+  margin: 0.25rem 0 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--color-gray-800);
+}
+
+.timeline-meta {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--color-gray-400);
+}
+
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+
+.evidence-card {
+  display: block;
+  border: 1px solid var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 150ms;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.evidence-thumb {
+  width: 100%;
+  height: 6rem;
+  object-fit: cover;
+  background: var(--color-gray-50);
+
+  &--file {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-gray-400);
+  }
+}
+
+.evidence-info {
+  padding: 0.5rem;
+}
+
+.evidence-name {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-gray-900);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.evidence-description {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--color-gray-500);
+}

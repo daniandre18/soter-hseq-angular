@@ -1,11 +1,14 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import type { Observable } from 'rxjs';
 import { OrdersQuery } from '../state/orders.query';
 import { OrdersService } from '../state/orders.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
 import { UsersRepository } from '../../../core/repositories/users.repository';
 import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
 import type { OrderStatus, ServiceOrder } from '../models/order.model';
+import type { NoteType, TechnicalNote } from '../models/note.model';
+import type { Evidence, EvidenceCategory } from '../models/evidence.model';
 import type { PieSlice } from '../../../shared/components/pie-chart/pie-chart';
 import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
@@ -178,6 +181,30 @@ export class OrdersFacade {
   async updateStatus(orderId: string, status: OrderStatus): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.updateStatus(orderId, status, userId);
+  }
+
+  watchNotes(orderId: string): Observable<TechnicalNote[]> {
+    return this.service.watchNotes(orderId);
+  }
+
+  async addNote(orderId: string, noteType: NoteType, content: string): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.addNote(orderId, noteType, content, userId);
+  }
+
+  watchEvidence(orderId: string): Observable<Evidence[]> {
+    return this.service.watchEvidence(orderId);
+  }
+
+  async uploadEvidence(
+    orderId: string,
+    file: File,
+    category: EvidenceCategory | undefined,
+    description: string | undefined,
+    onProgress?: (percent: number) => void,
+  ): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.uploadEvidence(orderId, file, category, description, userId, onProgress);
   }
 
   async generateClosingActDraft(orderId: string, notes: string): Promise<void> {
