@@ -7,6 +7,7 @@ import { ForgotPassword } from './features/auth/pages/forgot-password/forgot-pas
 import { AccessDenied } from './shared/pages/access-denied/access-denied';
 import { NotFound } from './shared/pages/not-found/not-found';
 import { Dashboard } from './features/dashboard/dashboard';
+import { ClientsList } from './features/clients/pages/clients-list/clients-list';
 
 export const routes: Routes = [
   { path: 'login', component: Login, title: 'Iniciar sesión — SOTER HSEQ' },
@@ -27,6 +28,13 @@ export const routes: Routes = [
         component: Dashboard,
         title: 'Panel — SOTER HSEQ',
         data: { title: 'Panel' },
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
+      },
+      {
+        path: 'clientes',
+        component: ClientsList,
+        title: 'Clientes — SOTER HSEQ',
+        data: { title: 'Clientes' },
         canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
       },
     ],

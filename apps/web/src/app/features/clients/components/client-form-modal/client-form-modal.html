@@ -1,0 +1,54 @@
+<app-modal [open]="open()" [title]="title()" size="lg" (closeRequested)="close()">
+  <form class="client-form" (submit)="onSubmit(); $event.preventDefault()">
+    <label class="field field--full">
+      Razón Social *
+      <input [formField]="clientForm.businessName" placeholder="Empresa S.A.S." />
+      @if (clientForm.businessName().touched() && clientForm.businessName().errors().length) {
+        <span class="field-error">{{ clientForm.businessName().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field">
+      NIT *
+      <input [formField]="clientForm.taxId" placeholder="900.000.000-0" />
+      @if (clientForm.taxId().touched() && clientForm.taxId().errors().length) {
+        <span class="field-error">{{ clientForm.taxId().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field">
+      Ciudad
+      <input [formField]="clientForm.city" placeholder="Bogotá" />
+    </label>
+
+    <label class="field">
+      Correo
+      <input type="email" [formField]="clientForm.email" placeholder="contacto@empresa.com" />
+    </label>
+
+    <label class="field">
+      Teléfono
+      <input [formField]="clientForm.phone" placeholder="+57 300 000 0000" />
+    </label>
+
+    <label class="field field--full">
+      Dirección
+      <input [formField]="clientForm.address" placeholder="Calle 80 # 45-22" />
+    </label>
+
+    <label class="field field--full">
+      Estado
+      <select [formField]="clientForm.status">
+        <option value="ACTIVE">Activo</option>
+        <option value="INACTIVE">Inactivo</option>
+      </select>
+    </label>
+  </form>
+
+  <div modalFooter>
+    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button (click)="onSubmit()" [disabled]="clientForm().invalid() || saving()">
+      {{ saving() ? 'Guardando…' : 'Guardar' }}
+    </app-button>
+  </div>
+</app-modal>

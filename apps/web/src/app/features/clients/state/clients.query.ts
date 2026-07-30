@@ -6,6 +6,7 @@ import { ClientsState, ClientsStore } from './clients.store';
 export class ClientsQuery extends QueryEntity<ClientsState> {
   readonly clients$ = this.selectAll();
   readonly loading$ = this.selectLoading();
+  readonly error$ = this.selectError<string | null>();
 
   constructor() {
     super(inject(ClientsStore));

@@ -1,0 +1,38 @@
+@if (open()) {
+  <div class="modal-overlay">
+    <button
+      type="button"
+      class="modal-backdrop"
+      (click)="onBackdropClick()"
+      [attr.aria-label]="'Cerrar ' + title()"
+    ></button>
+
+    <div
+      class="modal-dialog"
+      [class]="'modal-dialog--' + size()"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="titleId"
+    >
+      <div class="modal-header">
+        <h3 [id]="titleId" class="modal-title">{{ title() }}</h3>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="closeRequested.emit()"
+          [attr.aria-label]="'Cerrar ' + title()"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <ng-content />
+      </div>
+
+      <div class="modal-footer">
+        <ng-content select="[modalFooter]" />
+      </div>
+    </div>
+  </div>
+}

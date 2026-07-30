@@ -1,0 +1,71 @@
+<section class="clients-page">
+  <div class="clients-toolbar">
+    <div class="clients-filters">
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Buscar por nombre, NIT o ciudad..."
+        aria-label="Buscar clientes"
+        [value]="search()"
+        (input)="onSearchInput($event)"
+      />
+      <select
+        class="status-select"
+        aria-label="Filtrar por estado"
+        [value]="statusFilter()"
+        (change)="onStatusChange($event)"
+      >
+        <option value="all">Todos</option>
+        <option value="ACTIVE">Activos</option>
+        <option value="INACTIVE">Inactivos</option>
+      </select>
+    </div>
+    <app-button (click)="openCreate()">+ Nuevo Cliente</app-button>
+  </div>
+
+  <div class="clients-summary">
+    <span>{{ filtered().length }} clientes</span>
+    <span class="summary-active">{{ activeInFiltered() }} activos</span>
+    <span class="summary-inactive">{{ inactiveInFiltered() }} inactivos</span>
+  </div>
+
+  @if (filtered().length === 0) {
+    <app-card class="empty-card">
+      <p>No hay clientes registrados</p>
+    </app-card>
+  } @else {
+    <div class="clients-grid">
+      @for (client of filtered(); track client.id) {
+        <app-card [clickable]="true" (cardClick)="openDetail(client)">
+          <div class="client-card-header">
+            <div class="client-icon">🏢</div>
+            <div class="client-card-title">
+              <p class="client-name">{{ client.businessName }}</p>
+              <p class="client-nit">NIT: {{ client.taxId }}</p>
+            </div>
+          </div>
+
+          <div class="client-card-meta">
+            <p>{{ client.city || 'Sin ciudad' }}</p>
+          </div>
+
+          <div class="client-card-footer">
+            <app-status-badge
+              [label]="client.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
+              [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
+            />
+            <button type="button" class="edit-link" (click)="openEdit(client, $event)">Editar</button>
+          </div>
+        </app-card>
+      }
+    </div>
+  }
+</section>
+
+<app-client-form-modal
+  [open]="formOpen()"
+  [editingClient]="editingClient()"
+  (closeRequested)="closeForm()"
+/>
+
+<app-client-detail-modal [client]="detailClient()" (closeRequested)="closeDetail()" />

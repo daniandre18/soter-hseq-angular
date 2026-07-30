@@ -1,0 +1,70 @@
+@if (client(); as c) {
+  <app-modal [open]="true" [title]="c.businessName" size="xl" (closeRequested)="close()">
+    <div class="detail-sections">
+      <div class="info-grid">
+        <div>
+          <p class="info-label">NIT</p>
+          <p class="info-value">{{ c.taxId }}</p>
+        </div>
+        <div>
+          <p class="info-label">Ciudad</p>
+          <p class="info-value">{{ c.city || '—' }}</p>
+        </div>
+        <div class="info-full">
+          <p class="info-label">Dirección</p>
+          <p class="info-value">{{ c.address || '—' }}</p>
+        </div>
+        <div>
+          <p class="info-label">Estado</p>
+          <app-status-badge
+            [label]="c.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
+            [color]="c.status === 'ACTIVE' ? 'green' : 'gray'"
+          />
+        </div>
+        <div>
+          <p class="info-label">Correo</p>
+          <p class="info-value">{{ c.email || '—' }}</p>
+        </div>
+        <div>
+          <p class="info-label">Teléfono</p>
+          <p class="info-value">{{ c.phone || '—' }}</p>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h4>Contactos</h4>
+        @if (contacts().length === 0) {
+          <p class="empty-text">Sin contactos registrados</p>
+        } @else {
+          @for (contact of contacts(); track contact.id) {
+            <div class="contact-row">
+              <div class="contact-avatar">{{ contact.name.charAt(0) }}</div>
+              <div class="contact-info">
+                <p class="contact-name">{{ contact.name }}</p>
+                <p class="contact-role">{{ contact.position }}</p>
+              </div>
+              <div class="contact-details">
+                <p>{{ contact.email }}</p>
+                <p>{{ contact.phone }}</p>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="detail-section">
+        <h4>Historial de Servicios ({{ clientOrders().length }})</h4>
+        @if (clientOrders().length === 0) {
+          <p class="empty-text">Sin órdenes registradas</p>
+        } @else {
+          @for (order of clientOrders(); track order.id) {
+            <div class="order-row">
+              <span class="order-code">{{ order.orderNumber }}</span>
+              <span class="order-title">{{ order.serviceSummary }}</span>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </app-modal>
+}

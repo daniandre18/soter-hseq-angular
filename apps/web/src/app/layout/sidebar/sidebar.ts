@@ -14,6 +14,7 @@ interface NavItem {
 // (CLAUDE.md §14): clientes, cotizaciones, órdenes, mis órdenes, etc.
 const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard', label: 'Panel', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
+  { path: '/clientes', label: 'Clientes', roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'] },
 ];
 
 @Component({

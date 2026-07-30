@@ -1,0 +1,12 @@
+<div
+  class="card"
+  [class]="'card--padding-' + padding()"
+  [class.card--clickable]="clickable()"
+  [attr.role]="clickable() ? 'button' : null"
+  [attr.tabindex]="clickable() ? 0 : null"
+  (click)="onClick()"
+  (keydown.enter)="onClick()"
+  (keydown.space)="onKeydownSpace($event)"
+>
+  <ng-content />
+</div>

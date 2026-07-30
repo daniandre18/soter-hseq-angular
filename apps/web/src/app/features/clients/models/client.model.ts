@@ -17,3 +17,21 @@ export interface Client {
   updatedAt: Date;
   updatedBy: string;
 }
+
+/** Subcolección `clients/{clientId}/contacts` (CLAUDE.md §9.3). */
+export interface ClientContact {
+  id: string;
+  name: string;
+  position?: string;
+  email?: string;
+  phone?: string;
+  isPrimary: boolean;
+  status: ClientStatus;
+}
+
+export type NewClient = Pick<
+  Client,
+  'businessName' | 'legalName' | 'taxId' | 'email' | 'phone' | 'address' | 'city' | 'notes' | 'status'
+>;
+
+export type NewClientContact = Omit<ClientContact, 'id'>;
