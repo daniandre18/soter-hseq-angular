@@ -24,12 +24,24 @@ import {
   toDateTimeLocalValue,
 } from '../../../../shared/utils/format-date';
 import type { ServiceOrder } from '../../models/order.model';
+import type { ClosingActContent } from '../../models/closing-act.model';
 
 const SCHEDULABLE_STATUSES = new Set<ServiceOrder['status']>(['DRAFT', 'SCHEDULED']);
 const ASSIGNABLE_STATUSES = new Set<ServiceOrder['status']>(['SCHEDULED', 'ASSIGNED']);
 const CANCELLABLE_STATUSES = new Set<ServiceOrder['status']>(['DRAFT', 'SCHEDULED', 'ASSIGNED']);
 const MIN_EVIDENCE_COUNT_FOR_REVIEW = 1;
-type DetailTab = 'info' | 'log' | 'evidence';
+type DetailTab = 'info' | 'log' | 'evidence' | 'acta';
+
+function linesToArray(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+function messageFor(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 
 @Component({
   selector: 'app-order-detail-modal',
@@ -64,6 +76,13 @@ export class OrderDetailModal {
       switchMap((order) => (order ? this.ordersFacade.watchEvidence(order.id) : of([]))),
     ),
     { initialValue: [] },
+  );
+
+  protected readonly closingAct = toSignal(
+    toObservable(this.order).pipe(
+      switchMap((order) => (order ? this.ordersFacade.watchClosingAct(order.id) : of(null))),
+    ),
+    { initialValue: null },
   );
 
   protected readonly statusLabel = computed(() => {
@@ -144,6 +163,43 @@ export class OrderDetailModal {
     }
     return null;
   });
+
+  protected readonly canRequestActa = computed(
+    () => this.canLog() && this.order()?.status === 'UNDER_REVIEW' && !this.closingAct(),
+  );
+
+  protected readonly canEditActa = computed(() => {
+    const act = this.closingAct();
+    return this.canManage() && !!act && act.status !== 'APPROVED' && act.status !== 'FINAL';
+  });
+
+  protected readonly canApproveActa = computed(() => {
+    const act = this.closingAct();
+    return this.canManage() && !!act && act.status !== 'APPROVED' && act.status !== 'FINAL';
+  });
+
+  protected readonly canCloseOrder = computed(() => {
+    const act = this.closingAct();
+    return this.canManage() && !!act && act.status === 'APPROVED';
+  });
+
+  protected readonly generatingActa = signal(false);
+  protected readonly savingActa = signal(false);
+  protected readonly approvingActa = signal(false);
+  protected readonly closingOrder = signal(false);
+  protected readonly pdfUrl = signal<string | null>(null);
+  protected readonly actaError = signal<string | null>(null);
+
+  protected readonly actExecutiveSummary = linkedSignal(() => this.closingAct()?.executiveSummary ?? '');
+  protected readonly actActivitiesText = linkedSignal(() =>
+    (this.closingAct()?.performedActivities ?? []).join('\n'),
+  );
+  protected readonly actFindingsText = linkedSignal(() => (this.closingAct()?.findings ?? []).join('\n'));
+  protected readonly actRecommendationsText = linkedSignal(() =>
+    (this.closingAct()?.recommendations ?? []).join('\n'),
+  );
+  protected readonly actConclusions = linkedSignal(() => this.closingAct()?.conclusions ?? '');
+  protected readonly actLimitations = linkedSignal(() => this.closingAct()?.limitations ?? '');
 
   protected readonly newNoteType = signal<NoteType>('GENERAL');
   protected readonly newNoteContent = signal('');
@@ -324,5 +380,91 @@ export class OrderDetailModal {
       this.uploading.set(false);
       this.uploadProgress.set(null);
     }
+  }
+
+  protected async generateActa(): Promise<void> {
+    const order = this.order();
+    if (!order) {
+      return;
+    }
+    this.generatingActa.set(true);
+    this.actaError.set(null);
+    try {
+      const summary = this.ordersFacade.buildNotesSummary(order, this.notes());
+      await this.ordersFacade.generateClosingActDraft(order.id, summary);
+    } catch (error) {
+      this.actaError.set(messageFor(error, 'No se pudo generar el borrador con IA.'));
+    } finally {
+      this.generatingActa.set(false);
+    }
+  }
+
+  protected async saveActaContent(): Promise<void> {
+    const act = this.closingAct();
+    if (!act) {
+      return;
+    }
+    const content: ClosingActContent = {
+      executiveSummary: this.actExecutiveSummary().trim(),
+      performedActivities: linesToArray(this.actActivitiesText()),
+      findings: linesToArray(this.actFindingsText()),
+      recommendations: linesToArray(this.actRecommendationsText()),
+      conclusions: this.actConclusions().trim() || undefined,
+      limitations: this.actLimitations().trim() || undefined,
+    };
+    this.savingActa.set(true);
+    this.actaError.set(null);
+    try {
+      await this.ordersFacade.updateClosingActContent(act.id, content);
+    } catch (error) {
+      this.actaError.set(messageFor(error, 'No se pudieron guardar los cambios del acta.'));
+    } finally {
+      this.savingActa.set(false);
+    }
+  }
+
+  protected async approveActa(): Promise<void> {
+    const order = this.order();
+    const act = this.closingAct();
+    if (!order || !act) {
+      return;
+    }
+    this.approvingActa.set(true);
+    this.actaError.set(null);
+    try {
+      await this.ordersFacade.approveClosingAct(act.id, order.id);
+    } catch (error) {
+      this.actaError.set(messageFor(error, 'No se pudo aprobar el acta.'));
+    } finally {
+      this.approvingActa.set(false);
+    }
+  }
+
+  protected async closeOrderAndGeneratePdf(): Promise<void> {
+    const order = this.order();
+    const act = this.closingAct();
+    if (!order || !act) {
+      return;
+    }
+    this.closingOrder.set(true);
+    this.actaError.set(null);
+    try {
+      const url = await this.ordersFacade.closeOrderWithPdf(order.id, act.id);
+      this.pdfUrl.set(url);
+    } catch (error) {
+      this.actaError.set(messageFor(error, 'No se pudo cerrar la orden ni generar el PDF.'));
+    } finally {
+      this.closingOrder.set(false);
+    }
+  }
+
+  protected async viewExistingPdf(): Promise<void> {
+    const path = this.closingAct()?.pdfPath;
+    if (!path) {
+      return;
+    }
+    const url = this.pdfUrl() ?? (await this.ordersFacade.resolvePdfUrl(path));
+    this.pdfUrl.set(url);
+    window.open(url, '_blank', 'noopener');
   }
 }

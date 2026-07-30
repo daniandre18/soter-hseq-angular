@@ -46,6 +46,9 @@
         >
           Evidencias ({{ evidenceList().length }})
         </button>
+        <button type="button" class="tab" [class.tab--active]="activeTab() === 'acta'" (click)="setActiveTab('acta')">
+          Acta
+        </button>
       </div>
 
       @switch (activeTab()) {
@@ -273,6 +276,120 @@
                       <p class="timeline-meta">{{ formatDateTime(item.uploadedAt) }}</p>
                     </div>
                   </a>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @case ('acta') {
+          <div class="tab-panel">
+            @if (actaError()) {
+              <p class="field-error">{{ actaError() }}</p>
+            }
+            @if (!closingAct()) {
+              @if (canRequestActa()) {
+                <div class="action-section">
+                  <h4>Generar borrador con IA</h4>
+                  <p class="info-value info-value--muted">
+                    Se enviará un resumen de las notas de campo a la IA para redactar un borrador. Siempre
+                    queda sujeto a revisión y aprobación humana antes del cierre.
+                  </p>
+                  <app-button size="sm" (click)="generateActa()" [disabled]="generatingActa()">
+                    {{ generatingActa() ? 'Generando…' : 'Generar borrador con IA' }}
+                  </app-button>
+                </div>
+              } @else {
+                <p class="info-value info-value--muted">
+                  El acta se puede generar una vez la orden esté en revisión.
+                </p>
+              }
+            } @else {
+              <div class="detail-header">
+                <p class="client-name">{{ closingAct()!.title }}</p>
+                <app-status-badge [label]="closingAct()!.status" color="purple" />
+              </div>
+
+              <label class="field field--full">
+                Resumen ejecutivo
+                <textarea
+                  rows="3"
+                  [disabled]="!canEditActa()"
+                  [value]="actExecutiveSummary()"
+                  (input)="actExecutiveSummary.set($any($event.target).value)"
+                ></textarea>
+              </label>
+
+              <label class="field field--full">
+                Actividades realizadas (una por línea)
+                <textarea
+                  rows="3"
+                  [disabled]="!canEditActa()"
+                  [value]="actActivitiesText()"
+                  (input)="actActivitiesText.set($any($event.target).value)"
+                ></textarea>
+              </label>
+
+              <label class="field field--full">
+                Hallazgos (uno por línea)
+                <textarea
+                  rows="3"
+                  [disabled]="!canEditActa()"
+                  [value]="actFindingsText()"
+                  (input)="actFindingsText.set($any($event.target).value)"
+                ></textarea>
+              </label>
+
+              <label class="field field--full">
+                Recomendaciones (una por línea)
+                <textarea
+                  rows="3"
+                  [disabled]="!canEditActa()"
+                  [value]="actRecommendationsText()"
+                  (input)="actRecommendationsText.set($any($event.target).value)"
+                ></textarea>
+              </label>
+
+              <label class="field field--full">
+                Conclusiones
+                <textarea
+                  rows="2"
+                  [disabled]="!canEditActa()"
+                  [value]="actConclusions()"
+                  (input)="actConclusions.set($any($event.target).value)"
+                ></textarea>
+              </label>
+
+              <label class="field field--full">
+                Limitaciones
+                <textarea
+                  rows="2"
+                  [disabled]="!canEditActa()"
+                  [value]="actLimitations()"
+                  (input)="actLimitations.set($any($event.target).value)"
+                ></textarea>
+              </label>
+
+              <div class="acta-actions">
+                @if (canEditActa()) {
+                  <app-button variant="outline" size="sm" (click)="saveActaContent()" [disabled]="savingActa()">
+                    {{ savingActa() ? 'Guardando…' : 'Guardar cambios' }}
+                  </app-button>
+                }
+                @if (canApproveActa()) {
+                  <app-button size="sm" (click)="approveActa()" [disabled]="approvingActa()">
+                    {{ approvingActa() ? 'Aprobando…' : 'Aprobar Acta' }}
+                  </app-button>
+                }
+                @if (canCloseOrder()) {
+                  <app-button size="sm" (click)="closeOrderAndGeneratePdf()" [disabled]="closingOrder()">
+                    {{ closingOrder() ? 'Generando PDF…' : 'Cerrar Orden y Generar PDF' }}
+                  </app-button>
+                }
+                @if (pdfUrl()) {
+                  <a class="pdf-link" [href]="pdfUrl()" target="_blank" rel="noopener">Descargar PDF</a>
+                } @else if (closingAct()!.pdfPath) {
+                  <button type="button" class="pdf-link" (click)="viewExistingPdf()">Ver PDF</button>
                 }
               </div>
             }

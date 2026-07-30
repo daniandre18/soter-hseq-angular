@@ -9,6 +9,7 @@ import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
 import type { OrderStatus, ServiceOrder } from '../models/order.model';
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory } from '../models/evidence.model';
+import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
 import type { PieSlice } from '../../../shared/components/pie-chart/pie-chart';
 import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
@@ -214,5 +215,41 @@ export class OrdersFacade {
       console.error('Error generando el borrador del acta de cierre:', error);
       throw error;
     }
+  }
+
+  /**
+   * Arma el texto de "notas de campo" que se envía a la Cloud Function
+   * (CLAUDE.md §12.2: resumen del servicio, notas técnicas, hallazgos,
+   * recomendaciones — nunca datos sensibles). La IA solo ve este resumen,
+   * nunca los documentos de evidencia completos.
+   */
+  buildNotesSummary(order: ServiceOrder, notes: TechnicalNote[]): string {
+    const lines = [`Servicio: ${order.serviceSummary}`];
+    if (notes.length > 0) {
+      lines.push('Notas de campo:', ...notes.map((note) => `- (${note.noteType}) ${note.content}`));
+    }
+    return lines.join('\n');
+  }
+
+  watchClosingAct(orderId: string): Observable<ClosingAct | null> {
+    return this.service.watchClosingAct(orderId);
+  }
+
+  async updateClosingActContent(actId: string, content: ClosingActContent): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.updateClosingActContent(actId, content, userId);
+  }
+
+  async approveClosingAct(actId: string, orderId: string): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.approveClosingAct(actId, orderId, userId);
+  }
+
+  async closeOrderWithPdf(orderId: string, actId: string): Promise<string> {
+    return this.service.closeOrderWithPdf(orderId, actId);
+  }
+
+  resolvePdfUrl(pdfPath: string): Promise<string> {
+    return this.service.resolvePdfUrl(pdfPath);
   }
 }

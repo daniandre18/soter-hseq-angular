@@ -1,10 +1,29 @@
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { defineString } from 'firebase-functions/params';
 import { GoogleGenAI } from '@google/genai';
+import PDFDocument from 'pdfkit';
 
 initializeApp();
+
+type Role = 'ADMIN' | 'COMMERCIAL' | 'COORDINATOR' | 'TECHNICIAN' | 'VIEWER';
+
+/**
+ * El Admin SDK ignora las Firestore Rules, así que cualquier función que
+ * escriba datos sensibles debe validar el rol por su cuenta leyendo el
+ * documento de `users` (CLAUDE.md §13.1: "nunca confiar en el rol enviado
+ * por el cliente" — aquí se resuelve siempre desde Firestore, no de
+ * `request.data`).
+ */
+async function requireRole(uid: string, allowedRoles: Role[]): Promise<void> {
+  const userDoc = await getFirestore().collection('users').doc(uid).get();
+  const role = userDoc.data()?.['role'] as Role | undefined;
+  if (!role || !allowedRoles.includes(role)) {
+    throw new HttpsError('permission-denied', 'Tu rol no tiene permiso para esta acción.');
+  }
+}
 
 // `defineString` (no `defineSecret`): para el MVP local con el Emulator
 // Suite y un proyecto "demo-" ficticio no hay cuenta de Google Cloud real
@@ -86,6 +105,9 @@ export const generateClosingAct = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Debes iniciar sesión para generar el acta.');
   }
+  // CLAUDE.md §23.6 "solo usuarios autorizados generan"; el técnico debe
+  // poder solicitarlo (§3.4), no solo ADMIN/COORDINATOR.
+  await requireRole(request.auth.uid, ['ADMIN', 'COORDINATOR', 'TECHNICIAN']);
 
   const { orderId, notes } = (request.data ?? {}) as Partial<GenerateClosingActRequest>;
   if (!orderId || !notes || notes.trim().length < 10) {
@@ -101,6 +123,12 @@ export const generateClosingAct = onCall(async (request) => {
   if (!orderSnapshot.exists) {
     throw new HttpsError('not-found', 'La orden no existe.');
   }
+
+  const priorActsSnapshot = await firestore
+    .collection('closingActs')
+    .where('orderId', '==', orderId)
+    .get();
+  const nextVersion = priorActsSnapshot.size + 1;
 
   const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
 
@@ -119,7 +147,7 @@ export const generateClosingAct = onCall(async (request) => {
   const closingActRef = firestore.collection('closingActs').doc();
   await closingActRef.set({
     orderId,
-    version: 1,
+    version: nextVersion,
     status: 'AI_GENERATED',
     source: 'AI_ASSISTED',
     title: `Acta de cierre - ${orderSnapshot.data()?.['orderNumber'] ?? orderId}`,
@@ -141,4 +169,102 @@ export const generateClosingAct = onCall(async (request) => {
   });
 
   return { closingActId: closingActRef.id };
+});
+
+interface CloseOrderRequest {
+  orderId: string;
+  actId: string;
+}
+
+function buildClosingActPdf(act: FirebaseFirestore.DocumentData, orderNumber: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 50 });
+    const chunks: Buffer[] = [];
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const section = (heading: string, body: string | string[]) => {
+      doc.moveDown().fontSize(12).font('Helvetica-Bold').text(heading);
+      doc.fontSize(10).font('Helvetica');
+      if (Array.isArray(body)) {
+        if (body.length === 0) {
+          doc.text('— Sin información registrada —', { oblique: true });
+        } else {
+          body.forEach((item) => doc.text(`• ${item}`));
+        }
+      } else {
+        doc.text(body || '— Sin información registrada —');
+      }
+    };
+
+    doc.fontSize(18).font('Helvetica-Bold').text(act['title'] ?? `Acta de cierre - ${orderNumber}`);
+    doc.fontSize(9).font('Helvetica').fillColor('#666666').text(`Orden ${orderNumber}`);
+    doc.fillColor('#000000');
+
+    section('Resumen ejecutivo', act['executiveSummary'] ?? '');
+    section('Actividades realizadas', (act['performedActivities'] as string[]) ?? []);
+    section('Hallazgos', (act['findings'] as string[]) ?? []);
+    section('Recomendaciones', (act['recommendations'] as string[]) ?? []);
+    section('Conclusiones', act['conclusions'] ?? '');
+    section('Limitaciones', act['limitations'] ?? '');
+
+    doc.end();
+  });
+}
+
+/**
+ * Cierre definitivo (CLAUDE.md §11.6/§23.7): genera el PDF final del acta
+ * aprobada, lo guarda en Storage, marca el acta como `FINAL` y la orden
+ * como `CLOSED`, y deja un evento auditado. Todo en el backend porque
+ * escribe en rutas que las reglas del cliente bloquean a propósito.
+ */
+export const closeOrder = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para cerrar la orden.');
+  }
+  // Solo coordinador/admin cierran (CLAUDE.md §3.1/§3.3).
+  await requireRole(request.auth.uid, ['ADMIN', 'COORDINATOR']);
+
+  const { orderId, actId } = (request.data ?? {}) as Partial<CloseOrderRequest>;
+  if (!orderId || !actId) {
+    throw new HttpsError('invalid-argument', 'Falta la orden o el acta a cerrar.');
+  }
+
+  const firestore = getFirestore();
+  const orderRef = firestore.collection('orders').doc(orderId);
+  const actRef = firestore.collection('closingActs').doc(actId);
+  const [orderSnapshot, actSnapshot] = await Promise.all([orderRef.get(), actRef.get()]);
+
+  if (!orderSnapshot.exists) {
+    throw new HttpsError('not-found', 'La orden no existe.');
+  }
+  if (!actSnapshot.exists || actSnapshot.data()?.['orderId'] !== orderId) {
+    throw new HttpsError('not-found', 'El acta no existe o no pertenece a esta orden.');
+  }
+  // No cerrar sin acta aprobada (CLAUDE.md §10.2/§23.7).
+  if (actSnapshot.data()?.['status'] !== 'APPROVED') {
+    throw new HttpsError('failed-precondition', 'El acta debe estar aprobada antes de cerrar la orden.');
+  }
+
+  const orderNumber = orderSnapshot.data()?.['orderNumber'] ?? orderId;
+  const pdfBuffer = await buildClosingActPdf(actSnapshot.data() ?? {}, orderNumber);
+
+  const pdfPath = `closing-acts/${actId}/acta-${orderNumber}.pdf`;
+  await getStorage().bucket().file(pdfPath).save(pdfBuffer, { contentType: 'application/pdf' });
+
+  const now = FieldValue.serverTimestamp();
+  const batch = firestore.batch();
+  batch.update(actRef, { status: 'FINAL', pdfPath, updatedAt: now, updatedBy: request.auth.uid });
+  batch.update(orderRef, { status: 'CLOSED', updatedAt: now, updatedBy: request.auth.uid });
+  batch.set(firestore.collection('auditEvents').doc(), {
+    type: 'ORDER_CLOSED',
+    orderId,
+    actId,
+    userId: request.auth.uid,
+    timestamp: now,
+  });
+  await batch.commit();
+
+  return { pdfPath };
 });

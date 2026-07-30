@@ -32,9 +32,14 @@ import { OrdersStore } from './orders.store';
 import type { OrderStatus, ServiceOrder } from '../models/order.model';
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory, EvidenceType } from '../models/evidence.model';
+import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
 
 interface GenerateClosingActResponse {
   closingActId: string;
+}
+
+interface CloseOrderResponse {
+  pdfPath: string;
 }
 
 type OrderUpdate = Partial<
@@ -78,6 +83,37 @@ function toEvidence(id: string, orderId: string, data: DocumentData): Evidence {
     uploadedAt: toDate(data['uploadedAt']) ?? new Date(0),
     uploadedBy: data['uploadedBy'],
     status: data['status'],
+  };
+}
+
+function toClosingAct(id: string, data: DocumentData): ClosingAct {
+  return {
+    id,
+    orderId: data['orderId'],
+    version: data['version'],
+    status: data['status'],
+    source: data['source'],
+    title: data['title'],
+    executiveSummary: data['executiveSummary'],
+    performedActivities: data['performedActivities'] ?? [],
+    findings: data['findings'] ?? [],
+    recommendations: data['recommendations'] ?? [],
+    conclusions: data['conclusions'] ?? undefined,
+    limitations: data['limitations'] ?? undefined,
+    modelName: data['modelName'] ?? undefined,
+    promptVersion: data['promptVersion'] ?? undefined,
+    pdfPath: data['pdfPath'] ?? undefined,
+    pdfUrl: data['pdfUrl'] ?? undefined,
+    generatedAt: toDate(data['generatedAt']),
+    generatedBy: data['generatedBy'] ?? undefined,
+    reviewedAt: toDate(data['reviewedAt']),
+    reviewedBy: data['reviewedBy'] ?? undefined,
+    approvedAt: toDate(data['approvedAt']),
+    approvedBy: data['approvedBy'] ?? undefined,
+    createdAt: toDate(data['createdAt']) ?? new Date(0),
+    createdBy: data['createdBy'],
+    updatedAt: toDate(data['updatedAt']) ?? new Date(0),
+    updatedBy: data['updatedBy'],
   };
 }
 
@@ -366,5 +402,93 @@ export class OrdersService {
       closingActId: data.closingActId,
       status: 'UNDER_REVIEW',
     });
+  }
+
+  /**
+   * Sin `orderBy` a propósito: combinarlo con el `where('orderId', ...)`
+   * exigiría un índice compuesto, y con como mucho un puñado de actas por
+   * orden (una versión inicial de IA y alguna revisión) alcanza con
+   * ordenar en el cliente.
+   */
+  watchClosingAct(orderId: string): Observable<ClosingAct | null> {
+    return new Observable<ClosingAct | null>((subscriber) => {
+      const actQuery = query(collection(this.firestore, 'closingActs'), where('orderId', '==', orderId));
+      return onSnapshot(
+        actQuery,
+        (snapshot) => {
+          const acts = snapshot.docs
+            .map((docSnapshot) => toClosingAct(docSnapshot.id, docSnapshot.data()))
+            .sort((a, b) => b.version - a.version);
+          subscriber.next(acts[0] ?? null);
+        },
+        (error) => subscriber.error(error),
+      );
+    });
+  }
+
+  /**
+   * Guarda la revisión humana del borrador (CLAUDE.md §11.6: "edita
+   * cualquier error, guarda la versión revisada"). No cambia el estado de la
+   * orden — solo `Aprobar Acta` lo hace, como paso explícito y separado.
+   */
+  async updateClosingActContent(
+    actId: string,
+    content: ClosingActContent,
+    updatedBy: string,
+  ): Promise<void> {
+    await updateDoc(doc(this.firestore, 'closingActs', actId), {
+      ...content,
+      status: 'UNDER_REVIEW',
+      reviewedAt: serverTimestamp(),
+      reviewedBy: updatedBy,
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+  }
+
+  /**
+   * Aprueba el acta y hace avanzar la orden a `APPROVED` en la misma
+   * transacción atómica (CLAUDE.md §10.2: "no aprobar sin acta" — al llegar
+   * aquí el acta ya existe por construcción, porque solo se puede aprobar
+   * un acta que ya se generó).
+   */
+  async approveClosingAct(actId: string, orderId: string, updatedBy: string): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    batch.update(doc(this.firestore, 'closingActs', actId), {
+      status: 'APPROVED',
+      approvedAt: serverTimestamp(),
+      approvedBy: updatedBy,
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+    batch.update(doc(this.firestore, 'orders', orderId), {
+      status: 'APPROVED',
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+    await batch.commit();
+  }
+
+  /**
+   * Genera el PDF final y cierra la orden. Ejecutado en el backend (Cloud
+   * Function con Admin SDK) porque escribe en rutas de Storage/Firestore que
+   * las reglas del cliente bloquean a propósito (`closing-acts/**`,
+   * `auditEvents`) — el cierre queda auditado sin depender de que el
+   * cliente sea honesto sobre qué acta se está cerrando.
+   */
+  async closeOrderWithPdf(orderId: string, actId: string): Promise<string> {
+    const closeOrder = httpsCallable<{ orderId: string; actId: string }, CloseOrderResponse>(
+      this.functions,
+      'closeOrder',
+    );
+    const { data } = await closeOrder({ orderId, actId });
+    return this.resolvePdfUrl(data.pdfPath);
+  }
+
+  /** Resuelve la URL de descarga vía el SDK del cliente (respeta Storage
+   *  Rules y funciona igual contra el emulador que contra producción, a
+   *  diferencia de construir la URL a mano). */
+  resolvePdfUrl(pdfPath: string): Promise<string> {
+    return getDownloadURL(ref(this.storage, pdfPath));
   }
 }

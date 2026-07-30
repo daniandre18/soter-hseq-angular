@@ -21,6 +21,7 @@ describe('OrderDetailModal', () => {
             technicianName: () => '',
             watchNotes: () => of([]),
             watchEvidence: () => of([]),
+            watchClosingAct: () => of(null),
           },
         },
         {

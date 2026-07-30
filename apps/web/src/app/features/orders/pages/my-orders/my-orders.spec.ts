@@ -24,6 +24,7 @@ describe('MyOrders', () => {
             init: () => undefined,
             watchNotes: () => of([]),
             watchEvidence: () => of([]),
+            watchClosingAct: () => of(null),
           },
         },
         {
