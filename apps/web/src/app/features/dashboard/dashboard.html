@@ -96,9 +96,9 @@
     </div>
 
     <div class="dashboard-card">
-      <div class="dashboard-card-header">
-        <h2>Servicios más Solicitados</h2>
-        <p>Top 5 por número de órdenes</p>
+      <div class="dashboard-card-header dashboard-card-header--divided">
+        <app-icon name="chart-pie" class="dashboard-card-icon" />
+        <h2>Servicios Más Solicitados</h2>
       </div>
       <app-bar-list
         [items]="ordersFacade.topServices()"

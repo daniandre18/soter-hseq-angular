@@ -5,7 +5,38 @@
   font-size: 0.875rem;
 }
 
-.bar-list-canvas {
-  position: relative;
-  width: 100%;
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bar-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.bar-row-label {
+  color: var(--color-gray-500);
+}
+
+.bar-row-percentage {
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.bar-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-gray-100);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 300ms ease;
 }

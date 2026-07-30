@@ -1,12 +1,17 @@
-@if (items().length === 0) {
+@if (renderedItems().length === 0) {
   <p class="bar-list-empty">{{ emptyMessage() }}</p>
 } @else {
-  <div class="bar-list-canvas" [style.height]="chartHeight()">
-    <canvas
-      baseChart
-      [type]="chartType"
-      [data]="chartData()"
-      [options]="chartOptions()"
-    ></canvas>
+  <div class="bar-list">
+    @for (item of renderedItems(); track item.key) {
+      <div class="bar-row" [title]="item.value + ' ' + unit()">
+        <div class="bar-row-top">
+          <span class="bar-row-label">{{ item.label }}</span>
+          <span class="bar-row-percentage">{{ item.percentage }}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" [style.width.%]="item.percentage" [style.background]="item.color"></div>
+        </div>
+      </div>
+    }
   </div>
 }
