@@ -45,6 +45,9 @@
               <th>Prioridad</th>
               <th>Avance</th>
               <th>Vence</th>
+              @if (canManage()) {
+                <th>Acciones</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -86,6 +89,18 @@
                 <td class="nowrap">
                   {{ order.dueDate ? formatDateNumeric(order.dueDate) : '—' }}
                 </td>
+                @if (canManage()) {
+                  <td class="actions-cell">
+                    <button type="button" class="edit-link" (click)="openEditFromList(order, $event)">
+                      Editar
+                    </button>
+                    @if (canDelete() && order.status === 'DRAFT') {
+                      <button type="button" class="delete-link" (click)="confirmDelete(order, $event)">
+                        Eliminar
+                      </button>
+                    }
+                  </td>
+                }
               </tr>
             }
           </tbody>
@@ -101,3 +116,16 @@
   (editRequested)="openEdit($event)"
 />
 <app-order-form-modal [open]="formOpen()" [editingOrder]="editingOrder()" (closeRequested)="closeForm()" />
+
+<app-modal [open]="!!deletingOrder()" title="¿Eliminar esta orden?" size="sm" (closeRequested)="cancelDelete()">
+  <p class="confirm-text">
+    Esta acción no se puede deshacer. Si la orden viene de una cotización, esa cotización vuelve a
+    quedar disponible como "Aprobada" para convertirse de nuevo.
+  </p>
+  <div modalFooter>
+    <app-button variant="outline" (click)="cancelDelete()">Cancelar</app-button>
+    <app-button variant="danger" (click)="deleteConfirmed()" [disabled]="deleting()">
+      {{ deleting() ? 'Eliminando…' : 'Eliminar' }}
+    </app-button>
+  </div>
+</app-modal>

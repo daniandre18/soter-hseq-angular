@@ -93,7 +93,13 @@ service cloud.firestore {
                      || (hasRole(['TECHNICIAN'])
                          && request.auth.uid in resource.data.assignedTechnicianIds
                          && resource.data.status != 'CLOSED');
-      allow delete: if false;
+      // Solo se puede eliminar en `DRAFT` (nada de campo/evidencia/actas
+      // asociadas todavía) y solo admin: si la orden viene de una
+      // cotización convertida, borrarla también revierte `quotes/{id}` a
+      // `APPROVED` (ver `OrdersService.deleteOrder`), y `quotes` solo
+      // admite `update` de ADMIN/COMMERCIAL — permitirlo a COORDINATOR aquí
+      // rompería ese batch a mitad de camino.
+      allow delete: if isAdmin() && resource.data.status == 'DRAFT';
 
       match /notes/{noteId} {
         allow read: if isSignedIn();

@@ -7,6 +7,7 @@ import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { Modal } from '../../../../shared/components/modal/modal';
 import { OrderDetailModal } from '../../components/order-detail-modal/order-detail-modal';
 import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
@@ -18,7 +19,7 @@ type StatusFilterOption = 'all' | OrderStatus;
 
 @Component({
   selector: 'app-orders-list',
-  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, OrderDetailModal, OrderFormModal],
+  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, Modal, OrderDetailModal, OrderFormModal],
   templateUrl: './orders-list.html',
   styleUrl: './orders-list.scss',
 })
@@ -32,11 +33,17 @@ export class OrdersList {
   protected readonly detailOrderId = signal<string | null>(null);
   protected readonly formOpen = signal(false);
   protected readonly editingOrder = signal<ServiceOrder | null>(null);
+  protected readonly deletingOrder = signal<ServiceOrder | null>(null);
+  protected readonly deleting = signal(false);
 
   protected readonly canManage = computed(() => {
     const role = this.authFacade.currentRole();
     return role === 'ADMIN' || role === 'COORDINATOR';
   });
+
+  /** Eliminar es más destructivo que crear/editar (revierte la cotización
+   *  de origen si la hay) — se restringe a ADMIN, ver `firestore.rules`. */
+  protected readonly canDelete = computed(() => this.authFacade.currentRole() === 'ADMIN');
 
   protected readonly statusOptions = Object.entries(ORDER_STATUS_CONFIG) as [
     OrderStatus,
@@ -125,5 +132,36 @@ export class OrdersList {
   protected closeForm(): void {
     this.formOpen.set(false);
     this.editingOrder.set(null);
+  }
+
+  /** "Editar" directo desde la fila de la tabla — mismo destino que el
+   *  botón "Editar" del detalle, sin pasar por él. */
+  protected openEditFromList(order: ServiceOrder, event: Event): void {
+    event.stopPropagation();
+    this.editingOrder.set(order);
+    this.formOpen.set(true);
+  }
+
+  protected confirmDelete(order: ServiceOrder, event: Event): void {
+    event.stopPropagation();
+    this.deletingOrder.set(order);
+  }
+
+  protected cancelDelete(): void {
+    this.deletingOrder.set(null);
+  }
+
+  protected async deleteConfirmed(): Promise<void> {
+    const order = this.deletingOrder();
+    if (!order) {
+      return;
+    }
+    this.deleting.set(true);
+    try {
+      await this.ordersFacade.deleteOrder(order);
+      this.deletingOrder.set(null);
+    } finally {
+      this.deleting.set(false);
+    }
   }
 }

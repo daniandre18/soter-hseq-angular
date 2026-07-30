@@ -384,6 +384,29 @@ export class OrdersService {
     await batch.commit();
   }
 
+  /**
+   * Solo permitido en `DRAFT` (misma condición que exige `firestore.rules`
+   * del lado del servidor, no solo aquí). Si la orden viene de una
+   * cotización convertida, la revierte a `APPROVED` y limpia `orderId` en
+   * el mismo batch — de lo contrario la cotización quedaría marcada
+   * `CONVERTED` apuntando a un documento que ya no existe, y
+   * `convertToOrder` la rechazaría para siempre por su chequeo de
+   * `quote.orderId`.
+   */
+  async deleteOrder(order: ServiceOrder, updatedBy: string): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    batch.delete(doc(this.firestore, 'orders', order.id));
+    if (order.quoteId) {
+      batch.update(doc(this.firestore, 'quotes', order.quoteId), {
+        status: 'APPROVED',
+        orderId: null,
+        updatedAt: serverTimestamp(),
+        updatedBy,
+      });
+    }
+    await batch.commit();
+  }
+
   watchNotes(orderId: string): Observable<TechnicalNote[]> {
     return new Observable<TechnicalNote[]>((subscriber) => {
       const notesQuery = query(

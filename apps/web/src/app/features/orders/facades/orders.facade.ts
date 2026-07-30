@@ -217,6 +217,11 @@ export class OrdersFacade {
     await this.service.updateProgress(orderId, progress, note, userId);
   }
 
+  async deleteOrder(order: ServiceOrder): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.deleteOrder(order, userId);
+  }
+
   watchNotes(orderId: string): Observable<TechnicalNote[]> {
     return this.service.watchNotes(orderId);
   }
