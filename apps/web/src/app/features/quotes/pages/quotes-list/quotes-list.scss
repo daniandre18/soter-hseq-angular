@@ -9,10 +9,11 @@
 
 .quotes-filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   flex: 1;
   max-width: 32rem;
-  min-width: 16rem;
+  min-width: 0;
 }
 
 .search-input,
@@ -33,11 +34,13 @@
 }
 
 .search-input {
-  flex: 1;
+  flex: 1 1 12rem;
+  min-width: 0;
 }
 
 .status-select {
   width: 11rem;
+  max-width: 100%;
   flex-shrink: 0;
 }
 

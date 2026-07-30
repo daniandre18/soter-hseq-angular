@@ -31,9 +31,13 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if false; // los usuarios se crean desde Cloud Functions
-      allow update: if isAdmin() && request.resource.data.role == resource.data.role
+      // Un usuario no puede cambiar su propio rol NI su propio estado (p.
+      // ej. reactivarse tras ser desactivado) — antes solo se protegía el
+      // rol, dejando `status` editable por el propio usuario sin querer.
+      allow update: if (isAdmin() && request.resource.data.role == resource.data.role)
                     || (isSignedIn() && request.auth.uid == userId
-                        && request.resource.data.role == resource.data.role);
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.status == resource.data.status);
       allow delete: if false;
     }
 
@@ -100,13 +104,24 @@ service cloud.firestore {
 
     match /closingActs/{actId} {
       allow read: if isSignedIn();
-      allow create, update: if hasRole(['ADMIN', 'COORDINATOR']);
+      // El documento inicial lo crea `generateClosingAct` con el Admin SDK
+      // (ignora estas reglas); `create` de cliente queda para uso futuro,
+      // ya con la misma condición de rol. `FINAL` es inmutable: una vez
+      // cerrada la orden, ni admin ni coordinador pueden reescribir el acta
+      // desde el cliente (CLAUDE.md §23.7) — solo `closeOrder` la marca así.
+      allow create: if hasRole(['ADMIN', 'COORDINATOR']);
+      allow update: if hasRole(['ADMIN', 'COORDINATOR']) && resource.data.status != 'FINAL';
       allow delete: if false;
     }
 
     match /auditEvents/{eventId} {
       allow read: if hasRole(['ADMIN', 'COORDINATOR']);
       allow write: if false; // solo el backend escribe bitácora de auditoría
+    }
+
+    // Denegar por defecto cualquier otra ruta (mismo criterio que storage.rules).
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

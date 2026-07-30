@@ -7,6 +7,21 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    // Las Storage Rules se evalúan aparte de las Firestore Rules: sin este
+    // cruce, cualquier usuario autenticado podía subir archivos directo a
+    // Storage aunque el rol o el estado de la orden ya lo bloquearan del
+    // lado de Firestore (CLAUDE.md §23.5 "bloquear cargas en órdenes
+    // cerradas" no se cumplía realmente si el cliente se saltaba Firestore).
+    function currentRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function canUploadEvidence(orderId) {
+      return isSignedIn()
+             && currentRole() in ['ADMIN', 'COORDINATOR', 'TECHNICIAN']
+             && firestore.get(/databases/(default)/documents/orders/$(orderId)).data.status != 'CLOSED';
+    }
+
     function isValidImage() {
       return request.resource.contentType.matches('^image/(jpeg|png|webp)$')
              && request.resource.size <= 10 * 1024 * 1024;
@@ -19,7 +34,7 @@ service firebase.storage {
 
     match /orders/{orderId}/evidence/{evidenceId}/{fileName} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isValidImage() || isValidPdf());
+      allow write: if canUploadEvidence(orderId) && (isValidImage() || isValidPdf());
     }
 
     match /closing-acts/{actId}/{fileName} {
