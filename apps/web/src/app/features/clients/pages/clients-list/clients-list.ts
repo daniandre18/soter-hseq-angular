@@ -3,15 +3,17 @@ import { ClientsFacade } from '../../facades/clients.facade';
 import { Card } from '../../../../shared/components/card/card';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { ClientFormModal } from '../../components/client-form-modal/client-form-modal';
 import { ClientDetailModal } from '../../components/client-detail-modal/client-detail-modal';
-import type { Client } from '../../models/client.model';
+import { CLIENT_TAG_CONFIG, CLIENT_TAG_KEYS } from '../../models/client.model';
+import type { Client, ClientTagKey } from '../../models/client.model';
 
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 
 @Component({
   selector: 'app-clients-list',
-  imports: [Card, Button, StatusBadge, ClientFormModal, ClientDetailModal],
+  imports: [Card, Button, StatusBadge, Icon, ClientFormModal, ClientDetailModal],
   templateUrl: './clients-list.html',
   styleUrl: './clients-list.scss',
 })
@@ -24,6 +26,10 @@ export class ClientsList {
   protected readonly formOpen = signal(false);
   protected readonly editingClient = signal<Client | null>(null);
   protected readonly detailClient = signal<Client | null>(null);
+  protected readonly openTagPickerId = signal<string | null>(null);
+
+  protected readonly tagConfig = CLIENT_TAG_CONFIG;
+  protected readonly tagKeys = CLIENT_TAG_KEYS;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -80,5 +86,24 @@ export class ClientsList {
 
   protected closeDetail(): void {
     this.detailClient.set(null);
+  }
+
+  protected toggleTagPicker(clientId: string, event: Event): void {
+    event.stopPropagation();
+    this.openTagPickerId.update((current) => (current === clientId ? null : clientId));
+  }
+
+  protected closeTagPicker(event: Event): void {
+    event.stopPropagation();
+    this.openTagPickerId.set(null);
+  }
+
+  protected hasTag(client: Client, tagKey: ClientTagKey): boolean {
+    return client.tags.includes(tagKey);
+  }
+
+  protected async toggleTag(client: Client, tagKey: ClientTagKey, event: Event): Promise<void> {
+    event.stopPropagation();
+    await this.clientsFacade.setTag(client.id, tagKey, !this.hasTag(client, tagKey));
   }
 }

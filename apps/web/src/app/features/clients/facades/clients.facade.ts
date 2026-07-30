@@ -4,7 +4,13 @@ import { Observable } from 'rxjs';
 import { ClientsQuery } from '../state/clients.query';
 import { ClientsService } from '../state/clients.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
-import type { Client, ClientContact, NewClient, NewClientContact } from '../models/client.model';
+import type {
+  Client,
+  ClientContact,
+  ClientTagKey,
+  NewClient,
+  NewClientContact,
+} from '../models/client.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClientsFacade {
@@ -32,6 +38,11 @@ export class ClientsFacade {
   async updateClient(id: string, changes: Partial<NewClient>): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.updateClient(id, changes, userId);
+  }
+
+  async setTag(id: string, tag: ClientTagKey, enabled: boolean): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.setTag(id, tag, enabled, userId);
   }
 
   watchContacts(clientId: string): Observable<ClientContact[]> {

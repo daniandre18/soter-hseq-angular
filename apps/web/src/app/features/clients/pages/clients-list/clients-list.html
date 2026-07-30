@@ -34,31 +34,90 @@
       <p>No hay clientes registrados</p>
     </app-card>
   } @else {
-    <div class="clients-grid">
-      @for (client of filtered(); track client.id) {
-        <app-card [clickable]="true" (cardClick)="openDetail(client)">
-          <div class="client-card-header">
-            <div class="client-icon">🏢</div>
-            <div class="client-card-title">
-              <p class="client-name">{{ client.businessName }}</p>
-              <p class="client-nit">NIT: {{ client.taxId }}</p>
-            </div>
-          </div>
-
-          <div class="client-card-meta">
-            <p>{{ client.city || 'Sin ciudad' }}</p>
-          </div>
-
-          <div class="client-card-footer">
-            <app-status-badge
-              [label]="client.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
-              [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
-            />
-            <button type="button" class="edit-link" (click)="openEdit(client, $event)">Editar</button>
-          </div>
-        </app-card>
-      }
-    </div>
+    <app-card padding="none">
+      <div class="table-scroll">
+        <table class="clients-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Ubicación</th>
+              <th>Etiquetas</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (client of filtered(); track client.id) {
+              <tr
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Ver detalle de ' + client.businessName"
+                (click)="openDetail(client)"
+                (keydown.enter)="openDetail(client)"
+              >
+                <td>
+                  <p class="client-name">{{ client.businessName }}</p>
+                  <p class="client-nit">NIT: {{ client.taxId }}</p>
+                </td>
+                <td>{{ client.city || 'Sin ciudad' }}</td>
+                <td>
+                  <div class="tag-chips">
+                    @for (tagKey of client.tags; track tagKey) {
+                      <span
+                        class="tag-chip"
+                        [style.background]="tagConfig[tagKey].color + '1a'"
+                        [style.color]="tagConfig[tagKey].color"
+                      >
+                        {{ tagConfig[tagKey].label }}
+                      </span>
+                    }
+                    @if (client.tags.length === 0) {
+                      <span class="muted">Sin etiquetas</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <app-status-badge
+                    [label]="client.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
+                    [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
+                  />
+                </td>
+                <td class="actions-cell">
+                  <div class="tag-picker-wrapper">
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      (click)="toggleTagPicker(client.id, $event)"
+                      aria-label="Etiquetar cliente"
+                      title="Etiquetar cliente"
+                    >
+                      <app-icon name="tag" />
+                    </button>
+                    @if (openTagPickerId() === client.id) {
+                      <div class="tag-picker">
+                        @for (tagKey of tagKeys; track tagKey) {
+                          <button type="button" class="tag-option" (click)="toggleTag(client, tagKey, $event)">
+                            <span class="tag-dot" [style.background]="tagConfig[tagKey].color"></span>
+                            <span class="tag-option-label">{{ tagConfig[tagKey].label }}</span>
+                            @if (hasTag(client, tagKey)) {
+                              <app-icon name="circle-check-big" class="tag-check" />
+                            }
+                          </button>
+                        }
+                        <button type="button" class="tag-picker-close" (click)="closeTagPicker($event)">
+                          Cerrar
+                        </button>
+                      </div>
+                    }
+                  </div>
+                  <button type="button" class="edit-link" (click)="openEdit(client, $event)">Editar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card>
   }
 </section>
 

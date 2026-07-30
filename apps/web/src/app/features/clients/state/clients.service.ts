@@ -4,6 +4,8 @@ import {
   Timestamp,
   Unsubscribe,
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   doc,
   onSnapshot,
@@ -13,7 +15,7 @@ import {
 import { Observable } from 'rxjs';
 import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
 import { ClientsStore } from './clients.store';
-import type { Client, ClientContact, NewClient, NewClientContact } from '../models/client.model';
+import type { Client, ClientContact, ClientTagKey, NewClient, NewClientContact } from '../models/client.model';
 
 function toDate(value: Timestamp | undefined): Date {
   return value ? value.toDate() : new Date(0);
@@ -31,6 +33,7 @@ function toClient(id: string, data: DocumentData): Client {
     city: data['city'],
     notes: data['notes'],
     status: data['status'],
+    tags: data['tags'] ?? [],
     createdAt: toDate(data['createdAt']),
     createdBy: data['createdBy'],
     updatedAt: toDate(data['updatedAt']),
@@ -91,6 +94,21 @@ export class ClientsService {
   async updateClient(id: string, changes: Partial<NewClient>, updatedBy: string): Promise<void> {
     await updateDoc(doc(this.firestore, 'clients', id), {
       ...changes,
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+  }
+
+  /**
+   * `arrayUnion`/`arrayRemove` en vez de escribir el arreglo completo: dos
+   * toggles seguidos (p. ej. el usuario clickea dos etiquetas rápido) no
+   * deben pisarse entre sí si el primer `updateDoc` todavía no volvió por
+   * el listener — cada operación es atómica del lado de Firestore, no
+   * depende del estado `tags` que tenga el cliente en el momento del click.
+   */
+  async setTag(id: string, tag: ClientTagKey, enabled: boolean, updatedBy: string): Promise<void> {
+    await updateDoc(doc(this.firestore, 'clients', id), {
+      tags: enabled ? arrayUnion(tag) : arrayRemove(tag),
       updatedAt: serverTimestamp(),
       updatedBy,
     });

@@ -21,7 +21,8 @@ export type IconName =
   | 'globe'
   | 'layout-dashboard'
   | 'log-out'
-  | 'chart-pie';
+  | 'chart-pie'
+  | 'tag';
 
 @Component({
   selector: 'app-icon',
