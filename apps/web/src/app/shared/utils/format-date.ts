@@ -2,6 +2,11 @@ export function formatDate(date: Date): string {
   return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+/** Formato dd/mm/aaaa, para tablas compactas. */
+export function formatDateNumeric(date: Date): string {
+  return date.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
 export function formatDateTime(date: Date): string {
   return date.toLocaleString('es-CO', {
     day: 'numeric',

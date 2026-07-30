@@ -9,4 +9,5 @@ import { Component, input } from '@angular/core';
 export class StatusBadge {
   readonly label = input.required<string>();
   readonly color = input.required<string>();
+  readonly dot = input(false);
 }

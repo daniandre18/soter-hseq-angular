@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { Dashboard } from './dashboard';
 import { OrdersFacade } from '../orders/facades/orders.facade';
 import { ClientsFacade } from '../clients/facades/clients.facade';
@@ -12,6 +13,7 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
+        provideRouter([]),
         {
           provide: OrdersFacade,
           useValue: {

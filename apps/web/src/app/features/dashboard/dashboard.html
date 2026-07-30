@@ -82,19 +82,62 @@
     </div>
   }
 
-  <div class="charts-row">
-    <div class="dashboard-card">
-      <div class="dashboard-card-header">
-        <h2>Órdenes por Estado</h2>
-        <p>{{ ordersFacade.orders().length }} órdenes en total</p>
+  <div class="dashboard-card dashboard-card--flush recent-orders-card">
+    <div class="dashboard-card-header recent-orders-header">
+      <div class="recent-orders-title">
+        <app-icon name="clipboard-list" class="dashboard-card-icon" />
+        <h2>Órdenes de Trabajo Recientes</h2>
       </div>
-      <app-pie-chart
-        [slices]="ordersFacade.statusBreakdown()"
-        unit="órdenes"
-        emptyMessage="Sin órdenes registradas"
-      />
+      <a class="ver-todas-btn" routerLink="/ordenes">Ver todas</a>
     </div>
+    @if (ordersFacade.recentOrders().length === 0) {
+      <p class="dashboard-empty">Sin órdenes recientes</p>
+    } @else {
+      <div class="table-scroll">
+        <table class="recent-orders-table">
+          <thead>
+            <tr>
+              <th>Orden</th>
+              <th>Cliente</th>
+              <th>Servicio</th>
+              <th>Técnico</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of ordersFacade.recentOrders(); track order.id) {
+              <tr [routerLink]="['/ordenes']">
+                <td class="order-number">{{ order.orderNumber }}</td>
+                <td>{{ order.clientBusinessName }}</td>
+                <td>{{ order.serviceSummary }}</td>
+                <td>
+                  @if (primaryTechnicianName(order); as name) {
+                    <div class="technician-cell">
+                      <app-avatar [name]="name" size="sm" />
+                      <span>{{ name }}</span>
+                    </div>
+                  } @else {
+                    <span class="muted">Sin asignar</span>
+                  }
+                </td>
+                <td>
+                  <app-status-badge
+                    [label]="statusLabel(order.status)"
+                    [color]="statusColor(order.status)"
+                    [dot]="true"
+                  />
+                </td>
+                <td class="nowrap">{{ formatDateNumeric(order.createdAt) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 
+  <div class="lists-row">
     <div class="dashboard-card">
       <div class="dashboard-card-header dashboard-card-header--divided">
         <app-icon name="chart-pie" class="dashboard-card-icon" />
@@ -105,32 +148,6 @@
         unit="órdenes"
         emptyMessage="Sin servicios con órdenes"
       />
-    </div>
-  </div>
-
-  <div class="lists-row">
-    <div class="dashboard-card dashboard-card--flush">
-      <div class="dashboard-card-header">
-        <h2>Órdenes Recientes</h2>
-      </div>
-      @if (ordersFacade.recentOrders().length === 0) {
-        <p class="dashboard-empty">Sin órdenes recientes</p>
-      } @else {
-        <div class="list">
-          @for (order of ordersFacade.recentOrders(); track order.id) {
-            <div class="list-row">
-              <div class="list-row-main">
-                <p class="list-row-title">{{ order.serviceSummary || order.orderNumber }}</p>
-                <p class="list-row-subtitle">{{ order.clientBusinessName }} · {{ order.orderNumber }}</p>
-              </div>
-              <div class="list-row-side">
-                <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
-                <app-progress-bar [value]="statusProgress(order.status)" class="list-row-progress" />
-              </div>
-            </div>
-          }
-        </div>
-      }
     </div>
 
     <div class="dashboard-card dashboard-card--flush">
