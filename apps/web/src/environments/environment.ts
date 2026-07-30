@@ -11,5 +11,5 @@ export const environment: AppEnvironment = {
     messagingSenderId: '',
     appId: '',
   },
-  functionsBaseUrl: '',
+  functionsRegion: 'us-central1',
 };

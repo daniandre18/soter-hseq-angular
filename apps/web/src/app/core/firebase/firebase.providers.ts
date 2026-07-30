@@ -3,8 +3,14 @@ import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { environment } from '../../../environments/environment';
-import { FIREBASE_AUTH, FIREBASE_FIRESTORE, FIREBASE_STORAGE } from './firebase.tokens';
+import {
+  FIREBASE_AUTH,
+  FIREBASE_FIRESTORE,
+  FIREBASE_FUNCTIONS,
+  FIREBASE_STORAGE,
+} from './firebase.tokens';
 
 const firebaseApp = initializeApp(environment.firebase);
 
@@ -40,8 +46,21 @@ function createStorage() {
   return storage;
 }
 
+function createFunctions() {
+  const functions = getFunctions(firebaseApp, environment.functionsRegion);
+  if (environment.useEmulators && environment.emulators) {
+    connectFunctionsEmulator(
+      functions,
+      environment.emulators.functionsHost,
+      environment.emulators.functionsPort,
+    );
+  }
+  return functions;
+}
+
 export const firebaseProviders: Provider[] = [
   { provide: FIREBASE_AUTH, useFactory: createAuth },
   { provide: FIREBASE_FIRESTORE, useFactory: createFirestore },
   { provide: FIREBASE_STORAGE, useFactory: createStorage },
+  { provide: FIREBASE_FUNCTIONS, useFactory: createFunctions },
 ];

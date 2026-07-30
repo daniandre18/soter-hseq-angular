@@ -13,6 +13,8 @@ export interface EmulatorConfig {
   firestorePort: number;
   storageHost: string;
   storagePort: number;
+  functionsHost: string;
+  functionsPort: number;
 }
 
 export interface AppEnvironment {
@@ -21,9 +23,8 @@ export interface AppEnvironment {
   firebase: FirebaseWebConfig;
   emulators?: EmulatorConfig;
   /**
-   * Base URL de las Cloud Functions HTTPS (p. ej. generateClosingAct).
-   * Gemini nunca se invoca directamente desde Angular (CLAUDE.md §12.1):
-   * esta URL apunta siempre a un endpoint backend autenticado.
+   * Región de despliegue de las Cloud Functions (debe coincidir con la
+   * región usada en `functions/src/index.ts`).
    */
-  functionsBaseUrl: string;
+  functionsRegion: string;
 }

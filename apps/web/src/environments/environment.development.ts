@@ -19,7 +19,8 @@ export const environment: AppEnvironment = {
     firestorePort: 8080,
     storageHost: '127.0.0.1',
     storagePort: 9199,
+    functionsHost: '127.0.0.1',
+    functionsPort: 5001,
   },
-  // Se actualizará cuando exista el Functions Emulator (Fase 6 — IA y acta).
-  functionsBaseUrl: 'http://127.0.0.1:5001/demo-soter-hseq/us-central1',
+  functionsRegion: 'us-central1',
 };

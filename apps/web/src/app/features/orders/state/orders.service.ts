@@ -1,6 +1,4 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import {
   DocumentData,
   Timestamp,
@@ -10,8 +8,8 @@ import {
   onSnapshot,
   updateDoc,
 } from 'firebase/firestore';
-import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
-import { environment } from '../../../../environments/environment';
+import { httpsCallable } from 'firebase/functions';
+import { FIREBASE_FIRESTORE, FIREBASE_FUNCTIONS } from '../../../core/firebase/firebase.tokens';
 import { OrdersStore } from './orders.store';
 import type { ServiceOrder } from '../models/order.model';
 
@@ -61,7 +59,7 @@ function toServiceOrder(id: string, data: DocumentData): ServiceOrder {
 export class OrdersService {
   private readonly store = inject(OrdersStore);
   private readonly firestore = inject(FIREBASE_FIRESTORE);
-  private readonly http = inject(HttpClient);
+  private readonly functions = inject(FIREBASE_FUNCTIONS);
 
   private unsubscribeFromOrders: Unsubscribe | null = null;
 
@@ -102,17 +100,17 @@ export class OrdersService {
    * aquí, para mantener una única fuente de verdad.
    */
   async generateClosingActDraft(orderId: string, notes: string): Promise<void> {
-    const response = await firstValueFrom(
-      this.http.post<GenerateClosingActResponse>(
-        `${environment.functionsBaseUrl}/generateClosingAct`,
-        { orderId, notes },
-      ),
-    );
+    const generateClosingAct = httpsCallable<
+      { orderId: string; notes: string },
+      GenerateClosingActResponse
+    >(this.functions, 'generateClosingAct');
+
+    const { data } = await generateClosingAct({ orderId, notes });
 
     const orderRef = doc(this.firestore, 'orders', orderId);
     await updateDoc(orderRef, {
       technicalNotes: notes,
-      closingActId: response.closingActId,
+      closingActId: data.closingActId,
       status: 'UNDER_REVIEW',
     });
   }
