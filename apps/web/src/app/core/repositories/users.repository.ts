@@ -1,8 +1,18 @@
 import { Injectable, inject } from '@angular/core';
-import { DocumentData, Timestamp, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import {
+  DocumentData,
+  Timestamp,
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  where,
+} from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import { FIREBASE_FIRESTORE } from '../firebase/firebase.tokens';
 import type { AppUser } from '../models/app-user.model';
+import type { UserRole } from '../models/user-role.model';
 
 function toDate(value: Timestamp | undefined): Date {
   return value ? value.toDate() : new Date(0);
@@ -45,6 +55,20 @@ export class UsersRepository {
         ref,
         (snapshot) => {
           subscriber.next(snapshot.exists() ? toAppUser(snapshot.id, snapshot.data()) : null);
+        },
+        (error) => subscriber.error(error),
+      );
+    });
+  }
+
+  /** Para selectores de asignación (p. ej. técnicos disponibles en Órdenes). */
+  watchByRole(role: UserRole): Observable<AppUser[]> {
+    return new Observable<AppUser[]>((subscriber) => {
+      const usersQuery = query(collection(this.firestore, 'users'), where('role', '==', role));
+      return onSnapshot(
+        usersQuery,
+        (snapshot) => {
+          subscriber.next(snapshot.docs.map((docSnapshot) => toAppUser(docSnapshot.id, docSnapshot.data())));
         },
         (error) => subscriber.error(error),
       );

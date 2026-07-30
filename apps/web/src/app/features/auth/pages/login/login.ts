@@ -32,7 +32,9 @@ export class Login {
     submit(this.loginForm, async () => {
       const success = await this.authFacade.login(this.model().email, this.model().password);
       if (success) {
-        await this.router.navigateByUrl('/dashboard');
+        // La ruta raíz decide el destino real según el rol (homeRedirectGuard):
+        // no todos los roles pueden ver el Panel (p. ej. un técnico).
+        await this.router.navigateByUrl('/');
       }
     });
   }

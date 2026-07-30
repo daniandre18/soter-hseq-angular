@@ -6,16 +6,26 @@ import {
   collection,
   doc,
   onSnapshot,
+  query,
+  serverTimestamp,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { FIREBASE_FIRESTORE, FIREBASE_FUNCTIONS } from '../../../core/firebase/firebase.tokens';
 import { OrdersStore } from './orders.store';
-import type { ServiceOrder } from '../models/order.model';
+import type { OrderStatus, ServiceOrder } from '../models/order.model';
 
 interface GenerateClosingActResponse {
   closingActId: string;
 }
+
+type OrderUpdate = Partial<
+  Pick<
+    ServiceOrder,
+    'scheduledStart' | 'scheduledEnd' | 'assignedTechnicianIds' | 'status' | 'actualStart' | 'actualEnd'
+  >
+>;
 
 function toDate(value: Timestamp | undefined): Date | undefined {
   return value ? value.toDate() : undefined;
@@ -63,16 +73,27 @@ export class OrdersService {
 
   private unsubscribeFromOrders: Unsubscribe | null = null;
 
-  watchOrders(): void {
+  /**
+   * Para un técnico, Firestore Rules exige `resource.data.assignedTechnicianIds`
+   * (CLAUDE.md §13.2), y una consulta de colección sin `where` que coincida
+   * con esa condición se rechaza por completo (no se filtra por documento):
+   * por eso el listener debe acotarse con `array-contains` para ese rol, a
+   * diferencia de ADMIN/COORDINATOR/COMMERCIAL, cuya regla no depende de
+   * `resource.data` y sí admite un listener sin filtro.
+   */
+  watchOrders(technicianUid?: string): void {
     if (this.unsubscribeFromOrders) {
       return;
     }
 
     this.store.setLoading(true);
     const ordersRef = collection(this.firestore, 'orders');
+    const ordersQuery = technicianUid
+      ? query(ordersRef, where('assignedTechnicianIds', 'array-contains', technicianUid))
+      : ordersRef;
 
     this.unsubscribeFromOrders = onSnapshot(
-      ordersRef,
+      ordersQuery,
       (snapshot) => {
         const orders = snapshot.docs.map((docSnapshot) =>
           toServiceOrder(docSnapshot.id, docSnapshot.data()),
@@ -90,6 +111,61 @@ export class OrdersService {
   stopWatchingOrders(): void {
     this.unsubscribeFromOrders?.();
     this.unsubscribeFromOrders = null;
+  }
+
+  /**
+   * Programa la visita. Si la orden todavía está en borrador, programar la
+   * fecha es lo que la hace pasar a `SCHEDULED` (CLAUDE.md §10.2).
+   */
+  async schedule(
+    orderId: string,
+    scheduledStart: Date,
+    scheduledEnd: Date,
+    updatedBy: string,
+  ): Promise<void> {
+    const current = this.store.getValue().entities?.[orderId];
+    const status: OrderStatus | undefined = current?.status === 'DRAFT' ? 'SCHEDULED' : undefined;
+    await this.updateOrder(orderId, { scheduledStart, scheduledEnd, ...(status && { status }) }, updatedBy);
+  }
+
+  /**
+   * Asigna (o reasigna) los técnicos de campo. La primera asignación sobre
+   * una orden programada es lo que la hace pasar a `ASSIGNED`; reasignar una
+   * orden ya asignada no cambia su estado (CLAUDE.md §10.2).
+   */
+  async assignTechnicians(
+    orderId: string,
+    technicianIds: string[],
+    updatedBy: string,
+  ): Promise<void> {
+    const current = this.store.getValue().entities?.[orderId];
+    const status: OrderStatus | undefined =
+      current?.status === 'SCHEDULED' && technicianIds.length > 0 ? 'ASSIGNED' : undefined;
+    await this.updateOrder(
+      orderId,
+      { assignedTechnicianIds: technicianIds, ...(status && { status }) },
+      updatedBy,
+    );
+  }
+
+  /**
+   * Transición genérica de estado (CLAUDE.md §10.2). Al iniciar ejecución se
+   * registra la marca de tiempo real de inicio.
+   */
+  async updateStatus(orderId: string, status: OrderStatus, updatedBy: string): Promise<void> {
+    const changes: OrderUpdate = { status };
+    if (status === 'IN_PROGRESS') {
+      changes.actualStart = new Date();
+    }
+    await this.updateOrder(orderId, changes, updatedBy);
+  }
+
+  private async updateOrder(orderId: string, changes: OrderUpdate, updatedBy: string): Promise<void> {
+    await updateDoc(doc(this.firestore, 'orders', orderId), {
+      ...changes,
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
   }
 
   /**

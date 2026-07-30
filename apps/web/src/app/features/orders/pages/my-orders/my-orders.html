@@ -1,0 +1,63 @@
+<section class="my-orders-page">
+  <div class="kpi-row">
+    <app-stat-card label="Asignadas" [value]="assignedCount()" icon="clipboard-list" color="brand" />
+    <app-stat-card label="En Ejecución" [value]="inProgressCount()" icon="hard-hat" color="orange" />
+    <app-stat-card label="Total" [value]="myOrders().length" icon="clock" color="blue" />
+  </div>
+
+  @if (activeOrders().length > 0) {
+    <div class="orders-section">
+      <h2>Órdenes Activas</h2>
+      <div class="orders-grid">
+        @for (order of activeOrders(); track order.id) {
+          <app-card [clickable]="true" (cardClick)="openDetail(order)">
+            <div class="order-card-header">
+              <div>
+                <p class="order-number">{{ order.orderNumber }}</p>
+                <p class="order-client">{{ order.clientBusinessName }}</p>
+              </div>
+            </div>
+            <p class="order-summary">{{ order.serviceSummary }}</p>
+            <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
+            <div class="order-card-footer">
+              @if (order.scheduledStart) {
+                <span>{{ formatDateTime(order.scheduledStart) }}</span>
+              }
+              @if (order.city) {
+                <span>{{ order.city }}</span>
+              }
+            </div>
+          </app-card>
+        }
+      </div>
+    </div>
+  }
+
+  @if (otherOrders().length > 0) {
+    <div class="orders-section">
+      <h2>Otras</h2>
+      <div class="orders-grid">
+        @for (order of otherOrders(); track order.id) {
+          <app-card [clickable]="true" (cardClick)="openDetail(order)">
+            <div class="order-card-header">
+              <div>
+                <p class="order-number">{{ order.orderNumber }}</p>
+                <p class="order-client">{{ order.clientBusinessName }}</p>
+              </div>
+            </div>
+            <p class="order-summary">{{ order.serviceSummary }}</p>
+            <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
+          </app-card>
+        }
+      </div>
+    </div>
+  }
+
+  @if (myOrders().length === 0) {
+    <app-card class="empty-card">
+      <p>No tienes órdenes asignadas</p>
+    </app-card>
+  }
+</section>
+
+<app-order-detail-modal [order]="liveDetailOrder()" (closeRequested)="closeDetail()" />

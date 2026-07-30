@@ -1,0 +1,84 @@
+<section class="orders-page">
+  <div class="orders-toolbar">
+    <div class="orders-filters">
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Buscar por número o cliente..."
+        aria-label="Buscar órdenes"
+        [value]="search()"
+        (input)="onSearchInput($event)"
+      />
+      <select
+        class="status-select"
+        aria-label="Filtrar por estado"
+        [value]="statusFilter()"
+        (change)="onStatusChange($event)"
+      >
+        <option value="all">Todos los estados</option>
+        @for (entry of statusOptions; track entry[0]) {
+          <option [value]="entry[0]">{{ entry[1].label }}</option>
+        }
+      </select>
+    </div>
+    <span class="orders-summary">{{ filtered().length }} órdenes</span>
+  </div>
+
+  @if (filtered().length === 0) {
+    <app-card class="empty-card">
+      <p>No hay órdenes registradas</p>
+    </app-card>
+  } @else {
+    <app-card padding="none">
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Orden</th>
+              <th>Cliente</th>
+              <th>Técnico(s)</th>
+              <th>Estado</th>
+              <th>Programada</th>
+              <th>Ciudad</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of filtered(); track order.id) {
+              <tr
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Ver detalle de la orden ' + order.orderNumber"
+                (click)="openDetail(order)"
+                (keydown.enter)="openDetail(order)"
+              >
+                <td class="order-number">{{ order.orderNumber }}</td>
+                <td>{{ order.clientBusinessName }}</td>
+                <td>
+                  @if (technicianNames(order).length > 0) {
+                    <div class="technician-cell">
+                      @for (name of technicianNames(order); track name) {
+                        <app-avatar [name]="name" size="sm" />
+                      }
+                      <span>{{ technicianNames(order).join(', ') }}</span>
+                    </div>
+                  } @else {
+                    <span class="muted">Sin asignar</span>
+                  }
+                </td>
+                <td>
+                  <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
+                </td>
+                <td class="nowrap">
+                  {{ order.scheduledStart ? formatDateTime(order.scheduledStart) : '—' }}
+                </td>
+                <td>{{ order.city || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  }
+</section>
+
+<app-order-detail-modal [order]="liveDetailOrder()" (closeRequested)="closeDetail()" />

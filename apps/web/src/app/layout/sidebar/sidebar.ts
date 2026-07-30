@@ -33,6 +33,18 @@ const NAV_ITEMS: NavItem[] = [
     icon: 'file-text',
     roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
   },
+  {
+    path: '/ordenes',
+    label: 'Órdenes',
+    icon: 'clipboard-list',
+    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+  },
+  {
+    path: '/mis-ordenes',
+    label: 'Mis Órdenes',
+    icon: 'hard-hat',
+    roles: ['TECHNICIAN'],
+  },
 ];
 
 @Component({

@@ -1,0 +1,126 @@
+@if (order(); as o) {
+  <app-modal [open]="true" [title]="o.orderNumber" size="lg" (closeRequested)="close()">
+    <div class="detail-sections">
+      <div class="detail-header">
+        <div>
+          <p class="client-name">{{ o.clientBusinessName }}</p>
+          @if (o.city) {
+            <p class="valid-until">{{ o.serviceAddress }} · {{ o.city }}</p>
+          }
+        </div>
+        <div class="header-actions">
+          <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+          @if (canExecute()) {
+            <app-button size="sm" (click)="startExecution()" [disabled]="saving()">
+              {{ saving() ? 'Iniciando…' : 'Iniciar Ejecución' }}
+            </app-button>
+          }
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div>
+          <p class="info-label">Servicio</p>
+          <p class="info-value">{{ o.serviceSummary }}</p>
+        </div>
+        <div>
+          <p class="info-label">Técnicos asignados</p>
+          @if (assignedTechnicianNames().length > 0) {
+            <div class="technician-chips">
+              @for (name of assignedTechnicianNames(); track name) {
+                <span class="technician-chip">
+                  <app-avatar [name]="name" size="sm" />
+                  {{ name }}
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="info-value info-value--muted">Sin asignar</p>
+          }
+        </div>
+        @if (o.scheduledStart) {
+          <div>
+            <p class="info-label">Visita programada</p>
+            <p class="info-value">
+              {{ formatDateTime(o.scheduledStart) }}
+              @if (o.scheduledEnd) {
+                — {{ formatDateTime(o.scheduledEnd) }}
+              }
+            </p>
+          </div>
+        }
+        @if (o.actualStart) {
+          <div>
+            <p class="info-label">Inicio real</p>
+            <p class="info-value">{{ formatDateTime(o.actualStart) }}</p>
+          </div>
+        }
+      </div>
+
+      @if (canSchedule()) {
+        <div class="action-section">
+          <h4>Programar visita</h4>
+          <div class="schedule-fields">
+            <label class="field">
+              Inicio
+              <input
+                type="datetime-local"
+                [value]="scheduledStartValue()"
+                (input)="onScheduledStartInput($event)"
+              />
+            </label>
+            <label class="field">
+              Fin
+              <input
+                type="datetime-local"
+                [value]="scheduledEndValue()"
+                (input)="onScheduledEndInput($event)"
+              />
+            </label>
+            <app-button
+              size="sm"
+              (click)="saveSchedule()"
+              [disabled]="saving() || !scheduledStartValue() || !scheduledEndValue()"
+            >
+              {{ saving() ? 'Guardando…' : 'Programar' }}
+            </app-button>
+          </div>
+        </div>
+      }
+
+      @if (canAssign()) {
+        <div class="action-section">
+          <h4>Asignar técnicos</h4>
+          @if (technicians().length === 0) {
+            <p class="info-value info-value--muted">No hay técnicos registrados.</p>
+          } @else {
+            <div class="technician-options">
+              @for (technician of technicians(); track technician.id) {
+                <label class="technician-option">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedTechnicianIds().includes(technician.id)"
+                    (change)="toggleTechnician(technician.id, $any($event.target).checked)"
+                  />
+                  <app-avatar [name]="technician.displayName" size="sm" />
+                  {{ technician.displayName }}
+                </label>
+              }
+            </div>
+            <app-button size="sm" (click)="saveAssignment()" [disabled]="saving()">
+              {{ saving() ? 'Guardando…' : 'Asignar' }}
+            </app-button>
+          }
+        </div>
+      }
+    </div>
+
+    <div modalFooter>
+      @if (canCancel()) {
+        <app-button variant="danger" (click)="cancelOrder()" [disabled]="saving()">
+          Cancelar Orden
+        </app-button>
+      }
+    </div>
+  </app-modal>
+}

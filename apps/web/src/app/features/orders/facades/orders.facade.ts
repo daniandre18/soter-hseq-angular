@@ -2,8 +2,10 @@ import { Injectable, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { OrdersQuery } from '../state/orders.query';
 import { OrdersService } from '../state/orders.service';
+import { AuthFacade } from '../../auth/facades/auth.facade';
+import { UsersRepository } from '../../../core/repositories/users.repository';
 import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
-import type { ServiceOrder } from '../models/order.model';
+import type { OrderStatus, ServiceOrder } from '../models/order.model';
 import type { PieSlice } from '../../../shared/components/pie-chart/pie-chart';
 import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
@@ -39,10 +41,17 @@ function startOfToday(): Date {
 export class OrdersFacade {
   private readonly query = inject(OrdersQuery);
   private readonly service = inject(OrdersService);
+  private readonly authFacade = inject(AuthFacade);
+  private readonly usersRepository = inject(UsersRepository);
 
   readonly orders = toSignal(this.query.orders$, { initialValue: [] });
   readonly loading = toSignal(this.query.loading$, { initialValue: false });
   readonly error = toSignal(this.query.error$, { initialValue: null });
+
+  /** Técnicos disponibles para asignación (CLAUDE.md §23.4). */
+  readonly technicians = toSignal(this.usersRepository.watchByRole('TECHNICIAN'), {
+    initialValue: [],
+  });
 
   readonly assignedCount = computed(
     () => this.orders().filter((order) => order.status === 'ASSIGNED').length,
@@ -144,7 +153,31 @@ export class OrdersFacade {
   });
 
   init(): void {
-    this.service.watchOrders();
+    const user = this.authFacade.currentUser();
+    this.service.watchOrders(user?.role === 'TECHNICIAN' ? user.id : undefined);
+  }
+
+  byId(id: string): ServiceOrder | undefined {
+    return this.orders().find((order) => order.id === id);
+  }
+
+  technicianName(id: string): string {
+    return this.technicians().find((technician) => technician.id === id)?.displayName ?? 'Técnico';
+  }
+
+  async schedule(orderId: string, scheduledStart: Date, scheduledEnd: Date): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.schedule(orderId, scheduledStart, scheduledEnd, userId);
+  }
+
+  async assignTechnicians(orderId: string, technicianIds: string[]): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.assignTechnicians(orderId, technicianIds, userId);
+  }
+
+  async updateStatus(orderId: string, status: OrderStatus): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.updateStatus(orderId, status, userId);
   }
 
   async generateClosingActDraft(orderId: string, notes: string): Promise<void> {
