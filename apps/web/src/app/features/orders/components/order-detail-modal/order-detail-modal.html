@@ -22,7 +22,7 @@
               [disabled]="saving() || !!sendToReviewBlockedReason()"
               [title]="sendToReviewBlockedReason() ?? ''"
             >
-              {{ saving() ? 'Enviando…' : 'Enviar a Revisión' }}
+              {{ saving() ? 'Enviando…' : sendToReviewLabel() }}
             </app-button>
           }
         </div>
@@ -198,6 +198,28 @@
                     [disabled]="addingNote() || !newNoteContent().trim()"
                   >
                     {{ addingNote() ? 'Guardando…' : 'Agregar' }}
+                  </app-button>
+                </div>
+              </div>
+            }
+
+            @if (canRequestCorrection()) {
+              <div class="action-section">
+                <h4>Solicitar corrección</h4>
+                <div class="note-form">
+                  <textarea
+                    rows="2"
+                    placeholder="Explica qué falta corregir antes de aprobar..."
+                    [value]="correctionReason()"
+                    (input)="correctionReason.set($any($event.target).value)"
+                  ></textarea>
+                  <app-button
+                    variant="danger"
+                    size="sm"
+                    (click)="requestCorrectionSubmit()"
+                    [disabled]="requestingCorrection() || !correctionReason().trim()"
+                  >
+                    {{ requestingCorrection() ? 'Enviando…' : 'Solicitar Corrección' }}
                   </app-button>
                 </div>
               </div>

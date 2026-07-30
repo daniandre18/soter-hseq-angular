@@ -269,6 +269,29 @@ export class OrdersService {
     });
   }
 
+  /**
+   * El coordinador devuelve la orden a campo (CLAUDE.md §3.3 "solicitar
+   * correcciones", §10.2 UNDER_REVIEW→CORRECTION_REQUIRED). El motivo queda
+   * como una nota más en la bitácora, para que el técnico lo vea en el
+   * mismo lugar que el resto de las notas.
+   */
+  async requestCorrection(orderId: string, reason: string, updatedBy: string): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    const noteRef = doc(collection(this.firestore, 'orders', orderId, 'notes'));
+    batch.set(noteRef, {
+      content: `Corrección solicitada: ${reason}`,
+      noteType: 'GENERAL',
+      createdAt: serverTimestamp(),
+      createdBy: updatedBy,
+    });
+    batch.update(doc(this.firestore, 'orders', orderId), {
+      status: 'CORRECTION_REQUIRED',
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+    await batch.commit();
+  }
+
   watchNotes(orderId: string): Observable<TechnicalNote[]> {
     return new Observable<TechnicalNote[]>((subscriber) => {
       const notesQuery = query(

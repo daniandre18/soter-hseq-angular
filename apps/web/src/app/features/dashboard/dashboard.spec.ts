@@ -24,6 +24,8 @@ describe('Dashboard', () => {
             closedCount: signal(0),
             openCount: signal(0),
             overdueCount: signal(0),
+            overdueOrders: signal([]),
+            correctionRequiredOrders: signal([]),
             pendingCount: signal(0),
             todayVisitsCount: signal(0),
             techniciansInFieldCount: signal(0),

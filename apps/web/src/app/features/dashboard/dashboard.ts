@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { OrdersFacade } from '../orders/facades/orders.facade';
 import { ClientsFacade } from '../clients/facades/clients.facade';
 import { ORDER_STATUS_CONFIG } from '../orders/models/order-status-config';
@@ -8,10 +9,11 @@ import { PieChart } from '../../shared/components/pie-chart/pie-chart';
 import { BarList } from '../../shared/components/bar-list/bar-list';
 import { StatusBadge } from '../../shared/components/status-badge/status-badge';
 import { ProgressBar } from '../../shared/components/progress-bar/progress-bar';
+import { Icon } from '../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [StatCard, PieChart, BarList, StatusBadge, ProgressBar],
+  imports: [StatCard, PieChart, BarList, StatusBadge, ProgressBar, Icon, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

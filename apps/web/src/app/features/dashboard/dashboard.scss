@@ -116,6 +116,28 @@
   }
 }
 
+.alerts-card {
+  margin-bottom: 1.5rem;
+}
+
+.alert-row {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.alert-icon {
+  flex-shrink: 0;
+
+  &--red {
+    color: var(--color-red-600);
+  }
+
+  &--orange {
+    color: var(--color-orange-600, var(--color-red-600));
+  }
+}
+
 .list-row-side {
   display: flex;
   flex-direction: column;

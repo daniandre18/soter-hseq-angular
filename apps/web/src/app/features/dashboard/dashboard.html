@@ -54,6 +54,34 @@
     <p class="dashboard-error">{{ ordersFacade.error() }}</p>
   }
 
+  @if (ordersFacade.overdueOrders().length > 0 || ordersFacade.correctionRequiredOrders().length > 0) {
+    <div class="dashboard-card dashboard-card--flush alerts-card">
+      <div class="dashboard-card-header">
+        <h2>Alertas Operativas</h2>
+      </div>
+      <div class="list">
+        @for (order of ordersFacade.overdueOrders(); track order.id) {
+          <a class="list-row alert-row" [routerLink]="['/ordenes']">
+            <app-icon name="triangle-alert" class="alert-icon alert-icon--red" />
+            <div class="list-row-main">
+              <p class="list-row-title">{{ order.orderNumber }} vencida</p>
+              <p class="list-row-subtitle">{{ order.clientBusinessName }}</p>
+            </div>
+          </a>
+        }
+        @for (order of ordersFacade.correctionRequiredOrders(); track order.id) {
+          <a class="list-row alert-row" [routerLink]="['/ordenes']">
+            <app-icon name="triangle-alert" class="alert-icon alert-icon--orange" />
+            <div class="list-row-main">
+              <p class="list-row-title">{{ order.orderNumber }} requiere corrección</p>
+              <p class="list-row-subtitle">{{ order.clientBusinessName }}</p>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+  }
+
   <div class="charts-row">
     <div class="dashboard-card">
       <div class="dashboard-card-header">

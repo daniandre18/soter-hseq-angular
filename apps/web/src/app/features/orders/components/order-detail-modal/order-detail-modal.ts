@@ -140,6 +140,8 @@ export class OrderDetailModal {
     );
   });
 
+  /** Cubre tanto el primer envío (IN_PROGRESS) como el reenvío tras una
+   *  corrección (CORRECTION_REQUIRED) — misma transición hacia UNDER_REVIEW. */
   protected readonly canSendToReview = computed(() => {
     const order = this.order();
     const uid = this.authFacade.currentUser()?.id;
@@ -148,9 +150,19 @@ export class OrderDetailModal {
       this.authFacade.currentRole() === 'TECHNICIAN' &&
       !!uid &&
       order.assignedTechnicianIds.includes(uid) &&
-      order.status === 'IN_PROGRESS'
+      (order.status === 'IN_PROGRESS' || order.status === 'CORRECTION_REQUIRED')
     );
   });
+
+  protected readonly sendToReviewLabel = computed(() =>
+    this.order()?.status === 'CORRECTION_REQUIRED' ? 'Reenviar a Revisión' : 'Enviar a Revisión',
+  );
+
+  /** Coordinador/admin devuelven la orden a campo (CLAUDE.md §3.3 "solicitar
+   *  correcciones"). */
+  protected readonly canRequestCorrection = computed(
+    () => this.canManage() && this.order()?.status === 'UNDER_REVIEW',
+  );
 
   /** Explica por qué "Enviar a Revisión" está deshabilitado (CLAUDE.md §10.2:
    *  no enviar a revisión sin notas ni sin evidencia mínima). `null` = listo. */
@@ -200,6 +212,9 @@ export class OrderDetailModal {
   );
   protected readonly actConclusions = linkedSignal(() => this.closingAct()?.conclusions ?? '');
   protected readonly actLimitations = linkedSignal(() => this.closingAct()?.limitations ?? '');
+
+  protected readonly correctionReason = signal('');
+  protected readonly requestingCorrection = signal(false);
 
   protected readonly newNoteType = signal<NoteType>('GENERAL');
   protected readonly newNoteContent = signal('');
@@ -311,6 +326,21 @@ export class OrderDetailModal {
       this.close();
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  protected async requestCorrectionSubmit(): Promise<void> {
+    const order = this.order();
+    const reason = this.correctionReason().trim();
+    if (!order || !reason) {
+      return;
+    }
+    this.requestingCorrection.set(true);
+    try {
+      await this.ordersFacade.requestCorrection(order.id, reason);
+      this.correctionReason.set('');
+    } finally {
+      this.requestingCorrection.set(false);
     }
   }
 

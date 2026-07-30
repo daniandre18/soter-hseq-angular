@@ -79,8 +79,9 @@ export class OrdersFacade {
     () => this.orders().filter((order) => order.status === 'DRAFT').length,
   );
 
-  /** Programadas para hoy con fecha de fin vencida y sin cerrar/cancelar. */
-  readonly overdueCount = computed(() => {
+  /** Programadas con fecha de fin vencida y sin cerrar/cancelar — la base de
+   *  la alerta operativa "Vencidas" del panel del dashboard. */
+  readonly overdueOrders = computed(() => {
     const now = new Date();
     return this.orders().filter(
       (order) =>
@@ -88,8 +89,15 @@ export class OrdersFacade {
         order.scheduledEnd < now &&
         order.status !== 'CLOSED' &&
         order.status !== 'CANCELLED',
-    ).length;
+    );
   });
+
+  readonly overdueCount = computed(() => this.overdueOrders().length);
+
+  /** Órdenes que el coordinador devolvió a campo — la otra alerta operativa. */
+  readonly correctionRequiredOrders = computed(() =>
+    this.orders().filter((order) => order.status === 'CORRECTION_REQUIRED'),
+  );
 
   readonly todayVisitsCount = computed(() => {
     const today = new Date();
@@ -182,6 +190,11 @@ export class OrdersFacade {
   async updateStatus(orderId: string, status: OrderStatus): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.updateStatus(orderId, status, userId);
+  }
+
+  async requestCorrection(orderId: string, reason: string): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.requestCorrection(orderId, reason, userId);
   }
 
   watchNotes(orderId: string): Observable<TechnicalNote[]> {
