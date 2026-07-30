@@ -19,6 +19,7 @@
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
     "@datorama/akita": "^8.0.1",
+    "@fontsource/poppins": "^5.3.0",
     "firebase": "^12.16.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
