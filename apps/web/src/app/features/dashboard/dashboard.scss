@@ -18,11 +18,10 @@
   margin-bottom: 1.5rem;
 }
 
-.lists-row {
+.dashboard-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
 
   @media (min-width: 1280px) {
     grid-template-columns: 1fr 1fr;
@@ -97,10 +96,24 @@
   gap: 0.75rem;
   padding: 0.75rem 1.5rem;
   border-top: 1px solid var(--color-gray-100);
+  text-decoration: none;
+  color: inherit;
   transition: background-color 150ms;
 
   &:hover {
     background: var(--color-gray-50);
+  }
+}
+
+.list-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.375rem;
+  flex-shrink: 0;
+
+  .list-row-progress {
+    width: 5rem;
   }
 }
 
@@ -175,95 +188,3 @@
   }
 }
 
-.recent-orders-card,
-.status-pie-card {
-  margin-bottom: 1.5rem;
-}
-
-.recent-orders-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.recent-orders-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.ver-todas-btn {
-  padding: 0.375rem 0.875rem;
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-md);
-  color: var(--color-gray-700);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color 150ms;
-
-  &:hover {
-    background: var(--color-gray-50);
-  }
-}
-
-.table-scroll {
-  overflow-x: auto;
-}
-
-.recent-orders-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-
-  th {
-    padding: 0.75rem 1.5rem;
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    color: var(--color-gray-500);
-    background: var(--color-gray-50);
-    border-top: 1px solid var(--color-gray-100);
-    border-bottom: 1px solid var(--color-gray-100);
-  }
-
-  td {
-    padding: 0.75rem 1.5rem;
-    border-top: 1px solid var(--color-gray-100);
-    color: var(--color-gray-700);
-  }
-
-  tbody tr {
-    cursor: pointer;
-    transition: background-color 150ms;
-
-    &:hover {
-      background: var(--color-gray-50);
-    }
-  }
-
-  .order-number {
-    font-weight: 600;
-    color: var(--color-gray-900);
-  }
-
-  .nowrap {
-    white-space: nowrap;
-    color: var(--color-gray-400);
-  }
-
-  .muted {
-    font-size: 0.8125rem;
-    font-style: italic;
-    color: var(--color-gray-300);
-  }
-}
-
-.technician-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
