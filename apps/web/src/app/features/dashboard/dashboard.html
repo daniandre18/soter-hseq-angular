@@ -118,12 +118,12 @@
           @for (order of ordersFacade.recentOrders(); track order.id) {
             <a class="list-row" [routerLink]="['/ordenes']">
               <div class="list-row-main">
-                <p class="list-row-title">{{ order.serviceSummary || order.orderNumber }}</p>
+                <p class="list-row-title">{{ order.title || order.serviceSummary || order.orderNumber }}</p>
                 <p class="list-row-subtitle">{{ order.clientBusinessName }} · {{ order.orderNumber }}</p>
               </div>
               <div class="list-row-side">
                 <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
-                <app-progress-bar [value]="statusProgress(order.status)" class="list-row-progress" />
+                <app-progress-bar [value]="statusProgress(order)" class="list-row-progress" />
               </div>
             </a>
           }

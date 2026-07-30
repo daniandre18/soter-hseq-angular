@@ -22,6 +22,9 @@
       </select>
     </div>
     <span class="orders-summary">{{ filtered().length }} órdenes</span>
+    @if (canManage()) {
+      <app-button class="new-order-btn" (click)="openCreate()">+ Nueva Orden</app-button>
+    }
   </div>
 
   @if (filtered().length === 0) {
@@ -34,12 +37,14 @@
         <table class="orders-table">
           <thead>
             <tr>
-              <th>Orden</th>
+              <th>Código</th>
+              <th>Título</th>
               <th>Cliente</th>
-              <th>Técnico(s)</th>
+              <th>Técnico</th>
               <th>Estado</th>
-              <th>Programada</th>
-              <th>Ciudad</th>
+              <th>Prioridad</th>
+              <th>Avance</th>
+              <th>Vence</th>
             </tr>
           </thead>
           <tbody>
@@ -52,6 +57,7 @@
                 (keydown.enter)="openDetail(order)"
               >
                 <td class="order-number">{{ order.orderNumber }}</td>
+                <td class="order-title">{{ order.title || order.serviceSummary }}</td>
                 <td>{{ order.clientBusinessName }}</td>
                 <td>
                   @if (technicianNames(order).length > 0) {
@@ -68,10 +74,18 @@
                 <td>
                   <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
                 </td>
-                <td class="nowrap">
-                  {{ order.scheduledStart ? formatDateTime(order.scheduledStart) : '—' }}
+                <td>
+                  <app-status-badge [label]="priorityLabel(order.priority)" [color]="priorityColor(order.priority)" />
                 </td>
-                <td>{{ order.city || '—' }}</td>
+                <td>
+                  <div class="progress-cell">
+                    <app-progress-bar [value]="order.progress" class="progress-cell-bar" />
+                    <span class="progress-cell-value">{{ order.progress }}%</span>
+                  </div>
+                </td>
+                <td class="nowrap">
+                  {{ order.dueDate ? formatDateNumeric(order.dueDate) : '—' }}
+                </td>
               </tr>
             }
           </tbody>
@@ -81,4 +95,9 @@
   }
 </section>
 
-<app-order-detail-modal [order]="liveDetailOrder()" (closeRequested)="closeDetail()" />
+<app-order-detail-modal
+  [order]="liveDetailOrder()"
+  (closeRequested)="closeDetail()"
+  (editRequested)="openEdit($event)"
+/>
+<app-order-form-modal [open]="formOpen()" [editingOrder]="editingOrder()" (closeRequested)="closeForm()" />

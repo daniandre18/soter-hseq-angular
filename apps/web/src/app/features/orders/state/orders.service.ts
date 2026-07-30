@@ -7,11 +7,13 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDocs,
   increment,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
   writeBatch,
@@ -29,7 +31,13 @@ import {
   FIREBASE_STORAGE,
 } from '../../../core/firebase/firebase.tokens';
 import { OrdersStore } from './orders.store';
-import type { OrderStatus, ServiceOrder } from '../models/order.model';
+import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
+import type {
+  NewOrderData,
+  OrderDetailsUpdate,
+  OrderStatus,
+  ServiceOrder,
+} from '../models/order.model';
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory, EvidenceType } from '../models/evidence.model';
 import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
@@ -129,6 +137,7 @@ function toDate(value: Timestamp | undefined): Date | undefined {
 }
 
 function toServiceOrder(id: string, data: DocumentData): ServiceOrder {
+  const status: OrderStatus = data['status'];
   return {
     id,
     orderNumber: data['orderNumber'],
@@ -137,6 +146,15 @@ function toServiceOrder(id: string, data: DocumentData): ServiceOrder {
     clientBusinessName: data['clientBusinessName'],
     assignedTechnicianIds: data['assignedTechnicianIds'] ?? [],
     coordinatorId: data['coordinatorId'],
+    // `title`/`priority`/`progress` no existían antes de agregar la creación
+    // manual de órdenes: los documentos previos (venidos de una cotización)
+    // no los tienen, así que se cubren con un valor por defecto razonable
+    // en vez de quedar `undefined` en la UI.
+    title: data['title'] ?? data['serviceSummary'] ?? '',
+    priority: data['priority'] ?? 'MEDIUM',
+    dueDate: toDate(data['dueDate']),
+    description: data['description'] ?? undefined,
+    progress: data['progress'] ?? ORDER_STATUS_CONFIG[status]?.progress ?? 0,
     scheduledStart: toDate(data['scheduledStart']),
     scheduledEnd: toDate(data['scheduledEnd']),
     actualStart: toDate(data['actualStart']),
@@ -289,6 +307,80 @@ export class OrdersService {
       updatedAt: serverTimestamp(),
       updatedBy,
     });
+    await batch.commit();
+  }
+
+  /**
+   * Crea una orden manualmente, sin pasar por una cotización (a diferencia
+   * de `QuotesService.convertToOrder`). El consecutivo usa el mismo esquema
+   * `OT-XXXX` y la misma limitación de carrera aceptada para el MVP (conteo
+   * de colección fuera de una transacción).
+   */
+  async createOrder(data: NewOrderData, createdBy: string): Promise<string> {
+    const ordersCollection = collection(this.firestore, 'orders');
+    const ordersSnapshot = await getDocs(ordersCollection);
+    const orderNumber = `OT-${(ordersSnapshot.size + 1).toString().padStart(4, '0')}`;
+
+    const assignedTechnicianIds = data.technicianId ? [data.technicianId] : [];
+    const status: OrderStatus = assignedTechnicianIds.length > 0 ? 'ASSIGNED' : 'DRAFT';
+
+    const orderRef = doc(ordersCollection);
+    await setDoc(orderRef, {
+      orderNumber,
+      clientId: data.clientId,
+      clientBusinessName: data.clientBusinessName,
+      assignedTechnicianIds,
+      title: data.title,
+      serviceSummary: data.serviceSummary,
+      priority: data.priority,
+      dueDate: data.dueDate,
+      description: data.description,
+      progress: 0,
+      status,
+      evidenceCount: 0,
+      createdAt: serverTimestamp(),
+      createdBy,
+      updatedAt: serverTimestamp(),
+      updatedBy: createdBy,
+    });
+
+    return orderRef.id;
+  }
+
+  /** Edita los campos "de cabecera" de la orden (CLAUDE.md no cubre esto
+   *  explícitamente; técnicos/programación siguen teniendo sus propios flujos
+   *  dedicados en `schedule`/`assignTechnicians`, no se tocan aquí). */
+  async updateOrderDetails(orderId: string, changes: OrderDetailsUpdate, updatedBy: string): Promise<void> {
+    await updateDoc(doc(this.firestore, 'orders', orderId), {
+      ...changes,
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+  }
+
+  /** Avance manual (0-100), editable en cualquier estado no cerrado; una
+   *  nota opcional queda en la bitácora para dar contexto del cambio. */
+  async updateProgress(
+    orderId: string,
+    progress: number,
+    note: string | undefined,
+    updatedBy: string,
+  ): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    batch.update(doc(this.firestore, 'orders', orderId), {
+      progress,
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+    if (note) {
+      const noteRef = doc(collection(this.firestore, 'orders', orderId, 'notes'));
+      batch.set(noteRef, {
+        content: `Avance actualizado a ${progress}%: ${note}`,
+        noteType: 'GENERAL',
+        createdAt: serverTimestamp(),
+        createdBy: updatedBy,
+      });
+    }
     await batch.commit();
   }
 

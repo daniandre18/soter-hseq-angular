@@ -50,6 +50,10 @@
   white-space: nowrap;
 }
 
+.new-order-btn {
+  margin-left: auto;
+}
+
 .empty-card {
   text-align: center;
   padding: 3rem 1.5rem;
@@ -110,6 +114,32 @@
     font-size: 0.8125rem;
     font-style: italic;
     color: var(--color-gray-300);
+  }
+
+  .order-title {
+    max-width: 14rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    color: var(--color-gray-900);
+  }
+}
+
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 6rem;
+
+  &-bar {
+    flex: 1;
+  }
+
+  &-value {
+    font-size: 0.75rem;
+    color: var(--color-gray-500);
+    white-space: nowrap;
   }
 }
 

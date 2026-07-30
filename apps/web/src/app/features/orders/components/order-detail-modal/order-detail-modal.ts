@@ -6,9 +6,11 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
+import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
 import { NOTE_TYPE_LABELS, type NoteType } from '../../models/note.model';
 import {
   ACCEPTED_IMAGE_TYPES,
@@ -23,13 +25,29 @@ import {
   fromDateTimeLocalValue,
   toDateTimeLocalValue,
 } from '../../../../shared/utils/format-date';
-import type { ServiceOrder } from '../../models/order.model';
+import type { OrderStatus, ServiceOrder } from '../../models/order.model';
 import type { ClosingActContent } from '../../models/closing-act.model';
 
 const SCHEDULABLE_STATUSES = new Set<ServiceOrder['status']>(['DRAFT', 'SCHEDULED']);
 const ASSIGNABLE_STATUSES = new Set<ServiceOrder['status']>(['SCHEDULED', 'ASSIGNED']);
 const CANCELLABLE_STATUSES = new Set<ServiceOrder['status']>(['DRAFT', 'SCHEDULED', 'ASSIGNED']);
 const MIN_EVIDENCE_COUNT_FOR_REVIEW = 1;
+/**
+ * Estados que un cambio manual libre puede fijar. `APPROVED`/`CLOSED` quedan
+ * afuera a propósito: solo se alcanzan a través del flujo de acta
+ * (`approveClosingAct`/`closeOrderWithPdf`), que deja auditoría y genera el
+ * PDF — permitirlos aquí saltaría ese flujo sin dejar rastro.
+ */
+const FREELY_SETTABLE_STATUSES: OrderStatus[] = [
+  'DRAFT',
+  'SCHEDULED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'EVIDENCE_PENDING',
+  'UNDER_REVIEW',
+  'CORRECTION_REQUIRED',
+  'CANCELLED',
+];
 type DetailTab = 'info' | 'log' | 'evidence' | 'acta';
 
 function linesToArray(text: string): string[] {
@@ -45,7 +63,7 @@ function messageFor(error: unknown, fallback: string): string {
 
 @Component({
   selector: 'app-order-detail-modal',
-  imports: [Modal, Button, StatusBadge, Avatar, KeyValuePipe],
+  imports: [Modal, Button, StatusBadge, Avatar, ProgressBar, KeyValuePipe],
   templateUrl: './order-detail-modal.html',
   styleUrl: './order-detail-modal.scss',
 })
@@ -55,6 +73,7 @@ export class OrderDetailModal {
 
   readonly order = input<ServiceOrder | null>(null);
   readonly closeRequested = output<void>();
+  readonly editRequested = output<ServiceOrder>();
 
   protected readonly saving = signal(false);
   protected readonly formatDateTime = formatDateTime;
@@ -95,9 +114,28 @@ export class OrderDetailModal {
     return order ? ORDER_STATUS_CONFIG[order.status].color : 'gray';
   });
 
+  protected readonly priorityLabel = computed(() => {
+    const order = this.order();
+    return order ? ORDER_PRIORITY_CONFIG[order.priority].label : '';
+  });
+
+  protected readonly priorityColor = computed(() => {
+    const order = this.order();
+    return order ? ORDER_PRIORITY_CONFIG[order.priority].color : 'gray';
+  });
+
   private readonly canManage = computed(() => {
     const role = this.authFacade.currentRole();
     return role === 'ADMIN' || role === 'COORDINATOR';
+  });
+
+  /** Igual que "Cancelar Orden": una orden cerrada/cancelada es de solo
+   *  lectura salvo administración auditada aparte (CLAUDE.md §10.2). */
+  protected readonly canEditOrder = computed(() => {
+    const order = this.order();
+    return (
+      this.canManage() && !!order && order.status !== 'CLOSED' && order.status !== 'CANCELLED'
+    );
   });
 
   protected readonly canSchedule = computed(
@@ -111,6 +149,17 @@ export class OrderDetailModal {
   protected readonly canCancel = computed(
     () => this.canManage() && !!this.order() && CANCELLABLE_STATUSES.has(this.order()!.status),
   );
+
+  /** Control genérico de cambio de estado (independiente de los botones de
+   *  transición guiada de arriba) — para que admin/coordinador puedan
+   *  corregir un estado sin encajar en un flujo específico. */
+  protected readonly canChangeStatusFreely = computed(() => {
+    const order = this.order();
+    return this.canManage() && !!order && order.status !== 'CLOSED';
+  });
+
+  protected readonly freelySettableStatuses = FREELY_SETTABLE_STATUSES;
+  protected readonly statusOptionLabel = (status: OrderStatus) => ORDER_STATUS_CONFIG[status].label;
 
   protected readonly canExecute = computed(() => {
     const order = this.order();
@@ -216,6 +265,12 @@ export class OrderDetailModal {
   protected readonly correctionReason = signal('');
   protected readonly requestingCorrection = signal(false);
 
+  protected readonly statusChangeOpen = signal(false);
+  protected readonly statusChangeTarget = linkedSignal<OrderStatus>(
+    () => this.order()?.status ?? 'DRAFT',
+  );
+  protected readonly changingStatus = signal(false);
+
   protected readonly newNoteType = signal<NoteType>('GENERAL');
   protected readonly newNoteContent = signal('');
   protected readonly addingNote = signal(false);
@@ -241,8 +296,59 @@ export class OrderDetailModal {
     () => this.order()?.assignedTechnicianIds ?? [],
   );
 
+  protected readonly progressValue = linkedSignal(() => this.order()?.progress ?? 0);
+  protected readonly progressNote = signal('');
+  protected readonly savingProgress = signal(false);
+
   protected close(): void {
     this.closeRequested.emit();
+  }
+
+  protected editOrder(): void {
+    const order = this.order();
+    if (order) {
+      this.editRequested.emit(order);
+    }
+  }
+
+  protected openStatusChange(): void {
+    this.statusChangeOpen.set(true);
+  }
+
+  protected closeStatusChange(): void {
+    this.statusChangeOpen.set(false);
+  }
+
+  protected async confirmStatusChange(): Promise<void> {
+    const order = this.order();
+    if (!order) {
+      return;
+    }
+    this.changingStatus.set(true);
+    try {
+      await this.ordersFacade.updateStatus(order.id, this.statusChangeTarget());
+      this.statusChangeOpen.set(false);
+    } finally {
+      this.changingStatus.set(false);
+    }
+  }
+
+  protected onProgressInput(event: Event): void {
+    this.progressValue.set(Number((event.target as HTMLInputElement).value));
+  }
+
+  protected async saveProgress(): Promise<void> {
+    const order = this.order();
+    if (!order) {
+      return;
+    }
+    this.savingProgress.set(true);
+    try {
+      await this.ordersFacade.updateProgress(order.id, this.progressValue(), this.progressNote().trim() || undefined);
+      this.progressNote.set('');
+    } finally {
+      this.savingProgress.set(false);
+    }
   }
 
   protected onScheduledStartInput(event: Event): void {

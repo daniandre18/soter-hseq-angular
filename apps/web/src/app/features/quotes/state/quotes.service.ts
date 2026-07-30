@@ -185,6 +185,7 @@ export class QuotesService {
         throw new Error('Esta cotización ya fue convertida en orden.');
       }
 
+      const serviceSummary = `Servicios de la cotización ${quote['quoteNumber']}`;
       transaction.set(orderRef, {
         orderNumber,
         quoteId,
@@ -192,7 +193,10 @@ export class QuotesService {
         clientBusinessName: quote['clientBusinessName'],
         assignedTechnicianIds: [],
         status: 'DRAFT',
-        serviceSummary: `Servicios de la cotización ${quote['quoteNumber']}`,
+        title: serviceSummary,
+        serviceSummary,
+        priority: 'MEDIUM',
+        progress: 0,
         evidenceCount: 0,
         createdAt: serverTimestamp(),
         createdBy: userId,

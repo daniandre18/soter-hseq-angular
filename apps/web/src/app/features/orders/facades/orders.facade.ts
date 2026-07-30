@@ -6,7 +6,12 @@ import { OrdersService } from '../state/orders.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
 import { UsersRepository } from '../../../core/repositories/users.repository';
 import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
-import type { OrderStatus, ServiceOrder } from '../models/order.model';
+import type {
+  NewOrderData,
+  OrderDetailsUpdate,
+  OrderStatus,
+  ServiceOrder,
+} from '../models/order.model';
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory } from '../models/evidence.model';
 import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
@@ -195,6 +200,21 @@ export class OrdersFacade {
   async requestCorrection(orderId: string, reason: string): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.requestCorrection(orderId, reason, userId);
+  }
+
+  async createOrder(data: NewOrderData): Promise<string> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    return this.service.createOrder(data, userId);
+  }
+
+  async updateOrderDetails(orderId: string, changes: OrderDetailsUpdate): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.updateOrderDetails(orderId, changes, userId);
+  }
+
+  async updateProgress(orderId: string, progress: number, note?: string): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.updateProgress(orderId, progress, note, userId);
   }
 
   watchNotes(orderId: string): Observable<TechnicalNote[]> {

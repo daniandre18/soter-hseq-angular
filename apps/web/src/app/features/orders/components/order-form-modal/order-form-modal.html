@@ -1,0 +1,88 @@
+<app-modal [open]="open()" [title]="title()" size="lg" (closeRequested)="close()">
+  <form class="order-form" (submit)="onSubmit(); $event.preventDefault()">
+    <label class="field field--full">
+      Título *
+      <input [formField]="orderForm.title" placeholder="Ej: Inspección de Seguridad — Planta Principal" />
+      @if (orderForm.title().touched() && orderForm.title().errors().length) {
+        <span class="field-error">{{ orderForm.title().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field">
+      Cliente *
+      <select [formField]="orderForm.clientId">
+        <option value="">Seleccionar cliente...</option>
+        @for (client of activeClients(); track client.id) {
+          <option [value]="client.id">{{ client.businessName }}</option>
+        }
+      </select>
+      @if (orderForm.clientId().touched() && orderForm.clientId().errors().length) {
+        <span class="field-error">{{ orderForm.clientId().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field">
+      Servicio *
+      <select
+        [formField]="orderForm.serviceId"
+        (change)="onServiceSelected($any($event.target).value)"
+      >
+        <option value="">Seleccionar servicio...</option>
+        @for (service of activeServices(); track service.id) {
+          <option [value]="service.id">{{ service.name }}</option>
+        }
+      </select>
+      @if (currentServiceHint()) {
+        <span class="field-hint">Actual: {{ currentServiceHint() }}</span>
+      }
+      @if (orderForm.serviceSummary().touched() && orderForm.serviceSummary().errors().length) {
+        <span class="field-error">{{ orderForm.serviceSummary().errors()[0].message }}</span>
+      }
+    </label>
+
+    @if (!editingOrder()) {
+      <label class="field">
+        Técnico
+        <select [formField]="orderForm.technicianId">
+          <option value="">Sin asignar</option>
+          @for (technician of technicians(); track technician.id) {
+            <option [value]="technician.id">{{ technician.displayName }}</option>
+          }
+        </select>
+      </label>
+    }
+
+    <label class="field">
+      Prioridad
+      <select [formField]="orderForm.priority">
+        @for (key of priorityKeys; track key) {
+          <option [value]="key">{{ priorityLabels[key].label }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      Fecha Límite *
+      <input type="date" [formField]="orderForm.dueDate" />
+      @if (orderForm.dueDate().touched() && orderForm.dueDate().errors().length) {
+        <span class="field-error">{{ orderForm.dueDate().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="field field--full">
+      Descripción (opcional)
+      <textarea
+        [formField]="orderForm.description"
+        rows="3"
+        placeholder="Detalles del trabajo a realizar..."
+      ></textarea>
+    </label>
+  </form>
+
+  <div modalFooter>
+    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button (click)="onSubmit()" [disabled]="orderForm().invalid() || saving()">
+      {{ saving() ? 'Guardando…' : editingOrder() ? 'Guardar Cambios' : 'Crear Orden' }}
+    </app-button>
+  </div>
+</app-modal>

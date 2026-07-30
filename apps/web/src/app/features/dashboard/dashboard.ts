@@ -39,8 +39,8 @@ export class Dashboard {
     return ORDER_STATUS_CONFIG[status].color;
   }
 
-  protected statusProgress(status: ServiceOrder['status']): number {
-    return ORDER_STATUS_CONFIG[status].progress;
+  protected statusProgress(order: ServiceOrder): number {
+    return order.progress;
   }
 
   protected formatVisitDay(date: Date): string {

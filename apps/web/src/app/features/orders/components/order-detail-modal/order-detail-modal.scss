@@ -91,6 +91,36 @@
   flex-wrap: wrap;
 }
 
+.progress-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.progress-percent {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-brand-700);
+}
+
+.progress-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  input[type='range'] {
+    flex: 1;
+  }
+
+  input[type='text'] {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+  }
+}
+
 .field {
   display: flex;
   flex-direction: column;

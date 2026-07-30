@@ -1,34 +1,49 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { OrdersFacade } from '../../facades/orders.facade';
+import { AuthFacade } from '../../../auth/facades/auth.facade';
+import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { Card } from '../../../../shared/components/card/card';
+import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
+import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { OrderDetailModal } from '../../components/order-detail-modal/order-detail-modal';
+import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
-import { formatDateTime } from '../../../../shared/utils/format-date';
-import type { OrderStatus, ServiceOrder } from '../../models/order.model';
+import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
+import { formatDateNumeric } from '../../../../shared/utils/format-date';
+import type { OrderPriority, OrderStatus, ServiceOrder } from '../../models/order.model';
 
 type StatusFilterOption = 'all' | OrderStatus;
 
 @Component({
   selector: 'app-orders-list',
-  imports: [Card, StatusBadge, Avatar, OrderDetailModal],
+  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, OrderDetailModal, OrderFormModal],
   templateUrl: './orders-list.html',
   styleUrl: './orders-list.scss',
 })
 export class OrdersList {
   protected readonly ordersFacade = inject(OrdersFacade);
+  private readonly authFacade = inject(AuthFacade);
+  private readonly clientsFacade = inject(ClientsFacade);
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilterOption>('all');
   protected readonly detailOrderId = signal<string | null>(null);
+  protected readonly formOpen = signal(false);
+  protected readonly editingOrder = signal<ServiceOrder | null>(null);
+
+  protected readonly canManage = computed(() => {
+    const role = this.authFacade.currentRole();
+    return role === 'ADMIN' || role === 'COORDINATOR';
+  });
 
   protected readonly statusOptions = Object.entries(ORDER_STATUS_CONFIG) as [
     OrderStatus,
     { label: string; color: string },
   ][];
 
-  protected readonly formatDateTime = formatDateTime;
+  protected readonly formatDateNumeric = formatDateNumeric;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -55,6 +70,7 @@ export class OrdersList {
 
   constructor() {
     this.ordersFacade.init();
+    this.clientsFacade.init();
   }
 
   protected statusLabel(status: OrderStatus): string {
@@ -63,6 +79,14 @@ export class OrdersList {
 
   protected statusColor(status: OrderStatus): string {
     return ORDER_STATUS_CONFIG[status].color;
+  }
+
+  protected priorityLabel(priority: OrderPriority): string {
+    return ORDER_PRIORITY_CONFIG[priority].label;
+  }
+
+  protected priorityColor(priority: OrderPriority): string {
+    return ORDER_PRIORITY_CONFIG[priority].color;
   }
 
   protected technicianNames(order: ServiceOrder): string[] {
@@ -83,5 +107,23 @@ export class OrdersList {
 
   protected closeDetail(): void {
     this.detailOrderId.set(null);
+  }
+
+  protected openCreate(): void {
+    this.editingOrder.set(null);
+    this.formOpen.set(true);
+  }
+
+  /** Disparado desde `OrderDetailModal` ("Editar"): cierra el detalle y
+   *  abre el mismo formulario de creación en modo edición. */
+  protected openEdit(order: ServiceOrder): void {
+    this.detailOrderId.set(null);
+    this.editingOrder.set(order);
+    this.formOpen.set(true);
+  }
+
+  protected closeForm(): void {
+    this.formOpen.set(false);
+    this.editingOrder.set(null);
   }
 }

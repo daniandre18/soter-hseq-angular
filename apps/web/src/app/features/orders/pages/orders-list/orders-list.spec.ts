@@ -5,6 +5,8 @@ import { of } from 'rxjs';
 import { OrdersList } from './orders-list';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
+import { ClientsFacade } from '../../../clients/facades/clients.facade';
+import { ServicesFacade } from '../../../services/facades/services.facade';
 
 describe('OrdersList', () => {
   let component: OrdersList;
@@ -33,6 +35,11 @@ describe('OrdersList', () => {
             currentUser: signal(null),
             currentRole: signal(null),
           },
+        },
+        { provide: ClientsFacade, useValue: { clients: signal([]), init: () => undefined } },
+        {
+          provide: ServicesFacade,
+          useValue: { activeServices: signal([]), byId: () => undefined, init: () => undefined },
         },
       ],
     }).compileComponents();

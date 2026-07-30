@@ -10,6 +10,13 @@
         </div>
         <div class="header-actions">
           <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+          <app-status-badge [label]="priorityLabel()" [color]="priorityColor()" />
+          @if (canChangeStatusFreely()) {
+            <app-button variant="outline" size="sm" (click)="openStatusChange()">Cambiar Estado</app-button>
+          }
+          @if (canEditOrder()) {
+            <app-button variant="outline" size="sm" (click)="editOrder()">Editar</app-button>
+          }
           @if (canExecute()) {
             <app-button size="sm" (click)="startExecution()" [disabled]="saving()">
               {{ saving() ? 'Iniciando…' : 'Iniciar Ejecución' }}
@@ -59,6 +66,12 @@
                 <p class="info-label">Servicio</p>
                 <p class="info-value">{{ o.serviceSummary }}</p>
               </div>
+              @if (o.dueDate) {
+                <div>
+                  <p class="info-label">Fecha límite</p>
+                  <p class="info-value">{{ formatDateTime(o.dueDate) }}</p>
+                </div>
+              }
               <div>
                 <p class="info-label">Técnicos asignados</p>
                 @if (assignedTechnicianNames().length > 0) {
@@ -95,6 +108,43 @@
                 <div>
                   <p class="info-label">Fin real</p>
                   <p class="info-value">{{ formatDateTime(o.actualEnd) }}</p>
+                </div>
+              }
+            </div>
+
+            @if (o.description) {
+              <div class="action-section">
+                <p class="info-label">Descripción</p>
+                <p class="info-value">{{ o.description }}</p>
+              </div>
+            }
+
+            <div class="action-section">
+              <h4>Avance</h4>
+              <div class="progress-header">
+                <span class="progress-percent">{{ progressValue() }}%</span>
+              </div>
+              <app-progress-bar [value]="progressValue()" />
+              @if (canLog()) {
+                <div class="progress-edit">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    aria-label="Avance"
+                    [value]="progressValue()"
+                    (input)="onProgressInput($event)"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Nota de avance (opcional)..."
+                    [value]="progressNote()"
+                    (input)="progressNote.set($any($event.target).value)"
+                  />
+                  <app-button size="sm" (click)="saveProgress()" [disabled]="savingProgress()">
+                    {{ savingProgress() ? 'Guardando…' : 'Guardar' }}
+                  </app-button>
                 </div>
               }
             </div>
@@ -426,6 +476,29 @@
           Cancelar Orden
         </app-button>
       }
+    </div>
+  </app-modal>
+
+  <app-modal
+    [open]="statusChangeOpen()"
+    title="Cambiar Estado"
+    size="sm"
+    (closeRequested)="closeStatusChange()"
+  >
+    <label class="field field--full">
+      Nuevo estado
+      <select [value]="statusChangeTarget()" (change)="statusChangeTarget.set($any($event.target).value)">
+        @for (status of freelySettableStatuses; track status) {
+          <option [value]="status">{{ statusOptionLabel(status) }}</option>
+        }
+      </select>
+    </label>
+
+    <div modalFooter>
+      <app-button variant="outline" (click)="closeStatusChange()">Cancelar</app-button>
+      <app-button (click)="confirmStatusChange()" [disabled]="changingStatus()">
+        {{ changingStatus() ? 'Guardando…' : 'Confirmar' }}
+      </app-button>
     </div>
   </app-modal>
 }
