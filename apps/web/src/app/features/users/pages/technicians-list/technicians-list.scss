@@ -74,8 +74,18 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.technician-name {
+  margin: 0;
   font-weight: 500;
   color: var(--color-gray-900);
+}
+
+.technician-specialty {
+  margin: 0.125rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
 }
 
 .actions-cell {

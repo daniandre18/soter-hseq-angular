@@ -10,9 +10,16 @@ interface TechnicianFormModel {
   email: string;
   password: string;
   phone: string;
+  specialty: string;
 }
 
-const EMPTY_MODEL: TechnicianFormModel = { displayName: '', email: '', password: '', phone: '' };
+const EMPTY_MODEL: TechnicianFormModel = {
+  displayName: '',
+  email: '',
+  password: '',
+  phone: '',
+  specialty: '',
+};
 
 @Component({
   selector: 'app-technician-form-modal',
@@ -70,6 +77,7 @@ export class TechnicianFormModal {
               email: technician.email,
               password: '',
               phone: technician.phone ?? '',
+              specialty: technician.specialty ?? '',
             }
           : { ...EMPTY_MODEL },
       );
@@ -91,6 +99,7 @@ export class TechnicianFormModal {
           await this.techniciansFacade.updateTechnician(editing.id, {
             displayName: value.displayName,
             phone: value.phone || undefined,
+            specialty: value.specialty || undefined,
           });
         } else {
           await this.techniciansFacade.createTechnician({
@@ -98,6 +107,7 @@ export class TechnicianFormModal {
             email: value.email,
             password: value.password,
             phone: value.phone || undefined,
+            specialty: value.specialty || undefined,
           });
         }
         this.close();

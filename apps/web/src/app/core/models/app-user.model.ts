@@ -13,6 +13,9 @@ export interface AppUser {
   displayName: string;
   email: string;
   phone?: string;
+  /** Solo aplica a técnicos (CLAUDE.md no lo define, pero el resto de roles
+   *  simplemente no lo usa) — p. ej. "Seguridad Industrial". */
+  specialty?: string;
   role: UserRole;
   status: UserStatus;
   photoUrl?: string;

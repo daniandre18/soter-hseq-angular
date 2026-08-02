@@ -39,7 +39,10 @@
                 <td>
                   <div class="technician-cell">
                     <app-avatar [name]="technician.displayName" size="sm" />
-                    <span>{{ technician.displayName }}</span>
+                    <div>
+                      <p class="technician-name">{{ technician.displayName }}</p>
+                      <p class="technician-specialty">{{ technician.specialty || 'Técnico HSEQ' }}</p>
+                    </div>
                   </div>
                 </td>
                 <td>{{ technician.email }}</td>

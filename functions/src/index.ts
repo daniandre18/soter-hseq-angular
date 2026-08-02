@@ -275,6 +275,7 @@ interface CreateUserRequest {
   password: string;
   displayName: string;
   phone?: string;
+  specialty?: string;
   role: Role;
 }
 
@@ -292,7 +293,8 @@ export const createUser = onCall(async (request) => {
   }
   await requireRole(request.auth.uid, ['ADMIN']);
 
-  const { email, password, displayName, phone, role } = (request.data ?? {}) as Partial<CreateUserRequest>;
+  const { email, password, displayName, phone, specialty, role } = (request.data ??
+    {}) as Partial<CreateUserRequest>;
   if (!email || !password || !displayName || !role) {
     throw new HttpsError('invalid-argument', 'Faltan datos obligatorios para crear el usuario.');
   }
@@ -320,6 +322,7 @@ export const createUser = onCall(async (request) => {
       displayName,
       email,
       phone: phone ?? null,
+      specialty: specialty ?? null,
       role,
       status: 'ACTIVE',
       createdAt: now,

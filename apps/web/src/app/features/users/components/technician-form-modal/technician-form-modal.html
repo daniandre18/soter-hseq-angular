@@ -30,9 +30,14 @@
       </label>
     }
 
-    <label class="field field--full">
+    <label class="field">
       Teléfono (opcional)
       <input type="tel" [formField]="technicianForm.phone" placeholder="+57 300 000 0000" />
+    </label>
+
+    <label class="field">
+      Especialidad (opcional)
+      <input [formField]="technicianForm.specialty" placeholder="Ej: Seguridad Industrial" />
     </label>
   </form>
 

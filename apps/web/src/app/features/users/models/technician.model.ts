@@ -6,11 +6,13 @@ export interface NewTechnicianData {
   email: string;
   password: string;
   phone?: string;
+  specialty?: string;
 }
 
-/** Campos editables sin pasar por Auth (nombre/teléfono) — el email y la
- *  contraseña no se editan desde este formulario simple. */
+/** Campos editables sin pasar por Auth (nombre/teléfono/especialidad) — el
+ *  email y la contraseña no se editan desde este formulario simple. */
 export interface TechnicianDetailsUpdate {
   displayName?: string;
   phone?: string;
+  specialty?: string;
 }

@@ -25,6 +25,7 @@ function toAppUser(id: string, data: DocumentData): AppUser {
     displayName: data['displayName'],
     email: data['email'],
     phone: data['phone'],
+    specialty: data['specialty'],
     role: data['role'],
     status: data['status'],
     photoUrl: data['photoUrl'],
