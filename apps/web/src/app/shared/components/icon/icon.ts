@@ -23,7 +23,10 @@ export type IconName =
   | 'log-out'
   | 'chart-pie'
   | 'tag'
-  | 'wrench';
+  | 'wrench'
+  | 'eye'
+  | 'square-pen'
+  | 'trash-2';
 
 @Component({
   selector: 'app-icon',

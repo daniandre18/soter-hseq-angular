@@ -46,7 +46,7 @@
           </thead>
           <tbody>
             @for (service of filtered(); track service.id) {
-              <tr tabindex="0" role="button" (click)="openEdit(service)" (keydown.enter)="openEdit(service)">
+              <tr>
                 <td>
                   <p class="service-name">{{ service.name }}</p>
                   @if (service.description) {
@@ -63,11 +63,23 @@
                   />
                 </td>
                 <td class="actions-cell">
-                  <button type="button" class="edit-link" (click)="openEdit(service); $event.stopPropagation()">
-                    Editar
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="openEdit(service)"
+                    aria-label="Editar servicio"
+                    title="Editar"
+                  >
+                    <app-icon name="square-pen" />
                   </button>
-                  <button type="button" class="delete-link" (click)="confirmDelete(service, $event)">
-                    Eliminar
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    (click)="confirmDelete(service, $event)"
+                    aria-label="Eliminar servicio"
+                    title="Eliminar"
+                  >
+                    <app-icon name="trash-2" />
                   </button>
                 </td>
               </tr>

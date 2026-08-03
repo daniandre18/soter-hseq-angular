@@ -116,3 +116,15 @@ body {
   background-color: var(--color-gray-50);
   color: var(--color-gray-900);
 }
+
+// Todo `<app-modal>` proyecta su footer via `<div modalFooter>` (definido en
+// cada template consumidor, no en el del modal) — el `gap` de `.modal-footer`
+// en modal.scss solo separa a ese wrapper de OTROS hijos directos, nunca
+// llega a los botones de adentro, así que quedan pegados sin este selector
+// global (no puede vivir en modal.scss por el scoping de Angular: ese
+// componente nunca "ve" el contenido proyectado como hijo directo suyo).
+[modalFooter] {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}

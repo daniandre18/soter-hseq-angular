@@ -4,6 +4,7 @@ import { Card } from '../../../../shared/components/card/card';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Modal } from '../../../../shared/components/modal/modal';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { ServiceFormModal } from '../../components/service-form-modal/service-form-modal';
 import { SERVICE_CATEGORY_KEYS, SERVICE_CATEGORY_LABELS } from '../../models/service.model';
 import { formatCurrency } from '../../../../shared/utils/format-currency';
@@ -13,7 +14,7 @@ type CategoryFilter = 'all' | ServiceCategory;
 
 @Component({
   selector: 'app-services-list',
-  imports: [Card, Button, StatusBadge, Modal, ServiceFormModal],
+  imports: [Card, Button, StatusBadge, Modal, Icon, ServiceFormModal],
   templateUrl: './services-list.html',
   styleUrl: './services-list.scss',
 })

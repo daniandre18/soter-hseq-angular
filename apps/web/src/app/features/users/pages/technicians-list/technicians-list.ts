@@ -4,12 +4,13 @@ import { Card } from '../../../../shared/components/card/card';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { TechnicianFormModal } from '../../components/technician-form-modal/technician-form-modal';
 import type { AppUser } from '../../../../core/models/app-user.model';
 
 @Component({
   selector: 'app-technicians-list',
-  imports: [Card, Button, StatusBadge, Avatar, TechnicianFormModal],
+  imports: [Card, Button, StatusBadge, Avatar, Icon, TechnicianFormModal],
   templateUrl: './technicians-list.html',
   styleUrl: './technicians-list.scss',
 })

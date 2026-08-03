@@ -71,13 +71,7 @@
           </thead>
           <tbody>
             @for (client of visibleClients(); track client.id) {
-              <tr
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'Ver detalle de ' + client.businessName"
-                (click)="openDetail(client)"
-                (keydown.enter)="openDetail(client)"
-              >
+              <tr>
                 <td class="checkbox-cell">
                   <input
                     type="checkbox"
@@ -141,10 +135,33 @@
                       </div>
                     }
                   </div>
-                  <button type="button" class="edit-link" (click)="openEdit(client, $event)">Editar</button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="openDetail(client)"
+                    aria-label="Ver cliente"
+                    title="Ver"
+                  >
+                    <app-icon name="eye" />
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="openEdit(client, $event)"
+                    aria-label="Editar cliente"
+                    title="Editar"
+                  >
+                    <app-icon name="square-pen" />
+                  </button>
                   @if (canDelete()) {
-                    <button type="button" class="delete-link" (click)="confirmDelete(client, $event)">
-                      Eliminar
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn--danger"
+                      (click)="confirmDelete(client, $event)"
+                      aria-label="Eliminar cliente"
+                      title="Eliminar"
+                    >
+                      <app-icon name="trash-2" />
                     </button>
                   }
                 </td>

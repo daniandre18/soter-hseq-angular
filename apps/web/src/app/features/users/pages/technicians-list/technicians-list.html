@@ -54,7 +54,15 @@
                   />
                 </td>
                 <td class="actions-cell">
-                  <button type="button" class="edit-link" (click)="openEdit(technician)">Editar</button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="openEdit(technician)"
+                    aria-label="Editar técnico"
+                    title="Editar"
+                  >
+                    <app-icon name="square-pen" />
+                  </button>
                   <button
                     type="button"
                     class="toggle-link"

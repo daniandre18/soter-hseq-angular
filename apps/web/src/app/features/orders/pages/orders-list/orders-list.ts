@@ -8,6 +8,7 @@ import { StatusBadge } from '../../../../shared/components/status-badge/status-b
 import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Modal } from '../../../../shared/components/modal/modal';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { OrderDetailModal } from '../../components/order-detail-modal/order-detail-modal';
 import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
@@ -19,7 +20,7 @@ type StatusFilterOption = 'all' | OrderStatus;
 
 @Component({
   selector: 'app-orders-list',
-  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, Modal, OrderDetailModal, OrderFormModal],
+  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, Modal, Icon, OrderDetailModal, OrderFormModal],
   templateUrl: './orders-list.html',
   styleUrl: './orders-list.scss',
 })

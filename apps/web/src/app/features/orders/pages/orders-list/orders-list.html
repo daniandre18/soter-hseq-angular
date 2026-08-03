@@ -45,20 +45,12 @@
               <th>Prioridad</th>
               <th>Avance</th>
               <th>Vence</th>
-              @if (canManage()) {
-                <th>Acciones</th>
-              }
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             @for (order of filtered(); track order.id) {
-              <tr
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'Ver detalle de la orden ' + order.orderNumber"
-                (click)="openDetail(order)"
-                (keydown.enter)="openDetail(order)"
-              >
+              <tr>
                 <td class="order-number">{{ order.orderNumber }}</td>
                 <td class="order-title">{{ order.title || order.serviceSummary }}</td>
                 <td>{{ order.clientBusinessName }}</td>
@@ -89,18 +81,39 @@
                 <td class="nowrap">
                   {{ order.dueDate ? formatDateNumeric(order.dueDate) : '—' }}
                 </td>
-                @if (canManage()) {
-                  <td class="actions-cell">
-                    <button type="button" class="edit-link" (click)="openEditFromList(order, $event)">
-                      Editar
+                <td class="actions-cell">
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="openDetail(order)"
+                    aria-label="Ver orden"
+                    title="Ver"
+                  >
+                    <app-icon name="eye" />
+                  </button>
+                  @if (canManage()) {
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      (click)="openEditFromList(order, $event)"
+                      aria-label="Editar orden"
+                      title="Editar"
+                    >
+                      <app-icon name="square-pen" />
                     </button>
-                    @if (canDelete() && order.status === 'DRAFT') {
-                      <button type="button" class="delete-link" (click)="confirmDelete(order, $event)">
-                        Eliminar
-                      </button>
-                    }
-                  </td>
-                }
+                  }
+                  @if (canDelete() && order.status === 'DRAFT') {
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn--danger"
+                      (click)="confirmDelete(order, $event)"
+                      aria-label="Eliminar orden"
+                      title="Eliminar"
+                    >
+                      <app-icon name="trash-2" />
+                    </button>
+                  }
+                </td>
               </tr>
             }
           </tbody>
