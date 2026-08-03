@@ -29,6 +29,21 @@
     <span class="summary-inactive">{{ inactiveInFiltered() }} inactivos</span>
   </div>
 
+  @if (selectedCount() > 0) {
+    <div class="selection-bar">
+      <span class="selection-count">{{ selectedCount() }}</span>
+      <span>{{ selectedCount() === 1 ? 'cliente seleccionado' : 'clientes seleccionados' }}</span>
+      @if (canDelete()) {
+        <app-button variant="danger" size="sm" class="selection-delete-btn" (click)="confirmBulkDelete()">
+          Eliminar
+        </app-button>
+      }
+      <button type="button" class="selection-close" (click)="clearSelection()" aria-label="Quitar selección">
+        <app-icon name="x" />
+      </button>
+    </div>
+  }
+
   @if (filtered().length === 0) {
     <app-card class="empty-card">
       <p>No hay clientes registrados</p>
@@ -39,6 +54,14 @@
         <table class="clients-table">
           <thead>
             <tr>
+              <th class="checkbox-cell">
+                <input
+                  type="checkbox"
+                  aria-label="Seleccionar todos los clientes visibles"
+                  [checked]="allVisibleSelected()"
+                  (click)="toggleSelectAll(); $event.stopPropagation()"
+                />
+              </th>
               <th>Cliente</th>
               <th>Ubicación</th>
               <th>Etiquetas</th>
@@ -47,7 +70,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (client of filtered(); track client.id) {
+            @for (client of visibleClients(); track client.id) {
               <tr
                 tabindex="0"
                 role="button"
@@ -55,6 +78,14 @@
                 (click)="openDetail(client)"
                 (keydown.enter)="openDetail(client)"
               >
+                <td class="checkbox-cell">
+                  <input
+                    type="checkbox"
+                    [attr.aria-label]="'Seleccionar ' + client.businessName"
+                    [checked]="isSelected(client.id)"
+                    (click)="toggleSelect(client.id, $event)"
+                  />
+                </td>
                 <td>
                   <p class="client-name">{{ client.businessName }}</p>
                   <p class="client-nit">NIT: {{ client.taxId }}</p>
@@ -111,12 +142,27 @@
                     }
                   </div>
                   <button type="button" class="edit-link" (click)="openEdit(client, $event)">Editar</button>
+                  @if (canDelete()) {
+                    <button type="button" class="delete-link" (click)="confirmDelete(client, $event)">
+                      Eliminar
+                    </button>
+                  }
                 </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
+      @if (hasMore()) {
+        <div class="load-more-bar">
+          <button type="button" class="load-more-btn" (click)="showMore()">
+            Mostrar {{ nextBatchSize() }} más
+          </button>
+          <button type="button" class="load-more-btn" (click)="showAll()">
+            Mostrar todas ({{ filtered().length }})
+          </button>
+        </div>
+      }
     </app-card>
   }
 </section>
@@ -126,5 +172,24 @@
   [editingClient]="editingClient()"
   (closeRequested)="closeForm()"
 />
+
+<app-modal
+  [open]="!!deletingIds()"
+  [title]="(deletingIds()?.length ?? 0) > 1 ? '¿Eliminar ' + deletingIds()!.length + ' clientes?' : '¿Eliminar este cliente?'"
+  size="sm"
+  (closeRequested)="cancelDelete()"
+>
+  <p class="confirm-text">
+    Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con
+    {{ (deletingIds()?.length ?? 0) > 1 ? 'estos clientes conservan' : 'este cliente conserva' }}
+    su nombre, pero ya no vas a poder abrir su ficha.
+  </p>
+  <div modalFooter>
+    <app-button variant="outline" (click)="cancelDelete()">Cancelar</app-button>
+    <app-button variant="danger" (click)="deleteConfirmed()" [disabled]="deleting()">
+      {{ deleting() ? 'Eliminando…' : 'Eliminar' }}
+    </app-button>
+  </div>
+</app-modal>
 
 <app-client-detail-modal [client]="detailClient()" (closeRequested)="closeDetail()" />

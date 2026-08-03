@@ -44,7 +44,10 @@ service cloud.firestore {
     match /clients/{clientId} {
       allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
       allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);
-      allow delete: if false; // no se eliminan clientes con historial
+      // Solo ADMIN, y solo un aviso en la UI (no un bloqueo aquí) de que
+      // las cotizaciones/órdenes ya creadas conservan `clientBusinessName`
+      // denormalizado — no se rompen visualmente aunque el cliente se borre.
+      allow delete: if isAdmin();
 
       match /contacts/{contactId} {
         allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);

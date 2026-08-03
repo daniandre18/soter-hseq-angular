@@ -7,6 +7,7 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   serverTimestamp,
@@ -97,6 +98,13 @@ export class ClientsService {
       updatedAt: serverTimestamp(),
       updatedBy,
     });
+  }
+
+  /** Solo ADMIN (ver `firestore.rules`). Las cotizaciones/órdenes ya
+   *  creadas guardan `clientBusinessName` por su cuenta, así que no quedan
+   *  rotas visualmente — solo se pierde la ficha viva del cliente. */
+  async deleteClient(id: string): Promise<void> {
+    await deleteDoc(doc(this.firestore, 'clients', id));
   }
 
   /**

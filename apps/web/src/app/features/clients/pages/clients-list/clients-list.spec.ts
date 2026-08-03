@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { ClientsList } from './clients-list';
 import { ClientsFacade } from '../../facades/clients.facade';
 import { OrdersFacade } from '../../../orders/facades/orders.facade';
+import { AuthFacade } from '../../../auth/facades/auth.facade';
 
 describe('ClientsList', () => {
   let component: ClientsList;
@@ -22,6 +23,7 @@ describe('ClientsList', () => {
           },
         },
         { provide: OrdersFacade, useValue: { orders: signal([]) } },
+        { provide: AuthFacade, useValue: { currentRole: signal(null) } },
       ],
     }).compileComponents();
 

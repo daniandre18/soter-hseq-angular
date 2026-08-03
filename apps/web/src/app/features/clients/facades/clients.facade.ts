@@ -40,6 +40,10 @@ export class ClientsFacade {
     await this.service.updateClient(id, changes, userId);
   }
 
+  async deleteClient(id: string): Promise<void> {
+    await this.service.deleteClient(id);
+  }
+
   async setTag(id: string, tag: ClientTagKey, enabled: boolean): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.setTag(id, tag, enabled, userId);
