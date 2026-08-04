@@ -34,7 +34,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (technician of filtered(); track technician.id) {
+            @for (technician of visibleTechnicians(); track technician.id) {
               <tr>
                 <td>
                   <div class="technician-cell">
@@ -72,12 +72,31 @@
                   >
                     {{ technician.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
                   </button>
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    (click)="confirmDelete(technician)"
+                    aria-label="Eliminar técnico"
+                    title="Eliminar"
+                  >
+                    <app-icon name="trash-2" />
+                  </button>
                 </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
+      @if (hasMore()) {
+        <div class="load-more-bar">
+          <button type="button" class="load-more-btn" (click)="showMore()">
+            Mostrar {{ nextBatchSize() }} más
+          </button>
+          <button type="button" class="load-more-btn" (click)="showAll()">
+            Mostrar todas ({{ filtered().length }})
+          </button>
+        </div>
+      }
     </app-card>
   }
 </section>
@@ -87,3 +106,25 @@
   [editingTechnician]="editingTechnician()"
   (closeRequested)="closeForm()"
 />
+
+<app-modal
+  [open]="!!deletingTechnician()"
+  title="¿Eliminar este técnico?"
+  size="sm"
+  (closeRequested)="cancelDelete()"
+>
+  <p class="confirm-text">
+    Esta acción no se puede deshacer: se elimina la cuenta por completo (ya no podrá iniciar
+    sesión). Las órdenes que ya tenía asignadas conservan su historial, solo dejan de mostrar
+    su nombre.
+  </p>
+  @if (deleteError()) {
+    <p class="delete-error">{{ deleteError() }}</p>
+  }
+  <div modalFooter>
+    <app-button variant="outline" (click)="cancelDelete()">Cancelar</app-button>
+    <app-button variant="danger" (click)="deleteConfirmed()" [disabled]="deleting()">
+      {{ deleting() ? 'Eliminando…' : 'Eliminar' }}
+    </app-button>
+  </div>
+</app-modal>

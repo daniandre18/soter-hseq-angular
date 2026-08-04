@@ -11,6 +11,10 @@ interface CreateUserResponse {
   uid: string;
 }
 
+interface DeleteUserResponse {
+  uid: string;
+}
+
 /** Mantiene el TechniciansStore de Akita sincronizado con los usuarios
  *  `role == 'TECHNICIAN'` de la colección `users` (vía `UsersRepository`,
  *  que ya centraliza el acceso a esa colección — CLAUDE.md §6.2). */
@@ -71,5 +75,14 @@ export class TechniciansService {
       updatedAt: serverTimestamp(),
       updatedBy,
     });
+  }
+
+  /** Borra la cuenta de Auth Y el documento de Firestore — no alcanza con
+   *  `deleteDoc` (dejaría una cuenta de Auth "huérfana" que aún podría
+   *  iniciar sesión), así que pasa por la Cloud Function `deleteUser`
+   *  (Admin SDK), mismo motivo que `createTechnician`. */
+  async deleteTechnician(uid: string): Promise<void> {
+    const deleteUser = httpsCallable<{ uid: string }, DeleteUserResponse>(this.functions, 'deleteUser');
+    await deleteUser({ uid });
   }
 }

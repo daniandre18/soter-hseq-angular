@@ -18,6 +18,8 @@ import type { OrderPriority, OrderStatus, ServiceOrder } from '../../models/orde
 
 type StatusFilterOption = 'all' | OrderStatus;
 
+const PAGE_SIZE = 10;
+
 @Component({
   selector: 'app-orders-list',
   imports: [Card, Button, StatusBadge, ProgressBar, Avatar, Modal, Icon, OrderDetailModal, OrderFormModal],
@@ -31,6 +33,7 @@ export class OrdersList {
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilterOption>('all');
+  protected readonly visibleCount = signal(PAGE_SIZE);
   protected readonly detailOrderId = signal<string | null>(null);
   protected readonly formOpen = signal(false);
   protected readonly editingOrder = signal<ServiceOrder | null>(null);
@@ -69,6 +72,12 @@ export class OrdersList {
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   });
 
+  protected readonly visibleOrders = computed(() => this.filtered().slice(0, this.visibleCount()));
+  protected readonly hasMore = computed(() => this.visibleCount() < this.filtered().length);
+  protected readonly nextBatchSize = computed(() =>
+    Math.min(PAGE_SIZE, this.filtered().length - this.visibleCount()),
+  );
+
   /** Referencia "viva": si la orden cambia mientras el modal sigue abierto,
    *  refleja el dato actualizado en vez de una foto vieja. */
   protected readonly liveDetailOrder = computed<ServiceOrder | null>(() => {
@@ -103,10 +112,20 @@ export class OrdersList {
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(PAGE_SIZE);
   }
 
   protected onStatusChange(event: Event): void {
     this.statusFilter.set((event.target as HTMLSelectElement).value as StatusFilterOption);
+    this.visibleCount.set(PAGE_SIZE);
+  }
+
+  protected showMore(): void {
+    this.visibleCount.update((count) => count + PAGE_SIZE);
+  }
+
+  protected showAll(): void {
+    this.visibleCount.set(this.filtered().length);
   }
 
   protected openDetail(order: ServiceOrder): void {

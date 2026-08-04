@@ -49,7 +49,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (order of filtered(); track order.id) {
+            @for (order of visibleOrders(); track order.id) {
               <tr>
                 <td class="order-number">{{ order.orderNumber }}</td>
                 <td class="order-title">{{ order.title || order.serviceSummary }}</td>
@@ -119,6 +119,16 @@
           </tbody>
         </table>
       </div>
+      @if (hasMore()) {
+        <div class="load-more-bar">
+          <button type="button" class="load-more-btn" (click)="showMore()">
+            Mostrar {{ nextBatchSize() }} más
+          </button>
+          <button type="button" class="load-more-btn" (click)="showAll()">
+            Mostrar todas ({{ filtered().length }})
+          </button>
+        </div>
+      }
     </app-card>
   }
 </section>

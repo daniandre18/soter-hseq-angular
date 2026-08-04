@@ -5,12 +5,15 @@ import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Icon } from '../../../../shared/components/icon/icon';
+import { Modal } from '../../../../shared/components/modal/modal';
 import { TechnicianFormModal } from '../../components/technician-form-modal/technician-form-modal';
 import type { AppUser } from '../../../../core/models/app-user.model';
 
+const PAGE_SIZE = 10;
+
 @Component({
   selector: 'app-technicians-list',
-  imports: [Card, Button, StatusBadge, Avatar, Icon, TechnicianFormModal],
+  imports: [Card, Button, StatusBadge, Avatar, Icon, Modal, TechnicianFormModal],
   templateUrl: './technicians-list.html',
   styleUrl: './technicians-list.scss',
 })
@@ -18,9 +21,13 @@ export class TechniciansList {
   protected readonly techniciansFacade = inject(TechniciansFacade);
 
   protected readonly search = signal('');
+  protected readonly visibleCount = signal(PAGE_SIZE);
   protected readonly formOpen = signal(false);
   protected readonly editingTechnician = signal<AppUser | null>(null);
   protected readonly togglingId = signal<string | null>(null);
+  protected readonly deletingTechnician = signal<AppUser | null>(null);
+  protected readonly deleting = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -35,12 +42,27 @@ export class TechniciansList {
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
   });
 
+  protected readonly visibleTechnicians = computed(() => this.filtered().slice(0, this.visibleCount()));
+  protected readonly hasMore = computed(() => this.visibleCount() < this.filtered().length);
+  protected readonly nextBatchSize = computed(() =>
+    Math.min(PAGE_SIZE, this.filtered().length - this.visibleCount()),
+  );
+
   constructor() {
     this.techniciansFacade.init();
   }
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(PAGE_SIZE);
+  }
+
+  protected showMore(): void {
+    this.visibleCount.update((count) => count + PAGE_SIZE);
+  }
+
+  protected showAll(): void {
+    this.visibleCount.set(this.filtered().length);
   }
 
   protected openCreate(): void {
@@ -67,6 +89,34 @@ export class TechniciansList {
       );
     } finally {
       this.togglingId.set(null);
+    }
+  }
+
+  protected confirmDelete(technician: AppUser): void {
+    this.deleteError.set(null);
+    this.deletingTechnician.set(technician);
+  }
+
+  protected cancelDelete(): void {
+    this.deletingTechnician.set(null);
+  }
+
+  protected async deleteConfirmed(): Promise<void> {
+    const technician = this.deletingTechnician();
+    if (!technician) {
+      return;
+    }
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    try {
+      await this.techniciansFacade.deleteTechnician(technician.id);
+      this.deletingTechnician.set(null);
+    } catch (error) {
+      this.deleteError.set(
+        error instanceof Error && error.message ? error.message : 'No se pudo eliminar el técnico.',
+      );
+    } finally {
+      this.deleting.set(false);
     }
   }
 }

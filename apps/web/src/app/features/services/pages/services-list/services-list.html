@@ -45,7 +45,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (service of filtered(); track service.id) {
+            @for (service of visibleServices(); track service.id) {
               <tr>
                 <td>
                   <p class="service-name">{{ service.name }}</p>
@@ -87,6 +87,16 @@
           </tbody>
         </table>
       </div>
+      @if (hasMore()) {
+        <div class="load-more-bar">
+          <button type="button" class="load-more-btn" (click)="showMore()">
+            Mostrar {{ nextBatchSize() }} más
+          </button>
+          <button type="button" class="load-more-btn" (click)="showAll()">
+            Mostrar todas ({{ filtered().length }})
+          </button>
+        </div>
+      }
     </app-card>
   }
 </section>

@@ -12,6 +12,8 @@ import type { Service, ServiceCategory } from '../../models/service.model';
 
 type CategoryFilter = 'all' | ServiceCategory;
 
+const PAGE_SIZE = 10;
+
 @Component({
   selector: 'app-services-list',
   imports: [Card, Button, StatusBadge, Modal, Icon, ServiceFormModal],
@@ -23,6 +25,7 @@ export class ServicesList {
 
   protected readonly search = signal('');
   protected readonly categoryFilter = signal<CategoryFilter>('all');
+  protected readonly visibleCount = signal(PAGE_SIZE);
 
   protected readonly formOpen = signal(false);
   protected readonly editingService = signal<Service | null>(null);
@@ -42,16 +45,32 @@ export class ServicesList {
     });
   });
 
+  protected readonly visibleServices = computed(() => this.filtered().slice(0, this.visibleCount()));
+  protected readonly hasMore = computed(() => this.visibleCount() < this.filtered().length);
+  protected readonly nextBatchSize = computed(() =>
+    Math.min(PAGE_SIZE, this.filtered().length - this.visibleCount()),
+  );
+
   constructor() {
     this.servicesFacade.init();
   }
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(PAGE_SIZE);
   }
 
   protected onCategoryChange(event: Event): void {
     this.categoryFilter.set((event.target as HTMLSelectElement).value as CategoryFilter);
+    this.visibleCount.set(PAGE_SIZE);
+  }
+
+  protected showMore(): void {
+    this.visibleCount.update((count) => count + PAGE_SIZE);
+  }
+
+  protected showAll(): void {
+    this.visibleCount.set(this.filtered().length);
   }
 
   protected openCreate(): void {

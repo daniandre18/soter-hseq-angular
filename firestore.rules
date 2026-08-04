@@ -38,7 +38,7 @@ service cloud.firestore {
                     || (isSignedIn() && request.auth.uid == userId
                         && request.resource.data.role == resource.data.role
                         && request.resource.data.status == resource.data.status);
-      allow delete: if false;
+      allow delete: if false; // se eliminan desde la Cloud Function `deleteUser` (borra Auth + Firestore juntos)
     }
 
     match /clients/{clientId} {

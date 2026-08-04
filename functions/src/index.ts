@@ -333,3 +333,45 @@ export const createUser = onCall(async (request) => {
 
   return { uid: authUser.uid };
 });
+
+interface DeleteUserRequest {
+  uid: string;
+}
+
+/**
+ * Elimina la cuenta de Auth Y el documento de `users` en el mismo paso.
+ * `firestore.rules` bloquea `delete` en `users` a propósito (ver el
+ * comentario ahí) — borrar solo el documento dejaría la cuenta de Auth
+ * viva (podría seguir iniciando sesión sin perfil), así que esto también
+ * necesita el Admin SDK, igual que `createUser`. No falla si el usuario
+ * tiene órdenes asignadas: `assignedTechnicianIds` no se limpia (seguiría
+ * "asignado" a un uid que ya no existe), pero `OrdersFacade.technicianName`
+ * ya tiene un fallback genérico ("Técnico") para un id sin match, mismo
+ * criterio ya aceptado para `ClientsService.deleteClient`.
+ */
+export const deleteUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para eliminar usuarios.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN']);
+
+  const { uid } = (request.data ?? {}) as Partial<DeleteUserRequest>;
+  if (!uid) {
+    throw new HttpsError('invalid-argument', 'Falta el usuario a eliminar.');
+  }
+  if (uid === request.auth.uid) {
+    throw new HttpsError('failed-precondition', 'No puedes eliminar tu propia cuenta.');
+  }
+
+  await getFirestore().collection('users').doc(uid).delete();
+  await getAuth()
+    .deleteUser(uid)
+    .catch((error) => {
+      const code = (error as { code?: string }).code;
+      if (code !== 'auth/user-not-found') {
+        throw error;
+      }
+    });
+
+  return { uid };
+});
