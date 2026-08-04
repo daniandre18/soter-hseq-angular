@@ -44,6 +44,28 @@
   flex-shrink: 0;
 }
 
+.manage-categories-link {
+  align-self: center;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-brand-600);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--color-brand-800);
+  }
+}
+
+.muted {
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--color-gray-300);
+}
+
 .services-summary {
   margin: 0 0 1rem;
   font-size: 0.875rem;

@@ -9,12 +9,18 @@
     </label>
 
     <label class="field">
-      Categoría
+      Categoría *
       <select [formField]="serviceForm.category">
-        @for (key of categoryKeys; track key) {
-          <option [value]="key">{{ categoryLabels[key] }}</option>
+        <option value="">Seleccionar categoría...</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">
+            {{ category.icon ? category.icon + ' ' : '' }}{{ category.label }}
+          </option>
         }
       </select>
+      @if (serviceForm.category().touched() && serviceForm.category().errors().length) {
+        <span class="field-error">{{ serviceForm.category().errors()[0].message }}</span>
+      }
     </label>
 
     <label class="field">

@@ -3,8 +3,8 @@ import { FormField, form, min, required, submit } from '@angular/forms/signals';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { ServicesFacade } from '../../facades/services.facade';
-import { SERVICE_CATEGORY_KEYS, SERVICE_CATEGORY_LABELS } from '../../models/service.model';
-import type { Service, ServiceCategory } from '../../models/service.model';
+import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
+import type { Service } from '../../models/service.model';
 
 // `status` como string-union (no `active: boolean`) a propósito: un
 // `<select>` nativo siempre emite string, y Signal Forms no coerciona el
@@ -14,7 +14,7 @@ import type { Service, ServiceCategory } from '../../models/service.model';
 interface ServiceFormModel {
   name: string;
   description: string;
-  category: ServiceCategory;
+  category: string;
   price: number;
   unit: string;
   status: 'ACTIVE' | 'INACTIVE';
@@ -23,7 +23,7 @@ interface ServiceFormModel {
 const EMPTY_MODEL: ServiceFormModel = {
   name: '',
   description: '',
-  category: 'SEGURIDAD',
+  category: '',
   price: 0,
   unit: 'visita',
   status: 'ACTIVE',
@@ -37,6 +37,7 @@ const EMPTY_MODEL: ServiceFormModel = {
 })
 export class ServiceFormModal {
   private readonly servicesFacade = inject(ServicesFacade);
+  private readonly categoriesFacade = inject(ServiceCategoriesFacade);
 
   readonly open = input(false);
   readonly editingService = input<Service | null>(null);
@@ -45,11 +46,11 @@ export class ServiceFormModal {
   protected readonly saving = signal(false);
   protected readonly model = signal<ServiceFormModel>({ ...EMPTY_MODEL });
 
-  protected readonly categoryLabels = SERVICE_CATEGORY_LABELS;
-  protected readonly categoryKeys = SERVICE_CATEGORY_KEYS;
+  protected readonly categories = this.categoriesFacade.categories;
 
   protected readonly serviceForm = form(this.model, (schemaPath) => {
     required(schemaPath.name, { message: 'El nombre del servicio es obligatorio.' });
+    required(schemaPath.category, { message: 'Selecciona una categoría.' });
     required(schemaPath.unit, { message: 'Indica la unidad de cobro.' });
     min(schemaPath.price, 0, { message: 'El precio no puede ser negativo.' });
   });
@@ -59,6 +60,7 @@ export class ServiceFormModal {
   );
 
   constructor() {
+    this.categoriesFacade.init();
     effect(() => {
       const service = this.editingService();
       if (!this.open()) {

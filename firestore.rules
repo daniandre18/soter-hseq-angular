@@ -76,6 +76,13 @@ service cloud.firestore {
       allow create, update, delete: if hasRole(['ADMIN', 'COMMERCIAL']);
     }
 
+    // Catálogo administrable de categorías de servicio — mismo criterio de
+    // acceso que `services` (quien lo lee/edita puede gestionar categorías).
+    match /serviceCategories/{categoryId} {
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+      allow create, update, delete: if hasRole(['ADMIN', 'COMMERCIAL']);
+    }
+
     match /quotes/{quoteId} {
       allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
       allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);

@@ -1,0 +1,77 @@
+<app-modal [open]="open()" title="Administrar Categorías" size="sm" (closeRequested)="close()">
+  @if (!creating()) {
+    <button type="button" class="new-category-btn" (click)="openCreateForm()">
+      <app-icon name="tag" />
+      Nueva categoría
+    </button>
+  } @else {
+    <div class="create-form">
+      <div class="create-row">
+        <input
+          type="text"
+          placeholder="Nombre de categoría..."
+          [value]="newLabel()"
+          (input)="newLabel.set($any($event.target).value)"
+          (keydown.enter)="saveNewCategory()"
+        />
+        <app-button size="sm" (click)="saveNewCategory()" [disabled]="saving() || !newLabel().trim()">
+          {{ saving() ? 'Guardando…' : 'Guardar' }}
+        </app-button>
+        <app-button variant="outline" size="sm" (click)="cancelCreate()">Cancelar</app-button>
+      </div>
+
+      <p class="field-hint">Ícono (opcional)</p>
+      <div class="icon-grid">
+        @for (icon of iconOptions; track icon) {
+          <button
+            type="button"
+            class="icon-option"
+            [class.icon-option--selected]="selectedIcon() === icon"
+            (click)="selectIcon(icon)"
+          >
+            {{ icon }}
+          </button>
+        }
+      </div>
+
+      <p class="field-hint">Color</p>
+      <div class="color-grid">
+        @for (color of palette; track color) {
+          <button
+            type="button"
+            class="color-swatch"
+            [class.color-swatch--selected]="selectedColor() === color"
+            [style.background]="color"
+            [attr.aria-label]="'Elegir color ' + color"
+            (click)="selectColor(color)"
+          ></button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="categories-list">
+    @if (categories().length === 0) {
+      <p class="empty-hint">Todavía no hay categorías creadas.</p>
+    }
+    @for (category of categories(); track category.id) {
+      <div class="category-row">
+        <span class="category-dot" [style.background]="category.color"></span>
+        @if (category.icon) {
+          <span class="category-icon">{{ category.icon }}</span>
+        }
+        <span class="category-label">{{ category.label }}</span>
+        <button
+          type="button"
+          class="delete-category-btn"
+          [disabled]="deletingId() === category.id"
+          (click)="deleteCategory(category.id)"
+          [attr.aria-label]="'Eliminar categoría ' + category.label"
+          title="Eliminar"
+        >
+          <app-icon name="trash-2" />
+        </button>
+      </div>
+    }
+  </div>
+</app-modal>

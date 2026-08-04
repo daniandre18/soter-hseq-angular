@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 
 import { ServicesList } from './services-list';
 import { ServicesFacade } from '../../facades/services.facade';
+import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
 
 describe('ServicesList', () => {
   let component: ServicesList;
@@ -18,6 +19,14 @@ describe('ServicesList', () => {
             services: signal([]),
             loading: signal(false),
             deleteService: async () => undefined,
+            init: () => undefined,
+          },
+        },
+        {
+          provide: ServiceCategoriesFacade,
+          useValue: {
+            categories: signal([]),
+            byId: () => undefined,
             init: () => undefined,
           },
         },

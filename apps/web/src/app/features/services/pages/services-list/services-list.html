@@ -16,10 +16,15 @@
         (change)="onCategoryChange($event)"
       >
         <option value="all">Todas las categorías</option>
-        @for (key of categoryKeys; track key) {
-          <option [value]="key">{{ categoryLabels[key] }}</option>
+        @for (category of categoriesFacade.categories(); track category.id) {
+          <option [value]="category.id">
+            {{ category.icon ? category.icon + ' ' : '' }}{{ category.label }}
+          </option>
         }
       </select>
+      <button type="button" class="manage-categories-link" (click)="openCategoriesManager()">
+        Administrar categorías
+      </button>
     </div>
     <app-button (click)="openCreate()">+ Nuevo Servicio</app-button>
   </div>
@@ -53,7 +58,13 @@
                     <p class="service-description">{{ service.description }}</p>
                   }
                 </td>
-                <td>{{ categoryLabels[service.category] }}</td>
+                <td>
+                  @if (categoriesFacade.byId(service.category); as category) {
+                    {{ category.icon ? category.icon + ' ' : '' }}{{ category.label }}
+                  } @else {
+                    <span class="muted">Sin categoría</span>
+                  }
+                </td>
                 <td class="nowrap">{{ formatCurrency(service.price) }}</td>
                 <td>{{ service.unit }}</td>
                 <td>
@@ -122,3 +133,8 @@
     <app-button variant="danger" (click)="deleteConfirmed()">Eliminar</app-button>
   </div>
 </app-modal>
+
+<app-service-categories-manager-modal
+  [open]="categoriesManagerOpen()"
+  (closeRequested)="closeCategoriesManager()"
+/>

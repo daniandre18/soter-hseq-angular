@@ -1,38 +1,37 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ServicesFacade } from '../../facades/services.facade';
+import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
 import { Card } from '../../../../shared/components/card/card';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { ServiceFormModal } from '../../components/service-form-modal/service-form-modal';
-import { SERVICE_CATEGORY_KEYS, SERVICE_CATEGORY_LABELS } from '../../models/service.model';
+import { ServiceCategoriesManagerModal } from '../../components/service-categories-manager-modal/service-categories-manager-modal';
 import { formatCurrency } from '../../../../shared/utils/format-currency';
-import type { Service, ServiceCategory } from '../../models/service.model';
-
-type CategoryFilter = 'all' | ServiceCategory;
+import type { Service } from '../../models/service.model';
 
 const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-services-list',
-  imports: [Card, Button, StatusBadge, Modal, Icon, ServiceFormModal],
+  imports: [Card, Button, StatusBadge, Modal, Icon, ServiceFormModal, ServiceCategoriesManagerModal],
   templateUrl: './services-list.html',
   styleUrl: './services-list.scss',
 })
 export class ServicesList {
   protected readonly servicesFacade = inject(ServicesFacade);
+  protected readonly categoriesFacade = inject(ServiceCategoriesFacade);
 
   protected readonly search = signal('');
-  protected readonly categoryFilter = signal<CategoryFilter>('all');
+  protected readonly categoryFilter = signal<string>('all');
   protected readonly visibleCount = signal(PAGE_SIZE);
 
   protected readonly formOpen = signal(false);
   protected readonly editingService = signal<Service | null>(null);
   protected readonly deletingId = signal<string | null>(null);
+  protected readonly categoriesManagerOpen = signal(false);
 
-  protected readonly categoryLabels = SERVICE_CATEGORY_LABELS;
-  protected readonly categoryKeys = SERVICE_CATEGORY_KEYS;
   protected readonly formatCurrency = formatCurrency;
 
   protected readonly filtered = computed(() => {
@@ -54,6 +53,7 @@ export class ServicesList {
 
   constructor() {
     this.servicesFacade.init();
+    this.categoriesFacade.init();
   }
 
   protected onSearchInput(event: Event): void {
@@ -62,8 +62,16 @@ export class ServicesList {
   }
 
   protected onCategoryChange(event: Event): void {
-    this.categoryFilter.set((event.target as HTMLSelectElement).value as CategoryFilter);
+    this.categoryFilter.set((event.target as HTMLSelectElement).value);
     this.visibleCount.set(PAGE_SIZE);
+  }
+
+  protected openCategoriesManager(): void {
+    this.categoriesManagerOpen.set(true);
+  }
+
+  protected closeCategoriesManager(): void {
+    this.categoriesManagerOpen.set(false);
   }
 
   protected showMore(): void {
