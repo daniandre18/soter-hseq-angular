@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 
 import { ClientsList } from './clients-list';
 import { ClientsFacade } from '../../facades/clients.facade';
+import { ClientTagsFacade } from '../../facades/client-tags.facade';
 import { OrdersFacade } from '../../../orders/facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 
@@ -24,6 +25,17 @@ describe('ClientsList', () => {
         },
         { provide: OrdersFacade, useValue: { orders: signal([]) } },
         { provide: AuthFacade, useValue: { currentRole: signal(null) } },
+        {
+          provide: ClientTagsFacade,
+          useValue: {
+            tags: signal([]),
+            loading: signal(false),
+            init: () => undefined,
+            byId: () => undefined,
+            addTag: async () => 'new-id',
+            deleteTag: async () => undefined,
+          },
+        },
       ],
     }).compileComponents();
 

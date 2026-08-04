@@ -55,6 +55,15 @@ service cloud.firestore {
       }
     }
 
+    // Catálogo administrable de etiquetas de cliente (mismo criterio de
+    // acceso que `clients`: quien puede editar un cliente puede gestionar
+    // el catálogo). Sin "historial" propio que proteger — a diferencia de
+    // `clients`, sí se permite `delete` a los mismos roles que crean.
+    match /clientTags/{tagId} {
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
+      allow create, update, delete: if hasRole(['ADMIN', 'COMMERCIAL']);
+    }
+
     match /services/{serviceId} {
       // Catálogo de servicios: se selecciona al armar una cotización, así
       // que el mismo alcance de roles que ya lee/escribe cotizaciones.

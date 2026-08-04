@@ -1,0 +1,58 @@
+<app-modal [open]="open()" title="Administrar Etiquetas" size="sm" (closeRequested)="close()">
+  @if (!creating()) {
+    <button type="button" class="new-tag-btn" (click)="openCreateForm()">
+      <app-icon name="tag" />
+      Nueva etiqueta
+    </button>
+  } @else {
+    <div class="create-form">
+      <div class="create-row">
+        <input
+          type="text"
+          placeholder="Nombre de etiqueta..."
+          [value]="newLabel()"
+          (input)="newLabel.set($any($event.target).value)"
+          (keydown.enter)="saveNewTag()"
+        />
+        <app-button size="sm" (click)="saveNewTag()" [disabled]="saving() || !newLabel().trim()">
+          {{ saving() ? 'Guardando…' : 'Guardar' }}
+        </app-button>
+        <app-button variant="outline" size="sm" (click)="cancelCreate()">Cancelar</app-button>
+      </div>
+      <div class="color-grid">
+        @for (color of palette; track color) {
+          <button
+            type="button"
+            class="color-swatch"
+            [class.color-swatch--selected]="selectedColor() === color"
+            [style.background]="color"
+            [attr.aria-label]="'Elegir color ' + color"
+            (click)="selectColor(color)"
+          ></button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="tags-list">
+    @if (tags().length === 0) {
+      <p class="empty-hint">Todavía no hay etiquetas creadas.</p>
+    }
+    @for (tag of tags(); track tag.id) {
+      <div class="tag-row">
+        <span class="tag-dot" [style.background]="tag.color"></span>
+        <span class="tag-label">{{ tag.label }}</span>
+        <button
+          type="button"
+          class="delete-tag-btn"
+          [disabled]="deletingId() === tag.id"
+          (click)="deleteTag(tag.id)"
+          [attr.aria-label]="'Eliminar etiqueta ' + tag.label"
+          title="Eliminar"
+        >
+          <app-icon name="trash-2" />
+        </button>
+      </div>
+    }
+  </div>
+</app-modal>

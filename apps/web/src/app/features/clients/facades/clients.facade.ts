@@ -4,13 +4,7 @@ import { Observable } from 'rxjs';
 import { ClientsQuery } from '../state/clients.query';
 import { ClientsService } from '../state/clients.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
-import type {
-  Client,
-  ClientContact,
-  ClientTagKey,
-  NewClient,
-  NewClientContact,
-} from '../models/client.model';
+import type { Client, ClientContact, NewClient, NewClientContact } from '../models/client.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClientsFacade {
@@ -44,7 +38,7 @@ export class ClientsFacade {
     await this.service.deleteClient(id);
   }
 
-  async setTag(id: string, tag: ClientTagKey, enabled: boolean): Promise<void> {
+  async setTag(id: string, tag: string, enabled: boolean): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.setTag(id, tag, enabled, userId);
   }

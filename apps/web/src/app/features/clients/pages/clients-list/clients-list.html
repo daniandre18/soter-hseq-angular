@@ -87,14 +87,12 @@
                 <td>{{ client.city || 'Sin ciudad' }}</td>
                 <td>
                   <div class="tag-chips">
-                    @for (tagKey of client.tags; track tagKey) {
-                      <span
-                        class="tag-chip"
-                        [style.background]="tagConfig[tagKey].color + '1a'"
-                        [style.color]="tagConfig[tagKey].color"
-                      >
-                        {{ tagConfig[tagKey].label }}
-                      </span>
+                    @for (tagId of client.tags; track tagId) {
+                      @if (tagsFacade.byId(tagId); as tag) {
+                        <span class="tag-chip" [style.background]="tag.color + '1a'" [style.color]="tag.color">
+                          {{ tag.label }}
+                        </span>
+                      }
                     }
                     @if (client.tags.length === 0) {
                       <span class="muted">Sin etiquetas</span>
@@ -120,18 +118,42 @@
                     </button>
                     @if (openTagPickerId() === client.id) {
                       <div class="tag-picker">
-                        @for (tagKey of tagKeys; track tagKey) {
-                          <button type="button" class="tag-option" (click)="toggleTag(client, tagKey, $event)">
-                            <span class="tag-dot" [style.background]="tagConfig[tagKey].color"></span>
-                            <span class="tag-option-label">{{ tagConfig[tagKey].label }}</span>
-                            @if (hasTag(client, tagKey)) {
-                              <app-icon name="circle-check-big" class="tag-check" />
-                            }
+                        <input
+                          type="text"
+                          class="tag-search-input"
+                          placeholder="Buscar o crear etiqueta..."
+                          aria-label="Buscar o crear etiqueta"
+                          [value]="tagSearch()"
+                          (input)="onTagSearchInput($event)"
+                        />
+                        <div class="tag-options-scroll">
+                          @if (canCreateTagFromSearch()) {
+                            <button type="button" class="tag-option tag-option--create" (click)="createAndApplyTag(client, $event)">
+                              <app-icon name="tag" class="tag-check" />
+                              <span class="tag-option-label">Crear "{{ tagSearch().trim() }}"</span>
+                            </button>
+                          }
+                          @for (tag of filteredTags(); track tag.id) {
+                            <button type="button" class="tag-option" (click)="toggleTag(client, tag.id, $event)">
+                              <span class="tag-dot" [style.background]="tag.color"></span>
+                              <span class="tag-option-label">{{ tag.label }}</span>
+                              @if (hasTag(client, tag.id)) {
+                                <app-icon name="circle-check-big" class="tag-check" />
+                              }
+                            </button>
+                          }
+                          @if (filteredTags().length === 0 && !canCreateTagFromSearch()) {
+                            <p class="tag-picker-empty">Sin etiquetas todavía.</p>
+                          }
+                        </div>
+                        <div class="tag-picker-footer">
+                          <button type="button" class="tag-picker-manage" (click)="openManager($event)">
+                            Administrar
                           </button>
-                        }
-                        <button type="button" class="tag-picker-close" (click)="closeTagPicker($event)">
-                          Cerrar
-                        </button>
+                          <button type="button" class="tag-picker-close" (click)="closeTagPicker($event)">
+                            Cerrar
+                          </button>
+                        </div>
                       </div>
                     }
                   </div>
@@ -215,3 +237,5 @@
 </app-modal>
 
 <app-client-detail-modal [client]="detailClient()" (closeRequested)="closeDetail()" />
+
+<app-client-tags-manager-modal [open]="managerOpen()" (closeRequested)="closeManager()" />

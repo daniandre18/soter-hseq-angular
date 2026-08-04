@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ClientsFacade } from '../../facades/clients.facade';
+import { ClientTagsFacade } from '../../facades/client-tags.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { Card } from '../../../../shared/components/card/card';
 import { Button } from '../../../../shared/components/button/button';
@@ -8,8 +9,9 @@ import { Icon } from '../../../../shared/components/icon/icon';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { ClientFormModal } from '../../components/client-form-modal/client-form-modal';
 import { ClientDetailModal } from '../../components/client-detail-modal/client-detail-modal';
-import { CLIENT_TAG_CONFIG, CLIENT_TAG_KEYS } from '../../models/client.model';
-import type { Client, ClientTagKey } from '../../models/client.model';
+import { ClientTagsManagerModal } from '../../components/client-tags-manager-modal/client-tags-manager-modal';
+import { CLIENT_TAG_COLOR_PALETTE } from '../../models/client-tag.model';
+import type { Client } from '../../models/client.model';
 
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 
@@ -17,12 +19,22 @@ const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-clients-list',
-  imports: [Card, Button, StatusBadge, Icon, Modal, ClientFormModal, ClientDetailModal],
+  imports: [
+    Card,
+    Button,
+    StatusBadge,
+    Icon,
+    Modal,
+    ClientFormModal,
+    ClientDetailModal,
+    ClientTagsManagerModal,
+  ],
   templateUrl: './clients-list.html',
   styleUrl: './clients-list.scss',
 })
 export class ClientsList {
   protected readonly clientsFacade = inject(ClientsFacade);
+  protected readonly tagsFacade = inject(ClientTagsFacade);
   private readonly authFacade = inject(AuthFacade);
 
   protected readonly search = signal('');
@@ -33,14 +45,31 @@ export class ClientsList {
   protected readonly editingClient = signal<Client | null>(null);
   protected readonly detailClient = signal<Client | null>(null);
   protected readonly openTagPickerId = signal<string | null>(null);
+  protected readonly tagSearch = signal('');
+  protected readonly creatingTag = signal(false);
+  protected readonly managerOpen = signal(false);
   protected readonly selectedIds = signal<Set<string>>(new Set());
   protected readonly deletingIds = signal<string[] | null>(null);
   protected readonly deleting = signal(false);
 
-  protected readonly tagConfig = CLIENT_TAG_CONFIG;
-  protected readonly tagKeys = CLIENT_TAG_KEYS;
-
   protected readonly canDelete = computed(() => this.authFacade.currentRole() === 'ADMIN');
+
+  /** Etiquetas del catálogo que coinciden con el texto de búsqueda del
+   *  picker abierto — vacío el texto, muestra todas. */
+  protected readonly filteredTags = computed(() => {
+    const term = this.tagSearch().trim().toLowerCase();
+    return this.tagsFacade.tags().filter((tag) => !term || tag.label.toLowerCase().includes(term));
+  });
+
+  /** Solo se ofrece "crear" cuando el texto no coincide con ninguna
+   *  etiqueta existente (evita duplicados con el mismo nombre). */
+  protected readonly canCreateTagFromSearch = computed(() => {
+    const term = this.tagSearch().trim();
+    if (!term) {
+      return false;
+    }
+    return !this.tagsFacade.tags().some((tag) => tag.label.toLowerCase() === term.toLowerCase());
+  });
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -80,6 +109,7 @@ export class ClientsList {
 
   constructor() {
     this.clientsFacade.init();
+    this.tagsFacade.init();
   }
 
   protected onSearchInput(event: Event): void {
@@ -130,6 +160,7 @@ export class ClientsList {
 
   protected toggleTagPicker(clientId: string, event: Event): void {
     event.stopPropagation();
+    this.tagSearch.set('');
     this.openTagPickerId.update((current) => (current === clientId ? null : clientId));
   }
 
@@ -138,13 +169,42 @@ export class ClientsList {
     this.openTagPickerId.set(null);
   }
 
-  protected hasTag(client: Client, tagKey: ClientTagKey): boolean {
-    return client.tags.includes(tagKey);
+  protected onTagSearchInput(event: Event): void {
+    this.tagSearch.set((event.target as HTMLInputElement).value);
   }
 
-  protected async toggleTag(client: Client, tagKey: ClientTagKey, event: Event): Promise<void> {
+  protected hasTag(client: Client, tagId: string): boolean {
+    return client.tags.includes(tagId);
+  }
+
+  protected async toggleTag(client: Client, tagId: string, event: Event): Promise<void> {
     event.stopPropagation();
-    await this.clientsFacade.setTag(client.id, tagKey, !this.hasTag(client, tagKey));
+    await this.clientsFacade.setTag(client.id, tagId, !this.hasTag(client, tagId));
+  }
+
+  /** "Buscar o crear etiqueta": si el texto no matchea ninguna existente,
+   *  crea una nueva (color siguiente de la paleta, cíclico) y la aplica al
+   *  cliente en el mismo paso. */
+  protected async createAndApplyTag(client: Client, event: Event): Promise<void> {
+    event.stopPropagation();
+    const label = this.tagSearch().trim();
+    if (!label || !this.canCreateTagFromSearch()) {
+      return;
+    }
+    const color = CLIENT_TAG_COLOR_PALETTE[this.tagsFacade.tags().length % CLIENT_TAG_COLOR_PALETTE.length];
+    const newTagId = await this.tagsFacade.addTag({ label, color });
+    await this.clientsFacade.setTag(client.id, newTagId, true);
+    this.tagSearch.set('');
+  }
+
+  protected openManager(event: Event): void {
+    event.stopPropagation();
+    this.openTagPickerId.set(null);
+    this.managerOpen.set(true);
+  }
+
+  protected closeManager(): void {
+    this.managerOpen.set(false);
   }
 
   protected isSelected(clientId: string): boolean {

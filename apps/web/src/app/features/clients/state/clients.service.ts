@@ -16,7 +16,7 @@ import {
 import { Observable } from 'rxjs';
 import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
 import { ClientsStore } from './clients.store';
-import type { Client, ClientContact, ClientTagKey, NewClient, NewClientContact } from '../models/client.model';
+import type { Client, ClientContact, NewClient, NewClientContact } from '../models/client.model';
 
 function toDate(value: Timestamp | undefined): Date {
   return value ? value.toDate() : new Date(0);
@@ -114,7 +114,7 @@ export class ClientsService {
    * el listener — cada operación es atómica del lado de Firestore, no
    * depende del estado `tags` que tenga el cliente en el momento del click.
    */
-  async setTag(id: string, tag: ClientTagKey, enabled: boolean, updatedBy: string): Promise<void> {
+  async setTag(id: string, tag: string, enabled: boolean, updatedBy: string): Promise<void> {
     await updateDoc(doc(this.firestore, 'clients', id), {
       tags: enabled ? arrayUnion(tag) : arrayRemove(tag),
       updatedAt: serverTimestamp(),
