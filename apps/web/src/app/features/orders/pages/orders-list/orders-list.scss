@@ -188,6 +188,9 @@
 }
 
 .load-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -195,6 +198,10 @@
   font-weight: 600;
   color: var(--color-brand-600);
   padding: 0;
+
+  app-icon {
+    display: flex;
+  }
 
   &:hover {
     color: var(--color-brand-800);

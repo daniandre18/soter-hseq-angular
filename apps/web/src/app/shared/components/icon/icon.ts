@@ -26,7 +26,10 @@ export type IconName =
   | 'wrench'
   | 'eye'
   | 'square-pen'
-  | 'trash-2';
+  | 'trash-2'
+  | 'chevron-up'
+  | 'chevron-down'
+  | 'chevrons-down';
 
 @Component({
   selector: 'app-icon',

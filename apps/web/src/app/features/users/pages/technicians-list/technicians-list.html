@@ -90,13 +90,18 @@
       @if (hasMore() || hasCollapsed()) {
         <div class="load-more-bar">
           @if (hasCollapsed()) {
-            <button type="button" class="load-more-btn" (click)="showLess()">Mostrar menos</button>
+            <button type="button" class="load-more-btn" (click)="showLess()">
+              <app-icon name="chevron-up" />
+              Mostrar menos
+            </button>
           }
           @if (hasMore()) {
             <button type="button" class="load-more-btn" (click)="showMore()">
+              <app-icon name="chevron-down" />
               Mostrar {{ nextBatchSize() }} más
             </button>
             <button type="button" class="load-more-btn" (click)="showAll()">
+              <app-icon name="chevrons-down" />
               Mostrar todas ({{ filtered().length }})
             </button>
           }
