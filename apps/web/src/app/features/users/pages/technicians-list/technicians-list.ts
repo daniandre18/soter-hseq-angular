@@ -44,6 +44,7 @@ export class TechniciansList {
 
   protected readonly visibleTechnicians = computed(() => this.filtered().slice(0, this.visibleCount()));
   protected readonly hasMore = computed(() => this.visibleCount() < this.filtered().length);
+  protected readonly hasCollapsed = computed(() => this.visibleCount() > PAGE_SIZE);
   protected readonly nextBatchSize = computed(() =>
     Math.min(PAGE_SIZE, this.filtered().length - this.visibleCount()),
   );
@@ -63,6 +64,10 @@ export class TechniciansList {
 
   protected showAll(): void {
     this.visibleCount.set(this.filtered().length);
+  }
+
+  protected showLess(): void {
+    this.visibleCount.set(PAGE_SIZE);
   }
 
   protected openCreate(): void {

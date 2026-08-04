@@ -170,14 +170,19 @@
           </tbody>
         </table>
       </div>
-      @if (hasMore()) {
+      @if (hasMore() || hasCollapsed()) {
         <div class="load-more-bar">
-          <button type="button" class="load-more-btn" (click)="showMore()">
-            Mostrar {{ nextBatchSize() }} más
-          </button>
-          <button type="button" class="load-more-btn" (click)="showAll()">
-            Mostrar todas ({{ filtered().length }})
-          </button>
+          @if (hasCollapsed()) {
+            <button type="button" class="load-more-btn" (click)="showLess()">Mostrar menos</button>
+          }
+          @if (hasMore()) {
+            <button type="button" class="load-more-btn" (click)="showMore()">
+              Mostrar {{ nextBatchSize() }} más
+            </button>
+            <button type="button" class="load-more-btn" (click)="showAll()">
+              Mostrar todas ({{ filtered().length }})
+            </button>
+          }
         </div>
       }
     </app-card>
