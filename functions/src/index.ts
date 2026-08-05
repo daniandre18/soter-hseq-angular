@@ -4,7 +4,6 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
-import { defineString } from 'firebase-functions/params';
 import { GoogleGenAI } from '@google/genai';
 import PDFDocument from 'pdfkit';
 
@@ -268,11 +267,6 @@ export const onQuoteStatusChanged = onDocumentUpdated('quotes/{quoteId}', async 
   });
 });
 
-// `defineString` (no `defineSecret`): para el MVP local con el Emulator
-// Suite y un proyecto "demo-" ficticio no hay cuenta de Google Cloud real
-// contra la cual resolver Secret Manager. En producción esto debe migrar a
-// `firebase functions:secrets:set GEMINI_API_KEY` (CLAUDE.md §13.5).
-const geminiApiKey = defineString('GEMINI_API_KEY');
 const GEMINI_MODEL = 'gemini-1.5-flash';
 const CLOSING_ACT_PROMPT_VERSION = 'closing-act-v1';
 
@@ -373,7 +367,14 @@ export const generateClosingAct = onCall(async (request) => {
     .get();
   const nextVersion = priorActsSnapshot.size + 1;
 
-  const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+  const apiKey = process.env['GEMINI_API_KEY'];
+  if (!apiKey) {
+    throw new HttpsError(
+      'failed-precondition',
+      'La generación con IA todavía no está configurada en este entorno.',
+    );
+  }
+  const ai = new GoogleGenAI({ apiKey });
 
   let draft: ClosingActDraft;
   try {
