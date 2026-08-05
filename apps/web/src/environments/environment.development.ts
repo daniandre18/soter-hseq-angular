@@ -5,7 +5,7 @@ import type { AppEnvironment } from '../app/core/models/app-environment.model';
 export const environment: AppEnvironment = {
   production: false,
   useEmulators: true,
-  demoQuickLoginEnabled: false,
+  demoQuickLoginEnabled: true,
   evidenceUploadsEnabled: true,
   firebase: {
     apiKey: 'demo-api-key',

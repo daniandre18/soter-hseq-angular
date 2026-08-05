@@ -61,6 +61,14 @@ export class NotificationBell {
     void this.facade.markAllAsRead();
   }
 
+  protected dismiss(notificationId: string): void {
+    void this.facade.dismiss(notificationId);
+  }
+
+  protected dismissAll(): void {
+    void this.facade.dismissAll();
+  }
+
   @HostListener('document:click', ['$event.target'])
   protected onDocumentClick(target: EventTarget | null): void {
     if (this.open() && target instanceof Node && !this.elementRef.nativeElement.contains(target)) {

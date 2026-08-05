@@ -1,4 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { map } from 'rxjs';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { Card } from '../../../../shared/components/card/card';
@@ -20,6 +23,16 @@ const ACTIVE_STATUSES = new Set<ServiceOrder['status']>(['ASSIGNED', 'IN_PROGRES
 export class MyOrders {
   protected readonly ordersFacade = inject(OrdersFacade);
   private readonly authFacade = inject(AuthFacade);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** `?open=<id>` — usado por la agenda de visitas y la campanita de
+   *  notificaciones para abrir directo el detalle en vez de solo aterrizar
+   *  en el listado (mismo patrón que OrdersList). */
+  private readonly openQueryParamId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('open'))),
+    { initialValue: null },
+  );
 
   protected readonly detailOrderId = signal<string | null>(null);
   protected readonly formatDateTime = formatDateTime;
@@ -56,6 +69,21 @@ export class MyOrders {
 
   constructor() {
     this.ordersFacade.init();
+
+    effect(() => {
+      const id = this.openQueryParamId();
+      if (!id) {
+        return;
+      }
+      const order = this.myOrders().find((candidate) => candidate.id === id);
+      if (order) {
+        this.detailOrderId.set(order.id);
+        void this.router.navigate([], {
+          queryParams: { open: null },
+          queryParamsHandling: 'merge',
+        });
+      }
+    });
   }
 
   protected statusLabel(status: ServiceOrder['status']): string {

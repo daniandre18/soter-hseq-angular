@@ -1,4 +1,12 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
@@ -22,6 +30,7 @@ interface CalendarDay {
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const VISIBLE_VISITS_PER_DAY = 3;
+let nextClientListboxId = 0;
 
 function startOfDay(date: Date): Date {
   const result = new Date(date);
@@ -42,6 +51,8 @@ function dateKey(date: Date): string {
 export class VisitsAgenda {
   protected readonly ordersFacade = inject(OrdersFacade);
   private readonly authFacade = inject(AuthFacade);
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
+  protected readonly clientListboxId = `agenda-client-listbox-${nextClientListboxId++}`;
   protected readonly weekdays = WEEKDAYS;
   protected readonly visibleVisitsPerDay = VISIBLE_VISITS_PER_DAY;
 
@@ -58,8 +69,25 @@ export class VisitsAgenda {
     return role === 'ADMIN' || role === 'COMMERCIAL' || role === 'COORDINATOR';
   });
 
+  /** El Técnico solo tiene acceso a `/mis-ordenes` (route guard), no a
+   *  `/ordenes`; el resto de roles con acceso a la agenda sí ven el
+   *  listado general. Ambas páginas soportan `?open=<id>` para abrir el
+   *  detalle directo en vez de aterrizar en el listado. */
+  protected readonly orderDetailRoute = computed(() =>
+    this.authFacade.currentRole() === 'TECHNICIAN' ? '/mis-ordenes' : '/ordenes',
+  );
+
   protected readonly selectedTechnicianId = signal('all');
   protected readonly visibleMonth = signal(startOfDay(new Date()));
+
+  /** Día elegido en la franja deslizable de la vista mobile (CLAUDE.md
+   *  §15 responsive): al seleccionar un día, la tarjeta "Próximas visitas"
+   *  cambia a mostrar las visitas de ese día. `null` = sin selección,
+   *  vuelve a mostrar las próximas visitas. Se limpia al cambiar de mes. */
+  protected readonly selectedDayKey = signal<string | null>(null);
+
+  /** Hoja inferior de filtros avanzados en mobile (estado, técnico, fechas). */
+  protected readonly filtersSheetOpen = signal(false);
 
   /** Filtros combinables (CLAUDE.md §5: Signals para estado derivado — no
    *  hace falta RxJS `combineLatest` porque `orders()` ya vive en memoria
@@ -69,10 +97,31 @@ export class VisitsAgenda {
   protected readonly dateFrom = signal('');
   protected readonly dateTo = signal('');
 
+  /** Lista desplegable de clientes bajo el buscador (CLAUDE.md §15: buscar
+   *  por texto libre es propenso a error de tipeo; mostrar la lista real
+   *  de clientes con visitas y filtrarla en vivo es más rápido y preciso). */
+  protected readonly showClientSuggestions = signal(false);
+
   protected readonly statusOptions = Object.entries(ORDER_STATUS_CONFIG) as [
     OrderStatus,
     { label: string; color: string; hex: string },
   ][];
+
+  protected readonly clientOptions = computed(() => {
+    const byId = new Map<string, string>();
+    for (const order of this.ordersFacade.orders()) {
+      if (!byId.has(order.clientId)) {
+        byId.set(order.clientId, order.clientBusinessName);
+      }
+    }
+    return Array.from(byId.values()).sort((a, b) => a.localeCompare(b, 'es'));
+  });
+
+  protected readonly clientSuggestions = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    const options = this.clientOptions();
+    return term ? options.filter((name) => name.toLowerCase().includes(term)) : options;
+  });
 
   protected readonly hasActiveFilters = computed(
     () =>
@@ -82,6 +131,17 @@ export class VisitsAgenda {
       this.dateFrom() !== '' ||
       this.dateTo() !== '',
   );
+
+  /** Cuenta solo los filtros "avanzados" (los que viven en la hoja mobile);
+   *  la búsqueda queda fuera porque su campo permanece visible siempre. */
+  protected readonly activeFilterCount = computed(() => {
+    let count = 0;
+    if (this.statusFilter() !== 'all') count++;
+    if (this.showTechnicianFilter() && this.selectedTechnicianId() !== 'all') count++;
+    if (this.dateFrom() !== '') count++;
+    if (this.dateTo() !== '') count++;
+    return count;
+  });
 
   protected readonly scheduledVisits = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -161,8 +221,71 @@ export class VisitsAgenda {
       .slice(0, 6);
   });
 
+  protected readonly dayVisits = computed(() => {
+    const key = this.selectedDayKey();
+    if (!key) return [];
+    return this.scheduledVisits().filter((visit) => dateKey(visit.scheduledStart!) === key);
+  });
+
+  /** Lista mostrada en la tarjeta lateral: las visitas del día elegido en
+   *  la franja mobile, o las próximas visitas cuando no hay día elegido
+   *  (comportamiento por defecto, igual en desktop y mobile). */
+  protected readonly displayedVisits = computed(() =>
+    this.selectedDayKey() ? this.dayVisits() : this.upcomingVisits(),
+  );
+
+  protected readonly selectedDayLabel = computed(() => {
+    const key = this.selectedDayKey();
+    if (!key) return '';
+    const [year, month, day] = key.split('-').map(Number);
+    return this.formatLongDate(new Date(year, month, day));
+  });
+
+  protected readonly displayedSubtitle = computed(() => {
+    const count = this.displayedVisits().length;
+    if (this.selectedDayKey()) {
+      return count === 1 ? '1 visita' : `${count} visitas`;
+    }
+    return count === 1 ? '1 programada' : `${count} programadas`;
+  });
+
+  protected readonly displayedEmptyMessage = computed(() =>
+    this.selectedDayKey()
+      ? 'No hay visitas programadas para este día.'
+      : 'No hay visitas próximas para este filtro.',
+  );
+
   constructor() {
     this.ordersFacade.init();
+
+    effect((onCleanup) => {
+      if (this.filtersSheetOpen()) {
+        document.body.style.overflow = 'hidden';
+        onCleanup(() => {
+          document.body.style.overflow = '';
+        });
+      }
+    });
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    if (this.filtersSheetOpen()) {
+      this.closeFiltersSheet();
+    }
+    if (this.showClientSuggestions()) {
+      this.showClientSuggestions.set(false);
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected onDocumentClick(event: MouseEvent): void {
+    if (
+      this.showClientSuggestions() &&
+      !this.elementRef.nativeElement.contains(event.target as Node)
+    ) {
+      this.showClientSuggestions.set(false);
+    }
   }
 
   protected previousMonth(): void {
@@ -175,6 +298,27 @@ export class VisitsAgenda {
 
   protected goToToday(): void {
     this.visibleMonth.set(startOfDay(new Date()));
+    this.selectedDayKey.set(null);
+  }
+
+  protected onDayPillClick(day: CalendarDay): void {
+    this.selectedDayKey.update((current) => (current === day.key ? null : day.key));
+  }
+
+  protected clearSelectedDay(): void {
+    this.selectedDayKey.set(null);
+  }
+
+  protected weekdayShort(date: Date): string {
+    return WEEKDAYS[(date.getDay() + 6) % 7];
+  }
+
+  protected openFiltersSheet(): void {
+    this.filtersSheetOpen.set(true);
+  }
+
+  protected closeFiltersSheet(): void {
+    this.filtersSheetOpen.set(false);
   }
 
   protected onTechnicianChange(event: Event): void {
@@ -183,6 +327,21 @@ export class VisitsAgenda {
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+    this.showClientSuggestions.set(true);
+  }
+
+  protected onSearchFocus(): void {
+    this.showClientSuggestions.set(true);
+  }
+
+  protected selectClient(name: string): void {
+    this.search.set(name);
+    this.showClientSuggestions.set(false);
+  }
+
+  protected clearSearch(): void {
+    this.search.set('');
+    this.showClientSuggestions.set(false);
   }
 
   protected onStatusChange(event: Event): void {
@@ -203,6 +362,8 @@ export class VisitsAgenda {
     this.selectedTechnicianId.set('all');
     this.dateFrom.set('');
     this.dateTo.set('');
+    this.selectedDayKey.set(null);
+    this.showClientSuggestions.set(false);
   }
 
   protected technicianNames(order: ServiceOrder): string {
@@ -250,5 +411,6 @@ export class VisitsAgenda {
   private changeMonth(offset: number): void {
     const month = this.visibleMonth();
     this.visibleMonth.set(new Date(month.getFullYear(), month.getMonth() + offset, 1));
+    this.selectedDayKey.set(null);
   }
 }

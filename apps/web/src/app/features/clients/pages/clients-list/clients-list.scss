@@ -519,12 +519,10 @@
 
 @media (max-width: 767px) {
   .clients-page-header {
-    align-items: flex-start;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
     margin-bottom: 1rem;
-
-    > div {
-      flex: 1 1 12rem;
-    }
   }
 
   .clients-filters {

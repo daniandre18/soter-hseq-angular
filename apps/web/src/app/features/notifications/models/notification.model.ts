@@ -11,7 +11,8 @@ export type NotificationEntityType = 'ORDER' | 'QUOTE';
 
 /** Modelo de dominio de la colección `notifications`, escrita solo por
  *  Cloud Functions (`firestore.rules`: `allow create: if false`). Visible
- *  para ADMIN/COORDINATOR; `readBy` acumula los uids que ya la vieron. */
+ *  para ADMIN/COORDINATOR; los arrays de usuarios conservan el estado
+ *  individual sin eliminar el evento compartido. */
 export interface AppNotification {
   id: string;
   type: NotificationType;
@@ -20,6 +21,7 @@ export interface AppNotification {
   entityType: NotificationEntityType;
   entityId: string;
   readBy: string[];
+  dismissedBy: string[];
   createdAt: Date;
   createdBy: string;
 }

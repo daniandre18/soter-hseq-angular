@@ -13,7 +13,10 @@ import type { Quote } from '../../models/quote.model';
 /** `QuoteDetailModal` (dentro de `QuotesList`) inyecta `OrdersFacade` para
  *  listar las órdenes generadas por la cotización — sin este stub, Angular
  *  intenta construir la fachada real y falla por falta de `FIREBASE_FIRESTORE`. */
-const ordersFacadeStub = { provide: OrdersFacade, useValue: { orders: signal([]), init: () => undefined } };
+const ordersFacadeStub = {
+  provide: OrdersFacade,
+  useValue: { orders: signal([]), init: () => undefined },
+};
 
 describe('QuotesList', () => {
   let component: QuotesList;
@@ -30,6 +33,7 @@ describe('QuotesList', () => {
             quotes: signal([]),
             loading: signal(false),
             canManageQuotes: signal(true),
+            canEditDraftQuotes: signal(false),
             init: () => undefined,
           },
         },
@@ -91,6 +95,7 @@ describe('QuotesList', () => {
               quotes: signal([quote]),
               loading: signal(false),
               canManageQuotes: signal(true),
+              canEditDraftQuotes: signal(false),
               init: () => undefined,
               watchItems: () => of([]),
             },

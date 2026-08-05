@@ -40,7 +40,7 @@ const SERVICES_GROUP: NavGroup = {
     {
       kind: 'link',
       path: '/servicios',
-      label: 'Catálogo de servicios',
+      label: 'Catálogo',
       icon: 'wrench',
       roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
     },

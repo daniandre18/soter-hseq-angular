@@ -1,12 +1,13 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormField, applyEach, form, min, required, submit } from '@angular/forms/signals';
+import { firstValueFrom } from 'rxjs';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { formatCurrency } from '../../../../shared/utils/format-currency';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { ServicesFacade } from '../../../services/facades/services.facade';
 import { QuotesFacade } from '../../facades/quotes.facade';
-import type { NewQuoteItem } from '../../models/quote.model';
+import type { NewQuoteItem, Quote } from '../../models/quote.model';
 
 interface QuoteItemRow {
   serviceId: string;
@@ -52,9 +53,11 @@ export class QuoteFormModal {
   private readonly quotesFacade = inject(QuotesFacade);
 
   readonly open = input(false);
+  readonly editingQuote = input<Quote | null>(null);
   readonly closeRequested = output<void>();
 
   protected readonly saving = signal(false);
+  protected readonly loadingDraft = signal(false);
   protected readonly formatCurrency = formatCurrency;
 
   protected readonly activeClients = computed(() =>
@@ -80,6 +83,40 @@ export class QuoteFormModal {
 
   constructor() {
     this.servicesFacade.init();
+    effect(() => {
+      const open = this.open();
+      const quote = this.editingQuote();
+      if (!open) {
+        return;
+      }
+      if (quote) {
+        void this.loadDraft(quote);
+      } else {
+        this.model.set(emptyModel());
+      }
+    });
+  }
+
+  private async loadDraft(quote: Quote): Promise<void> {
+    this.loadingDraft.set(true);
+    try {
+      const items = await firstValueFrom(this.quotesFacade.watchItems(quote.id));
+      this.model.set({
+        clientId: quote.clientId,
+        validUntil: quote.validUntil?.toISOString().slice(0, 10) ?? defaultValidUntil(),
+        notes: quote.notes ?? '',
+        items:
+          items.length > 0
+            ? items.map((item) => ({
+                serviceId: item.serviceCode ?? '',
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+              }))
+            : [emptyItemRow()],
+      });
+    } finally {
+      this.loadingDraft.set(false);
+    }
   }
 
   protected addRow(): void {
@@ -137,20 +174,23 @@ export class QuoteFormModal {
             position: index,
           }));
 
-        await this.quotesFacade.addQuote(
-          {
-            clientId: client.id,
-            clientBusinessName: client.businessName,
-            validUntil: new Date(value.validUntil),
-            currency: 'COP',
-            subtotal: total,
-            tax: 0,
-            discount: 0,
-            total,
-            notes: value.notes || undefined,
-          },
-          items,
-        );
+        const quoteData = {
+          clientId: client.id,
+          clientBusinessName: client.businessName,
+          validUntil: new Date(value.validUntil),
+          currency: 'COP' as const,
+          subtotal: total,
+          tax: 0,
+          discount: 0,
+          total,
+          notes: value.notes || undefined,
+        };
+        const editing = this.editingQuote();
+        if (editing) {
+          await this.quotesFacade.updateDraft(editing.id, quoteData, items);
+        } else {
+          await this.quotesFacade.addQuote(quoteData, items);
+        }
         this.close();
       } finally {
         this.saving.set(false);

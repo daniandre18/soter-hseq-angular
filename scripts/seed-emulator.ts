@@ -13,7 +13,10 @@ import { Timestamp, getFirestore } from 'firebase-admin/firestore';
 process.env.FIRESTORE_EMULATOR_HOST ??= '127.0.0.1:8080';
 process.env.FIREBASE_AUTH_EMULATOR_HOST ??= '127.0.0.1:9099';
 
-const DEMO_PASSWORD = 'Demo1234!';
+// Debe coincidir con `DEMO_PASSWORD` en demo-login.ts — los botones de
+// login rápido (activados por `demoQuickLoginEnabled`) usan este mismo
+// valor fijo contra el Auth emulado.
+const DEMO_PASSWORD = '123456';
 
 type UserRole =
   'ADMIN' | 'COMMERCIAL' | 'COORDINATOR' | 'TECHNICIAN' | 'VIEWER';
@@ -325,6 +328,25 @@ interface SeedClient {
   city: string;
 }
 
+interface DetailedSeedClient extends SeedClient {
+  legalName: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+  contact: {
+    name: string;
+    position: string;
+    email: string;
+    phone: string;
+  };
+  site: {
+    name: string;
+    address: string;
+    city: string;
+  };
+}
+
 const SEED_CLIENTS: SeedClient[] = [
   {
     businessName: 'Constructora Andina SAS',
@@ -342,6 +364,168 @@ const SEED_CLIENTS: SeedClient[] = [
     city: 'Bogotá',
   },
 ];
+
+export const ADDITIONAL_SEED_CLIENTS: DetailedSeedClient[] = [
+  {
+    businessName: 'Alimentos del Valle SAS',
+    legalName: 'Alimentos del Valle Colombiano S.A.S.',
+    taxId: '901384726-1',
+    email: 'compras@alimentosdelvalle.com.co',
+    phone: '+57 602 485 2170',
+    address: 'Calle 38 # 5N-42',
+    city: 'Cali',
+    notes: 'Empresa de producción y distribución de alimentos refrigerados. Opera en dos turnos.',
+    contact: {
+      name: 'Natalia Herrera Gómez',
+      position: 'Coordinadora de SST',
+      email: 'natalia.herrera@alimentosdelvalle.com.co',
+      phone: '+57 315 642 9081',
+    },
+    site: { name: 'Planta Yumbo', address: 'Carrera 32 # 12-85, Zona Industrial', city: 'Yumbo' },
+  },
+  {
+    businessName: 'Logística Caribe SAS',
+    legalName: 'Logística Integral del Caribe S.A.S.',
+    taxId: '900847315-6',
+    email: 'administracion@logisticacaribe.com.co',
+    phone: '+57 605 693 1842',
+    address: 'Avenida Pedro de Heredia # 31-45',
+    city: 'Cartagena',
+    notes: 'Operador logístico con almacenamiento, transporte terrestre y manejo de mercancías.',
+    contact: {
+      name: 'Jorge Luis Paternina',
+      position: 'Jefe HSEQ',
+      email: 'jpaternina@logisticacaribe.com.co',
+      phone: '+57 300 518 2746',
+    },
+    site: { name: 'Centro de distribución Mamonal', address: 'Kilómetro 4, Vía Mamonal', city: 'Cartagena' },
+  },
+  {
+    businessName: 'Metalmecánica Antioqueña SAS',
+    legalName: 'Soluciones Metalmecánicas Antioqueñas S.A.S.',
+    taxId: '901126593-8',
+    email: 'contacto@metalantioquena.com.co',
+    phone: '+57 604 444 7390',
+    address: 'Carrera 50 # 29 Sur-18',
+    city: 'Medellín',
+    notes: 'Fabricación de estructuras metálicas y mantenimiento industrial. Requiere control de trabajo en caliente.',
+    contact: {
+      name: 'Carolina Restrepo Vélez',
+      position: 'Directora de Gestión Humana',
+      email: 'crestrepo@metalantioquena.com.co',
+      phone: '+57 310 774 1265',
+    },
+    site: { name: 'Taller Itagüí', address: 'Calle 36 # 54-21, Zona Industrial', city: 'Itagüí' },
+  },
+  {
+    businessName: 'Clínica Santa Isabel SAS',
+    legalName: 'Institución Prestadora de Servicios de Salud Santa Isabel S.A.S.',
+    taxId: '900562418-3',
+    email: 'proveedores@clinicasantaisabel.com.co',
+    phone: '+57 607 697 0520',
+    address: 'Carrera 33 # 48-76',
+    city: 'Bucaramanga',
+    notes: 'IPS de mediana complejidad con atención 24 horas y aproximadamente 180 colaboradores.',
+    contact: {
+      name: 'Diana Marcela Quintero',
+      position: 'Líder de Seguridad y Salud en el Trabajo',
+      email: 'dquintero@clinicasantaisabel.com.co',
+      phone: '+57 316 205 4389',
+    },
+    site: { name: 'Sede Cabecera', address: 'Carrera 33 # 48-76', city: 'Bucaramanga' },
+  },
+  {
+    businessName: 'Agroindustria Los Llanos SAS',
+    legalName: 'Agroindustria y Cultivos de los Llanos S.A.S.',
+    taxId: '901473820-5',
+    email: 'gerencia@agrollanos.com.co',
+    phone: '+57 608 661 9043',
+    address: 'Calle 15 # 38-60',
+    city: 'Villavicencio',
+    notes: 'Cultivo, procesamiento y empaque de productos agrícolas con operación en zona rural.',
+    contact: {
+      name: 'Miguel Ángel Cárdenas',
+      position: 'Administrador de Operaciones',
+      email: 'mcardenas@agrollanos.com.co',
+      phone: '+57 320 884 5931',
+    },
+    site: { name: 'Planta Puerto López', address: 'Kilómetro 8, Vía Puerto López', city: 'Puerto López' },
+  },
+  {
+    businessName: 'Empaques del Eje Cafetero SAS',
+    legalName: 'Empaques Sostenibles del Eje Cafetero S.A.S.',
+    taxId: '901208647-9',
+    email: 'servicioalcliente@empaqueseje.com.co',
+    phone: '+57 606 340 8126',
+    address: 'Avenida 30 de Agosto # 87-32',
+    city: 'Pereira',
+    notes: 'Fabricante de empaques de cartón y materiales reciclables para clientes del sector alimentos.',
+    contact: {
+      name: 'Laura Vanessa Ocampo',
+      position: 'Profesional HSEQ',
+      email: 'locampo@empaqueseje.com.co',
+      phone: '+57 312 593 7418',
+    },
+    site: { name: 'Planta Dosquebradas', address: 'Carrera 10 # 18-94, La Badea', city: 'Dosquebradas' },
+  },
+];
+
+/** Agrega clientes detallados sin depender de que el emulador esté vacío.
+ * Usa el NIT como identidad estable para que repetir el seed no duplique datos. */
+async function seedAdditionalClients(): Promise<void> {
+  console.log('\nSincronizando clientes adicionales de prueba...');
+  const now = Timestamp.now();
+
+  for (const client of ADDITIONAL_SEED_CLIENTS) {
+    const existing = await firestore
+      .collection('clients')
+      .where('taxId', '==', client.taxId)
+      .limit(1)
+      .get();
+    const ref = existing.docs[0]?.ref ?? firestore.collection('clients').doc();
+
+    await ref.set(
+      {
+        businessName: client.businessName,
+        businessNameNormalized: normalizeCatalogName(client.businessName),
+        legalName: client.legalName,
+        taxId: client.taxId,
+        taxIdNormalized: client.taxId.replace(/\D/g, ''),
+        email: client.email,
+        phone: client.phone,
+        address: client.address,
+        city: client.city,
+        notes: client.notes,
+        status: 'ACTIVE',
+        tags: [],
+        ...(existing.empty && { createdAt: now, createdBy: 'seed-script' }),
+        updatedAt: now,
+        updatedBy: 'seed-script',
+      },
+      { merge: true },
+    );
+
+    await ref.collection('contacts').doc('principal').set(
+      { ...client.contact, isPrimary: true, status: 'ACTIVE' },
+      { merge: true },
+    );
+    await ref.collection('sites').doc('principal').set(
+      {
+        ...client.site,
+        nameNormalized: normalizeCatalogName(client.site.name),
+        responsible: client.contact,
+        status: 'ACTIVE',
+        createdAt: now,
+        createdBy: 'seed-script',
+        updatedAt: now,
+        updatedBy: 'seed-script',
+      },
+      { merge: true },
+    );
+
+    console.log(`  ${existing.empty ? '✓' : '↺'} Cliente ${client.businessName}`);
+  }
+}
 
 interface SeedOrderSpec {
   clientIndex: number;
@@ -681,6 +865,13 @@ async function seedAgendaVisits(technicianUids: string[]): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  if (process.argv.includes('--clients-only')) {
+    console.log('Sembrando únicamente clientes adicionales de prueba...');
+    await seedAdditionalClients();
+    console.log('\nClientes sincronizados correctamente.');
+    return;
+  }
+
   if (process.argv.includes('--catalog-only')) {
     console.log('Sembrando únicamente el catálogo de servicios...');
     await seedWebsiteCatalog();
@@ -699,6 +890,7 @@ async function main(): Promise<void> {
 
   await seedWebsiteCatalog();
   await seedDemoData(uidsByRole.get('TECHNICIAN') ?? []);
+  await seedAdditionalClients();
   await linkViewerToDemoClient(uidsByRole.get('VIEWER')?.[0]);
   await seedAgendaVisits(uidsByRole.get('TECHNICIAN') ?? []);
 
@@ -707,9 +899,11 @@ async function main(): Promise<void> {
   );
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error: unknown) => {
-    console.error('Error sembrando datos:', error);
-    process.exit(1);
-  });
+if (process.argv[1]?.endsWith('seed-emulator.ts')) {
+  main()
+    .then(() => process.exit(0))
+    .catch((error: unknown) => {
+      console.error('Error sembrando datos:', error);
+      process.exit(1);
+    });
+}

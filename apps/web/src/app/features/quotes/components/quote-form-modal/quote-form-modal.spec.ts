@@ -19,7 +19,13 @@ describe('QuoteFormModal', () => {
           provide: ServicesFacade,
           useValue: { activeServices: signal([]), byId: () => undefined, init: () => undefined },
         },
-        { provide: QuotesFacade, useValue: { addQuote: async () => 'new-id' } },
+        {
+          provide: QuotesFacade,
+          useValue: {
+            addQuote: async () => 'new-id',
+            updateDraft: async () => undefined,
+          },
+        },
       ],
     }).compileComponents();
 

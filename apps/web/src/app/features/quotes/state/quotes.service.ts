@@ -164,6 +164,55 @@ export class QuotesService {
     return quoteRef.id;
   }
 
+  async updateDraft(
+    quoteId: string,
+    data: NewQuote,
+    items: NewQuoteItem[],
+    updatedBy: string,
+  ): Promise<void> {
+    const quoteRef = doc(this.firestore, 'quotes', quoteId);
+    const itemsSnapshot = await getDocs(collection(this.firestore, 'quotes', quoteId, 'items'));
+
+    await runTransaction(this.firestore, async (transaction) => {
+      const snapshot = await transaction.get(quoteRef);
+      if (!snapshot.exists() || snapshot.data()['status'] !== 'DRAFT') {
+        throw new Error('Solo se pueden editar cotizaciones en borrador.');
+      }
+
+      transaction.update(quoteRef, {
+        clientId: data.clientId,
+        clientBusinessName: data.clientBusinessName,
+        validUntil: data.validUntil ? Timestamp.fromDate(data.validUntil) : null,
+        currency: data.currency,
+        subtotal: data.subtotal,
+        tax: data.tax,
+        discount: data.discount,
+        total: data.total,
+        notes: data.notes ?? null,
+        updatedAt: serverTimestamp(),
+        updatedBy,
+      });
+      itemsSnapshot.docs.forEach((item) => transaction.delete(item.ref));
+      items.forEach((item) => {
+        transaction.set(doc(collection(this.firestore, 'quotes', quoteId, 'items')), item);
+      });
+    });
+  }
+
+  async deleteDraft(quoteId: string): Promise<void> {
+    const quoteRef = doc(this.firestore, 'quotes', quoteId);
+    const itemsSnapshot = await getDocs(collection(this.firestore, 'quotes', quoteId, 'items'));
+
+    await runTransaction(this.firestore, async (transaction) => {
+      const snapshot = await transaction.get(quoteRef);
+      if (!snapshot.exists() || snapshot.data()['status'] !== 'DRAFT') {
+        throw new Error('Solo se pueden eliminar cotizaciones en borrador.');
+      }
+      itemsSnapshot.docs.forEach((item) => transaction.delete(item.ref));
+      transaction.delete(quoteRef);
+    });
+  }
+
   async updateStatus(quoteId: string, status: QuoteStatus, updatedBy: string): Promise<void> {
     const quoteRef = doc(this.firestore, 'quotes', quoteId);
     await runTransaction(this.firestore, async (transaction) => {

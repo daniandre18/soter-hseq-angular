@@ -7,6 +7,8 @@ import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { Button } from '../../../../shared/components/button/button';
 import { Card } from '../../../../shared/components/card/card';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
+import { Icon } from '../../../../shared/components/icon/icon';
+import { Modal } from '../../../../shared/components/modal/modal';
 import { QuoteFormModal } from '../../components/quote-form-modal/quote-form-modal';
 import { QuoteDetailModal } from '../../components/quote-detail-modal/quote-detail-modal';
 import { QUOTE_STATUS_CONFIG } from '../../models/quote-status-config';
@@ -18,7 +20,7 @@ type StatusFilterOption = 'all' | QuoteStatus;
 
 @Component({
   selector: 'app-quotes-list',
-  imports: [Button, Card, StatusBadge, QuoteFormModal, QuoteDetailModal],
+  imports: [Button, Card, StatusBadge, Icon, Modal, QuoteFormModal, QuoteDetailModal],
   templateUrl: './quotes-list.html',
   styleUrl: './quotes-list.scss',
 })
@@ -39,6 +41,9 @@ export class QuotesList {
   protected readonly statusFilter = signal<StatusFilterOption>('all');
   protected readonly formOpen = signal(false);
   protected readonly detailQuoteId = signal<string | null>(null);
+  protected readonly editingQuote = signal<Quote | null>(null);
+  protected readonly deletingQuote = signal<Quote | null>(null);
+  protected readonly deleting = signal(false);
 
   protected readonly statusOptions = Object.entries(QUOTE_STATUS_CONFIG) as [
     QuoteStatus,
@@ -48,6 +53,7 @@ export class QuotesList {
   protected readonly formatCurrency = formatCurrency;
   protected readonly formatDate = formatDate;
   protected readonly canManageQuotes = this.quotesFacade.canManageQuotes;
+  protected readonly canEditDraftQuotes = this.quotesFacade.canEditDraftQuotes;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -64,6 +70,14 @@ export class QuotesList {
       })
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   });
+
+  protected readonly hasActiveFilters = computed(
+    () => this.search().trim().length > 0 || this.statusFilter() !== 'all',
+  );
+
+  protected readonly activeFilterCount = computed(
+    () => Number(this.search().trim().length > 0) + Number(this.statusFilter() !== 'all'),
+  );
 
   /** Referencia "viva" del detalle: si el estado cambia mientras el modal
    *  sigue abierto, refleja el dato actualizado en vez de una foto vieja. */
@@ -113,12 +127,55 @@ export class QuotesList {
     this.statusFilter.set((event.target as HTMLSelectElement).value as StatusFilterOption);
   }
 
+  protected clearFilters(): void {
+    this.search.set('');
+    this.statusFilter.set('all');
+  }
+
   protected openCreate(): void {
+    this.editingQuote.set(null);
+    this.formOpen.set(true);
+  }
+
+  protected openEdit(quote: Quote, event: Event): void {
+    event.stopPropagation();
+    if (!this.canEditDraftQuotes() || quote.status !== 'DRAFT') {
+      return;
+    }
+    this.editingQuote.set(quote);
     this.formOpen.set(true);
   }
 
   protected closeForm(): void {
     this.formOpen.set(false);
+    this.editingQuote.set(null);
+  }
+
+  protected confirmDelete(quote: Quote, event: Event): void {
+    event.stopPropagation();
+    if (this.canEditDraftQuotes() && quote.status === 'DRAFT') {
+      this.deletingQuote.set(quote);
+    }
+  }
+
+  protected cancelDelete(): void {
+    if (!this.deleting()) {
+      this.deletingQuote.set(null);
+    }
+  }
+
+  protected async deleteConfirmed(): Promise<void> {
+    const quote = this.deletingQuote();
+    if (!quote) {
+      return;
+    }
+    this.deleting.set(true);
+    try {
+      await this.quotesFacade.deleteDraft(quote.id);
+      this.deletingQuote.set(null);
+    } finally {
+      this.deleting.set(false);
+    }
   }
 
   protected openDetail(quote: Quote): void {

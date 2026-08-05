@@ -99,13 +99,15 @@ interface NotificationInput {
  * Escribe en el inbox global de ADMIN/COORDINATOR (`notifications`,
  * `firestore.rules`: `allow create: if false`) — un documento por evento,
  * visible para todo el rol sin fan-out; `readBy` empieza vacío y cada quien
- * agrega su propio uid al marcarlo leído (ver la regla de `update`).
+ * agrega su propio uid al marcarlo leído. `dismissedBy` hace lo mismo al
+ * descartarlo, sin borrar el evento para los demás usuarios.
  */
 async function notifyAdmins(input: NotificationInput): Promise<void> {
   const firestore = getFirestore();
   await firestore.collection('notifications').add({
     ...input,
     readBy: [],
+    dismissedBy: [],
     createdAt: FieldValue.serverTimestamp(),
   });
 }
