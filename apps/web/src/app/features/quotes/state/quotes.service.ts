@@ -7,8 +7,10 @@ import {
   doc,
   getDocs,
   onSnapshot,
+  query,
   runTransaction,
   serverTimestamp,
+  where,
   writeBatch,
 } from 'firebase/firestore';
 import { Observable } from 'rxjs';
@@ -73,18 +75,23 @@ export class QuotesService {
   private unsubscribeFromQuotes: Unsubscribe | null = null;
   private quotesRetriedAfterError = false;
 
-  watchQuotes(): void {
+  watchQuotes(clientId?: string): void {
     if (this.unsubscribeFromQuotes) {
       return;
     }
 
     this.store.setLoading(true);
+    const quotesRef = collection(this.firestore, 'quotes');
+    const quotesQuery = clientId ? query(quotesRef, where('clientId', '==', clientId)) : quotesRef;
+
     this.unsubscribeFromQuotes = onSnapshot(
-      collection(this.firestore, 'quotes'),
+      quotesQuery,
       (snapshot) => {
         this.quotesRetriedAfterError = false;
         this.store.setError(null);
-        this.store.set(snapshot.docs.map((docSnapshot) => toQuote(docSnapshot.id, docSnapshot.data())));
+        this.store.set(
+          snapshot.docs.map((docSnapshot) => toQuote(docSnapshot.id, docSnapshot.data())),
+        );
         this.store.setLoading(false);
       },
       (error) => {
@@ -96,7 +103,7 @@ export class QuotesService {
         this.unsubscribeFromQuotes = null;
         if (error.code === 'permission-denied' && !this.quotesRetriedAfterError) {
           this.quotesRetriedAfterError = true;
-          setTimeout(() => this.watchQuotes(), 1000);
+          setTimeout(() => this.watchQuotes(clientId), 1000);
         }
       },
     );

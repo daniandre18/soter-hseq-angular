@@ -9,7 +9,7 @@ interface DemoProfile {
   name: string;
   description: string;
   icon: string;
-  color: 'red' | 'blue' | 'purple' | 'orange';
+  color: 'red' | 'blue' | 'purple' | 'orange' | 'green';
 }
 
 const DEMO_PASSWORD = '123456';
@@ -57,6 +57,15 @@ export class DemoLogin {
       description: 'Consulta sus órdenes, registra avances, notas y hallazgos.',
       icon: '⛑️',
       color: 'orange',
+    },
+    {
+      email: 'cliente@soterhseq.demo',
+      role: 'Cliente',
+      name: 'María Torres',
+      description:
+        'Consulta sus cotizaciones y el estado de sus servicios, sin permisos de edición.',
+      icon: '🏢',
+      color: 'green',
     },
   ];
 

@@ -53,6 +53,11 @@ const SEED_USERS: SeedUser[] = [
     role: 'TECHNICIAN',
     specialty: 'Higiene Ocupacional',
   },
+  {
+    email: 'cliente@soterhseq.demo',
+    displayName: 'María Torres',
+    role: 'VIEWER',
+  },
 ];
 
 interface SeedServiceCategory {
@@ -546,6 +551,38 @@ async function seedDemoData(technicianUids: string[]): Promise<void> {
   }
 }
 
+/** Vincula el acceso de consulta con una única empresa. Se ejecuta aparte de
+ * `seedDemoData` para que también repare un emulador que ya tenía datos. */
+async function linkViewerToDemoClient(
+  viewerUid: string | undefined,
+): Promise<void> {
+  if (!viewerUid) {
+    return;
+  }
+
+  const clientSnapshot = await firestore
+    .collection('clients')
+    .where('businessName', '==', 'Minera del Norte SA')
+    .limit(1)
+    .get();
+  const client = clientSnapshot.docs[0];
+  if (!client) {
+    console.warn(
+      '  ! No se encontró Minera del Norte SA para vincular el perfil Cliente.',
+    );
+    return;
+  }
+
+  await firestore.collection('users').doc(viewerUid).update({
+    clientId: client.id,
+    updatedAt: Timestamp.now(),
+    updatedBy: 'seed-script',
+  });
+  console.log(
+    `  ✓ Cliente María Torres vinculado a ${client.data()['businessName']}`,
+  );
+}
+
 /**
  * Mantiene un conjunto idempotente de visitas próximas para probar la agenda.
  * Usa clientes ya presentes en el emulador y documentos con ids fijos, por lo
@@ -662,6 +699,7 @@ async function main(): Promise<void> {
 
   await seedWebsiteCatalog();
   await seedDemoData(uidsByRole.get('TECHNICIAN') ?? []);
+  await linkViewerToDemoClient(uidsByRole.get('VIEWER')?.[0]);
   await seedAgendaVisits(uidsByRole.get('TECHNICIAN') ?? []);
 
   console.log(

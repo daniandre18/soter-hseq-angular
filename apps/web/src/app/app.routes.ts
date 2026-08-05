@@ -54,14 +54,14 @@ export const routes: Routes = [
         component: QuotesList,
         title: 'Cotizaciones — SOTER HSEQ',
         data: { title: 'Cotizaciones' },
-        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER'])],
       },
       {
         path: 'ordenes',
         component: OrdersList,
         title: 'Órdenes — SOTER HSEQ',
         data: { title: 'Órdenes' },
-        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER'])],
       },
       {
         path: 'agenda',

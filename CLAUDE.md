@@ -121,11 +121,15 @@ No puede:
 
 Puede:
 
-- Consultar información autorizada.
+- Consultar las cotizaciones de la empresa vinculada a su perfil.
+- Consultar el estado e historial de las órdenes de esa misma empresa.
 - Descargar actas aprobadas.
-- Consultar el historial de órdenes permitido.
 
 No puede editar información.
+
+Para el demo, este perfil se presenta como **Cliente** y se vincula a una
+empresa mediante `users.clientId`. Es una vista de consulta acotada; no
+constituye el portal completo para clientes que permanece fuera del MVP.
 
 ---
 
@@ -450,6 +454,7 @@ interface AppUser {
   displayName: string;
   email: string;
   phone?: string;
+  clientId?: string; // solo VIEWER: empresa cuyos datos puede consultar
   role: 'ADMIN' | 'COMMERCIAL' | 'COORDINATOR' | 'TECHNICIAN' | 'VIEWER';
   status: 'ACTIVE' | 'INACTIVE';
   photoUrl?: string;

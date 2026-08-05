@@ -74,7 +74,7 @@ const NAV_SECTIONS: NavSection[] = [
         path: '/ordenes',
         label: 'Órdenes de trabajo',
         icon: 'clipboard-list',
-        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER'],
       },
       {
         kind: 'link',
@@ -108,7 +108,7 @@ const NAV_SECTIONS: NavSection[] = [
         path: '/cotizaciones',
         label: 'Cotizaciones',
         icon: 'file-text',
-        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER'],
       },
       SERVICES_GROUP,
     ],

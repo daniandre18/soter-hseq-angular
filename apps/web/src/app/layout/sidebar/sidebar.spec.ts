@@ -81,4 +81,32 @@ describe('Sidebar', () => {
 
     expect(authorizedFixture.nativeElement.querySelectorAll('.sidebar-sublink')).toHaveLength(2);
   });
+
+  it('shows only orders and quotes to the Cliente/VIEWER role', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [Sidebar],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AuthFacade,
+          useValue: {
+            currentUser: signal(null),
+            currentRole: signal('VIEWER'),
+            logout: async () => undefined,
+          },
+        },
+      ],
+    }).compileComponents();
+
+    const viewerFixture = TestBed.createComponent(Sidebar);
+    viewerFixture.detectChanges();
+    const links = Array.from<HTMLElement>(
+      viewerFixture.nativeElement.querySelectorAll('.sidebar-link-label'),
+    ).map((link) => link.textContent?.trim());
+
+    expect(links).toEqual(['Órdenes de trabajo', 'Cotizaciones']);
+    expect(viewerFixture.nativeElement.textContent).not.toContain('Panel');
+    expect(viewerFixture.nativeElement.textContent).not.toContain('Clientes');
+  });
 });

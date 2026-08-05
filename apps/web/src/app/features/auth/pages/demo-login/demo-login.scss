@@ -89,7 +89,10 @@
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    border-color 150ms ease;
 
   &:hover:not(:disabled),
   &:focus-visible {
@@ -121,6 +124,11 @@
   &--orange {
     --profile-color: var(--color-orange-600);
     --profile-background: var(--color-orange-50);
+  }
+
+  &--green {
+    --profile-color: var(--color-green-600);
+    --profile-background: var(--color-green-50);
   }
 }
 

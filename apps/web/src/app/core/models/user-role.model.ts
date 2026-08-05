@@ -13,5 +13,5 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   COMMERCIAL: 'Comercial',
   COORDINATOR: 'Coordinador',
   TECHNICIAN: 'Técnico',
-  VIEWER: 'Consulta',
+  VIEWER: 'Cliente',
 };

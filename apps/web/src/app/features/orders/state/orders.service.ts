@@ -208,14 +208,12 @@ export class OrdersService {
   private ordersRetriedAfterError = false;
 
   /**
-   * Para un técnico, Firestore Rules exige `resource.data.assignedTechnicianIds`
-   * (CLAUDE.md §13.2), y una consulta de colección sin `where` que coincida
-   * con esa condición se rechaza por completo (no se filtra por documento):
-   * por eso el listener debe acotarse con `array-contains` para ese rol, a
-   * diferencia de ADMIN/COORDINATOR/COMMERCIAL, cuya regla no depende de
-   * `resource.data` y sí admite un listener sin filtro.
+   * Firestore evalúa si una consulta completa puede cumplir las Rules, no
+   * filtra documentos después de leerlos. Por eso los técnicos consultan por
+   * `assignedTechnicianIds` y los clientes por su `clientId`; solo los roles
+   * internos con lectura general abren el listener sin filtro.
    */
-  watchOrders(technicianUid?: string): void {
+  watchOrders(technicianUid?: string, clientId?: string): void {
     if (this.unsubscribeFromOrders) {
       return;
     }
@@ -224,7 +222,9 @@ export class OrdersService {
     const ordersRef = collection(this.firestore, 'orders');
     const ordersQuery = technicianUid
       ? query(ordersRef, where('assignedTechnicianIds', 'array-contains', technicianUid))
-      : ordersRef;
+      : clientId
+        ? query(ordersRef, where('clientId', '==', clientId))
+        : ordersRef;
 
     this.unsubscribeFromOrders = onSnapshot(
       ordersQuery,
@@ -248,7 +248,7 @@ export class OrdersService {
         this.unsubscribeFromOrders = null;
         if (error.code === 'permission-denied' && !this.ordersRetriedAfterError) {
           this.ordersRetriedAfterError = true;
-          setTimeout(() => this.watchOrders(technicianUid), 1000);
+          setTimeout(() => this.watchOrders(technicianUid, clientId), 1000);
         }
       },
     );
@@ -317,7 +317,11 @@ export class OrdersService {
     await this.updateOrder(orderId, changes, updatedBy);
   }
 
-  private async updateOrder(orderId: string, changes: OrderUpdate, updatedBy: string): Promise<void> {
+  private async updateOrder(
+    orderId: string,
+    changes: OrderUpdate,
+    updatedBy: string,
+  ): Promise<void> {
     await updateDoc(doc(this.firestore, 'orders', orderId), {
       ...changes,
       updatedAt: serverTimestamp(),
@@ -410,7 +414,11 @@ export class OrdersService {
   /** Edita los campos "de cabecera" de la orden (CLAUDE.md no cubre esto
    *  explícitamente; técnicos/programación siguen teniendo sus propios flujos
    *  dedicados en `schedule`/`assignTechnicians`, no se tocan aquí). */
-  async updateOrderDetails(orderId: string, changes: OrderDetailsUpdate, updatedBy: string): Promise<void> {
+  async updateOrderDetails(
+    orderId: string,
+    changes: OrderDetailsUpdate,
+    updatedBy: string,
+  ): Promise<void> {
     await updateDoc(doc(this.firestore, 'orders', orderId), {
       ...changes,
       updatedAt: serverTimestamp(),
@@ -483,7 +491,9 @@ export class OrdersService {
         notesQuery,
         (snapshot) => {
           subscriber.next(
-            snapshot.docs.map((docSnapshot) => toTechnicalNote(docSnapshot.id, orderId, docSnapshot.data())),
+            snapshot.docs.map((docSnapshot) =>
+              toTechnicalNote(docSnapshot.id, orderId, docSnapshot.data()),
+            ),
           );
         },
         (error) => subscriber.error(error),
@@ -538,7 +548,9 @@ export class OrdersService {
         evidenceQuery,
         (snapshot) => {
           subscriber.next(
-            snapshot.docs.map((docSnapshot) => toEvidence(docSnapshot.id, orderId, docSnapshot.data())),
+            snapshot.docs.map((docSnapshot) =>
+              toEvidence(docSnapshot.id, orderId, docSnapshot.data()),
+            ),
           );
         },
         (error) => subscriber.error(error),
@@ -556,7 +568,9 @@ export class OrdersService {
         eventsQuery,
         (snapshot) => {
           subscriber.next(
-            snapshot.docs.map((docSnapshot) => toOrderEvent(docSnapshot.id, orderId, docSnapshot.data())),
+            snapshot.docs.map((docSnapshot) =>
+              toOrderEvent(docSnapshot.id, orderId, docSnapshot.data()),
+            ),
           );
         },
         (error) => subscriber.error(error),
@@ -591,7 +605,8 @@ export class OrdersService {
     const finalSnapshot = await new Promise<UploadTaskSnapshot>((resolve, reject) => {
       uploadTask.on(
         'state_changed',
-        (snapshot) => onProgress?.(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
+        (snapshot) =>
+          onProgress?.(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
         reject,
         () => resolve(uploadTask.snapshot),
       );
@@ -653,7 +668,10 @@ export class OrdersService {
    */
   watchClosingAct(orderId: string): Observable<ClosingAct | null> {
     return new Observable<ClosingAct | null>((subscriber) => {
-      const actQuery = query(collection(this.firestore, 'closingActs'), where('orderId', '==', orderId));
+      const actQuery = query(
+        collection(this.firestore, 'closingActs'),
+        where('orderId', '==', orderId),
+      );
       return onSnapshot(
         actQuery,
         (snapshot) => {

@@ -1,6 +1,6 @@
 import { Injectable, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import type { Observable } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { Observable, of, switchMap } from 'rxjs';
 import { OrdersQuery } from '../state/orders.query';
 import { OrdersService } from '../state/orders.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
@@ -53,12 +53,24 @@ export class OrdersFacade {
   readonly error = toSignal(this.query.error$, { initialValue: null });
 
   /** Técnicos disponibles para asignación (CLAUDE.md §23.4). */
-  readonly technicians = toSignal(this.usersRepository.watchByRole('TECHNICIAN'), {
-    initialValue: [],
-  });
+  readonly technicians = toSignal(
+    toObservable(this.authFacade.currentUser).pipe(
+      switchMap((user) =>
+        user && user.role !== 'VIEWER' ? this.usersRepository.watchByRole('TECHNICIAN') : of([]),
+      ),
+    ),
+    { initialValue: [] },
+  );
 
   /** Para resolver el autor de cualquier nota/evidencia/evento en el feed de Actividad. */
-  private readonly allUsers = toSignal(this.usersRepository.watchAll(), { initialValue: [] });
+  private readonly allUsers = toSignal(
+    toObservable(this.authFacade.currentUser).pipe(
+      switchMap((user) =>
+        user && user.role !== 'VIEWER' ? this.usersRepository.watchAll() : of([]),
+      ),
+    ),
+    { initialValue: [] },
+  );
 
   readonly assignedCount = computed(
     () => this.orders().filter((order) => order.status === 'ASSIGNED').length,
@@ -172,8 +184,14 @@ export class OrdersFacade {
   });
 
   init(): void {
-    const user = this.authFacade.currentUser();
-    this.service.watchOrders(user?.role === 'TECHNICIAN' ? user.id : undefined);
+    // Igual que QuotesFacade: no depender del valor inicial del Signal para
+    // elegir el alcance de una consulta protegida por Rules.
+    this.authFacade.resolveCurrentUser$().subscribe((user) => {
+      this.service.watchOrders(
+        user?.role === 'TECHNICIAN' ? user.id : undefined,
+        user?.role === 'VIEWER' ? (user.clientId ?? '__without-client__') : undefined,
+      );
+    });
   }
 
   byId(id: string): ServiceOrder | undefined {

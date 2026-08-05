@@ -37,8 +37,12 @@ describe('DemoLogin', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render the four demo profiles', () => {
-    expect(fixture.nativeElement.querySelectorAll('.profile-card')).toHaveLength(4);
+  it('should render the five demo profiles, including Cliente', () => {
+    const cards = fixture.nativeElement.querySelectorAll('.profile-card');
+
+    expect(cards).toHaveLength(5);
+    expect(fixture.nativeElement.textContent).toContain('Cliente');
+    expect(fixture.nativeElement.textContent).toContain('María Torres');
   });
 
   it('uses the PNG logo provided for the login', () => {

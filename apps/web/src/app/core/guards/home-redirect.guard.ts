@@ -18,7 +18,13 @@ export const homeRedirectGuard: CanActivateFn = () => {
       if (!user) {
         return router.createUrlTree(['/login']);
       }
-      return router.createUrlTree([user.role === 'TECHNICIAN' ? '/mis-ordenes' : '/dashboard']);
+      const destination =
+        user.role === 'TECHNICIAN'
+          ? '/mis-ordenes'
+          : user.role === 'VIEWER'
+            ? '/ordenes'
+            : '/dashboard';
+      return router.createUrlTree([destination]);
     }),
   );
 };

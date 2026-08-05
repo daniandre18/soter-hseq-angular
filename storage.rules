@@ -16,6 +16,29 @@ service firebase.storage {
       return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
     }
 
+    function currentClientId() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.clientId;
+    }
+
+    function orderData(orderId) {
+      return firestore.get(/databases/(default)/documents/orders/$(orderId)).data;
+    }
+
+    function canReadOrder(orderId) {
+      return isSignedIn()
+             && (currentRole() in ['ADMIN', 'COORDINATOR', 'COMMERCIAL']
+                 || (currentRole() == 'TECHNICIAN'
+                     && request.auth.uid in orderData(orderId).assignedTechnicianIds)
+                 || (currentRole() == 'VIEWER'
+                     && currentClientId() == orderData(orderId).clientId));
+    }
+
+    function canReadClosingAct(actId) {
+      return canReadOrder(
+        firestore.get(/databases/(default)/documents/closingActs/$(actId)).data.orderId
+      );
+    }
+
     function canUploadEvidence(orderId) {
       return isSignedIn()
              && currentRole() in ['ADMIN', 'COORDINATOR', 'TECHNICIAN']
@@ -33,12 +56,12 @@ service firebase.storage {
     }
 
     match /orders/{orderId}/evidence/{evidenceId}/{fileName} {
-      allow read: if isSignedIn();
+      allow read: if canReadOrder(orderId);
       allow write: if canUploadEvidence(orderId) && (isValidImage() || isValidPdf());
     }
 
     match /closing-acts/{actId}/{fileName} {
-      allow read: if isSignedIn();
+      allow read: if canReadClosingAct(actId);
       allow write: if false; // el PDF final lo escribe Cloud Functions
     }
 

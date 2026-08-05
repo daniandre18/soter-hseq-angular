@@ -16,6 +16,9 @@ export interface AppUser {
   /** Solo aplica a técnicos (CLAUDE.md no lo define, pero el resto de roles
    *  simplemente no lo usa) — p. ej. "Seguridad Industrial". */
   specialty?: string;
+  /** Empresa a la que pertenece un usuario de consulta (`VIEWER`).
+   *  Permite que consultas y Rules acoten los datos del portal cliente. */
+  clientId?: string;
   role: UserRole;
   status: UserStatus;
   photoUrl?: string;

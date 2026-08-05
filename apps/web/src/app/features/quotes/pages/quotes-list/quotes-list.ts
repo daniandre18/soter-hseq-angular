@@ -74,7 +74,9 @@ export class QuotesList {
 
   constructor() {
     this.quotesFacade.init();
-    this.clientsFacade.init();
+    if (this.canManageQuotes()) {
+      this.clientsFacade.init();
+    }
 
     // Espera a que `quotes()` traiga la cotización pedida (puede llegar
     // vacío mientras el listener de Firestore aún carga) y limpia el query
@@ -87,7 +89,10 @@ export class QuotesList {
       const quote = this.quotesFacade.quotes().find((candidate) => candidate.id === id);
       if (quote) {
         this.detailQuoteId.set(quote.id);
-        void this.router.navigate([], { queryParams: { open: null }, queryParamsHandling: 'merge' });
+        void this.router.navigate([], {
+          queryParams: { open: null },
+          queryParamsHandling: 'merge',
+        });
       }
     });
   }

@@ -127,7 +127,9 @@ export class OrdersList {
 
   constructor() {
     this.ordersFacade.init();
-    this.clientsFacade.init();
+    if (this.canManage()) {
+      this.clientsFacade.init();
+    }
 
     // Espera a que `orders()` traiga la orden pedida (puede llegar vacío
     // mientras el listener de Firestore aún carga) y limpia el query param
@@ -140,7 +142,10 @@ export class OrdersList {
       const order = this.ordersFacade.orders().find((candidate) => candidate.id === id);
       if (order) {
         this.detailOrderId.set(order.id);
-        void this.router.navigate([], { queryParams: { open: null }, queryParamsHandling: 'merge' });
+        void this.router.navigate([], {
+          queryParams: { open: null },
+          queryParamsHandling: 'merge',
+        });
       }
     });
   }

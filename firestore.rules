@@ -23,13 +23,35 @@ service cloud.firestore {
       return hasRole(['ADMIN']);
     }
 
+    function currentClientId() {
+      return currentUserDoc().data.clientId;
+    }
+
+    function viewerOwnsClient(clientId) {
+      return hasRole(['VIEWER']) && currentClientId() == clientId;
+    }
+
     function orderData(orderId) {
       return get(/databases/$(database)/documents/orders/$(orderId)).data;
     }
 
+    function quoteData(quoteId) {
+      return get(/databases/$(database)/documents/quotes/$(quoteId)).data;
+    }
+
+    function canReadOrder(orderId) {
+      return hasRole(['ADMIN', 'COORDINATOR', 'COMMERCIAL'])
+             || (hasRole(['TECHNICIAN'])
+                 && request.auth.uid in orderData(orderId).assignedTechnicianIds)
+             || viewerOwnsClient(orderData(orderId).clientId);
+    }
+
     // Un usuario no puede cambiar su propio rol ni el de otros desde el frontend.
     match /users/{userId} {
-      allow read: if isSignedIn();
+      // El cliente solo necesita su propio perfil; los usuarios internos sí
+      // resuelven nombres/técnicos para la operación y pueden listar usuarios.
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN'])
+                  || (hasRole(['VIEWER']) && request.auth.uid == userId);
       allow create: if false; // los usuarios se crean desde Cloud Functions
       // Un usuario no puede cambiar su propio rol NI su propio estado (p.
       // ej. reactivarse tras ser desactivado) — antes solo se protegía el
@@ -42,7 +64,8 @@ service cloud.firestore {
     }
 
     match /clients/{clientId} {
-      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])
+                  || viewerOwnsClient(clientId);
       allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);
       // Solo ADMIN, y solo un aviso en la UI (no un bloqueo aquí) de que
       // las cotizaciones/órdenes ya creadas conservan `clientBusinessName`
@@ -50,12 +73,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /contacts/{contactId} {
-        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
+        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])
+                    || viewerOwnsClient(clientId);
         allow write: if hasRole(['ADMIN', 'COMMERCIAL']);
       }
 
       match /sites/{siteId} {
-        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
+        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])
+                    || viewerOwnsClient(clientId);
         allow write: if hasRole(['ADMIN', 'COMMERCIAL']);
       }
     }
@@ -65,7 +90,7 @@ service cloud.firestore {
     // el catálogo). Sin "historial" propio que proteger — a diferencia de
     // `clients`, sí se permite `delete` a los mismos roles que crean.
     match /clientTags/{tagId} {
-      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER']);
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
       allow create, update, delete: if hasRole(['ADMIN', 'COMMERCIAL']);
     }
 
@@ -89,12 +114,14 @@ service cloud.firestore {
     }
 
     match /quotes/{quoteId} {
-      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])
+                  || viewerOwnsClient(resource.data.clientId);
       allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);
       allow delete: if false;
 
       match /items/{itemId} {
-        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+        allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])
+                    || viewerOwnsClient(quoteData(quoteId).clientId);
         allow write: if hasRole(['ADMIN', 'COMMERCIAL']);
       }
     }
@@ -105,7 +132,8 @@ service cloud.firestore {
       // modelada todavía, se concede lectura general para el MVP.
       allow read: if isAdmin()
                    || hasRole(['COORDINATOR', 'COMMERCIAL'])
-                   || (hasRole(['TECHNICIAN']) && request.auth.uid in resource.data.assignedTechnicianIds);
+                   || (hasRole(['TECHNICIAN']) && request.auth.uid in resource.data.assignedTechnicianIds)
+                   || viewerOwnsClient(resource.data.clientId);
       // COMMERCIAL también puede convertir una cotización aprobada en
       // orden (CLAUDE.md §3.2), lo que crea el documento de la orden.
       allow create: if hasRole(['ADMIN', 'COORDINATOR', 'COMMERCIAL']);
@@ -134,26 +162,26 @@ service cloud.firestore {
       allow delete: if isAdmin() && resource.data.status == 'DRAFT';
 
       match /notes/{noteId} {
-        allow read: if isSignedIn();
+        allow read: if canReadOrder(orderId);
         allow create: if hasRole(['ADMIN', 'COORDINATOR', 'TECHNICIAN']) && orderData(orderId).status != 'CLOSED';
         allow update, delete: if false;
       }
 
       match /evidence/{evidenceId} {
-        allow read: if isSignedIn();
+        allow read: if canReadOrder(orderId);
         allow create: if hasRole(['ADMIN', 'COORDINATOR', 'TECHNICIAN']) && orderData(orderId).status != 'CLOSED';
         allow update: if hasRole(['ADMIN', 'COORDINATOR']);
         allow delete: if false;
       }
 
       match /events/{eventId} {
-        allow read: if isSignedIn();
+        allow read: if canReadOrder(orderId);
         allow write: if false; // la bitácora solo la escribe el backend
       }
     }
 
     match /closingActs/{actId} {
-      allow read: if isSignedIn();
+      allow read: if canReadOrder(resource.data.orderId);
       // El documento inicial lo crea `generateClosingAct` con el Admin SDK
       // (ignora estas reglas); `create` de cliente queda para uso futuro,
       // ya con la misma condición de rol. `FINAL` es inmutable: una vez

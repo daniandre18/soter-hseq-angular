@@ -21,7 +21,14 @@ export class QuotesFacade {
   });
 
   init(): void {
-    this.service.watchQuotes();
+    // El guard puede resolver su propia lectura de perfil una fracción antes
+    // de que `currentUser` publique en el Signal. Esperar explícitamente evita
+    // que un VIEWER abra por accidente una consulta global que Rules rechaza.
+    this.authFacade.resolveCurrentUser$().subscribe((user) => {
+      this.service.watchQuotes(
+        user?.role === 'VIEWER' ? (user.clientId ?? '__without-client__') : undefined,
+      );
+    });
   }
 
   watchItems(quoteId: string): Observable<QuoteItem[]> {

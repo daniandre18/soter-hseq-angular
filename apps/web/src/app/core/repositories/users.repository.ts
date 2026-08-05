@@ -26,6 +26,7 @@ function toAppUser(id: string, data: DocumentData): AppUser {
     email: data['email'],
     phone: data['phone'],
     specialty: data['specialty'],
+    clientId: data['clientId'],
     role: data['role'],
     status: data['status'],
     photoUrl: data['photoUrl'],
@@ -96,7 +97,9 @@ export class UsersRepository {
       return onSnapshot(
         collection(this.firestore, 'users'),
         (snapshot) => {
-          subscriber.next(snapshot.docs.map((docSnapshot) => toAppUser(docSnapshot.id, docSnapshot.data())));
+          subscriber.next(
+            snapshot.docs.map((docSnapshot) => toAppUser(docSnapshot.id, docSnapshot.data())),
+          );
         },
         (error) => subscriber.error(error),
       );
@@ -110,7 +113,9 @@ export class UsersRepository {
       return onSnapshot(
         usersQuery,
         (snapshot) => {
-          subscriber.next(snapshot.docs.map((docSnapshot) => toAppUser(docSnapshot.id, docSnapshot.data())));
+          subscriber.next(
+            snapshot.docs.map((docSnapshot) => toAppUser(docSnapshot.id, docSnapshot.data())),
+          );
         },
         (error) => subscriber.error(error),
       );
