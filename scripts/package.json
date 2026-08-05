@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "seed": "tsx seed-emulator.ts",
-    "seed:catalog": "tsx seed-emulator.ts --catalog-only"
+    "seed:catalog": "tsx seed-emulator.ts --catalog-only",
+    "seed:clients": "tsx seed-emulator.ts --clients-only",
+    "seed:clients:production": "tsx seed-production-clients.ts --confirm-production"
   },
   "dependencies": {
     "firebase-admin": "^14.2.0"

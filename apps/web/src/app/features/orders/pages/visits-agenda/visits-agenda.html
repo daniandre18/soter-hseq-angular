@@ -1,50 +1,129 @@
 <section class="agenda-page">
   <div class="agenda-toolbar">
     <div class="agenda-filters">
-      <input
-        type="search"
-        class="search-input"
-        placeholder="Buscar por empresa..."
-        aria-label="Buscar por empresa"
-        [value]="search()"
-        (input)="onSearchInput($event)"
-      />
-      <select
-        class="status-select"
-        aria-label="Filtrar por estado"
-        [value]="statusFilter()"
-        (change)="onStatusChange($event)"
-      >
-        <option value="all">Todos los estados</option>
-        @for (entry of statusOptions; track entry[0]) {
-          <option [value]="entry[0]">{{ entry[1].label }}</option>
+      <div class="client-search">
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Buscar cliente..."
+          aria-label="Buscar cliente"
+          role="combobox"
+          aria-autocomplete="list"
+          [attr.aria-expanded]="showClientSuggestions()"
+          [attr.aria-controls]="clientListboxId"
+          [value]="search()"
+          (input)="onSearchInput($event)"
+          (focus)="onSearchFocus()"
+        />
+        @if (search()) {
+          <button
+            type="button"
+            class="clear-search-btn"
+            (click)="clearSearch()"
+            aria-label="Limpiar búsqueda de cliente"
+          >
+            <app-icon name="x" />
+          </button>
         }
-      </select>
-      @if (showTechnicianFilter()) {
-        <label class="technician-filter">
-          <span>Técnico</span>
-          <select [value]="selectedTechnicianId()" (change)="onTechnicianChange($event)">
-            <option value="all">Todos los técnicos</option>
-            @for (technician of ordersFacade.technicians(); track technician.id) {
-              <option [value]="technician.id">{{ technician.displayName }}</option>
-            }
-          </select>
+        @if (showClientSuggestions()) {
+          @if (clientSuggestions().length > 0) {
+            <ul
+              class="client-suggestions"
+              role="listbox"
+              [id]="clientListboxId"
+              aria-label="Clientes"
+            >
+              @for (client of clientSuggestions(); track client) {
+                <li role="option" [attr.aria-selected]="client === search()">
+                  <button type="button" (click)="selectClient(client)">{{ client }}</button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="client-suggestions client-suggestions--empty">Sin clientes coincidentes</p>
+          }
+        }
+      </div>
+      <button
+        type="button"
+        class="filters-toggle-btn"
+        (click)="openFiltersSheet()"
+        [attr.aria-expanded]="filtersSheetOpen()"
+      >
+        <app-icon name="sliders-horizontal" />
+        <span>Filtros</span>
+        @if (activeFilterCount() > 0) {
+          <span class="filter-badge">{{ activeFilterCount() }}</span>
+        }
+      </button>
+
+      <div
+        class="agenda-filters-advanced"
+        [class.agenda-filters-advanced--open]="filtersSheetOpen()"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Filtros de agenda"
+      >
+        <div class="filters-sheet-header">
+          <h2>Filtros</h2>
+          <button type="button" (click)="closeFiltersSheet()" aria-label="Cerrar filtros">
+            <app-icon name="x" />
+          </button>
+        </div>
+
+        <select
+          class="status-select"
+          aria-label="Filtrar por estado"
+          [value]="statusFilter()"
+          (change)="onStatusChange($event)"
+        >
+          <option value="all">Todos los estados</option>
+          @for (entry of statusOptions; track entry[0]) {
+            <option [value]="entry[0]">{{ entry[1].label }}</option>
+          }
+        </select>
+        @if (showTechnicianFilter()) {
+          <label class="technician-filter">
+            <span>Técnico</span>
+            <select [value]="selectedTechnicianId()" (change)="onTechnicianChange($event)">
+              <option value="all">Todos los técnicos</option>
+              @for (technician of ordersFacade.technicians(); track technician.id) {
+                <option [value]="technician.id">{{ technician.displayName }}</option>
+              }
+            </select>
+          </label>
+        }
+        <label class="date-filter">
+          <span>Desde</span>
+          <input type="date" [value]="dateFrom()" (change)="onDateFromChange($event)" />
         </label>
-      }
-      <label class="date-filter">
-        <span>Desde</span>
-        <input type="date" [value]="dateFrom()" (change)="onDateFromChange($event)" />
-      </label>
-      <label class="date-filter">
-        <span>Hasta</span>
-        <input type="date" [value]="dateTo()" (change)="onDateToChange($event)" />
-      </label>
-      @if (hasActiveFilters()) {
-        <button type="button" class="clear-filters-btn" (click)="clearFilters()">
-          Limpiar filtros
-        </button>
-      }
+        <label class="date-filter">
+          <span>Hasta</span>
+          <input type="date" [value]="dateTo()" (change)="onDateToChange($event)" />
+        </label>
+
+        <div class="filters-sheet-footer">
+          @if (hasActiveFilters()) {
+            <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+              Limpiar filtros
+            </button>
+          }
+          <button type="button" class="apply-filters-btn" (click)="closeFiltersSheet()">
+            Ver {{ scheduledVisits().length }}
+            {{ scheduledVisits().length === 1 ? 'visita' : 'visitas' }}
+          </button>
+        </div>
+      </div>
     </div>
+
+    @if (filtersSheetOpen()) {
+      <button
+        type="button"
+        class="filters-backdrop"
+        (click)="closeFiltersSheet()"
+        aria-label="Cerrar filtros"
+      ></button>
+    }
 
     <div class="month-navigation" aria-label="Navegación del calendario">
       <button type="button" class="today-button" (click)="goToToday()">Hoy</button>
@@ -91,7 +170,8 @@
               @for (visit of day.visits.slice(0, visibleVisitsPerDay); track visit.id) {
                 <a
                   class="calendar-visit"
-                  routerLink="/ordenes"
+                  [routerLink]="orderDetailRoute()"
+                  [queryParams]="{ open: visit.id }"
                   [title]="visit.title + ' · ' + technicianNames(visit)"
                 >
                   <span>{{ formatTime(visit.scheduledStart!) }}</span>
@@ -109,22 +189,60 @@
       </div>
     </app-card>
 
+    <app-card padding="none" class="day-strip-card">
+      <div class="mobile-day-strip" role="tablist" aria-label="Días del mes">
+        @for (day of calendarDays(); track day.key) {
+          @if (day.currentMonth) {
+            <button
+              type="button"
+              class="day-pill"
+              [class.day-pill--today]="day.today"
+              [class.day-pill--selected]="selectedDayKey() === day.key"
+              (click)="onDayPillClick(day)"
+              [attr.aria-pressed]="selectedDayKey() === day.key"
+              [attr.aria-label]="
+                formatLongDate(day.date) +
+                (day.visits.length > 0 ? ', ' + day.visits.length + ' visitas' : '')
+              "
+            >
+              <span class="day-pill-weekday">{{ weekdayShort(day.date) }}</span>
+              <span class="day-pill-number">{{ day.dayNumber }}</span>
+              @if (day.visits.length > 0) {
+                <span class="day-pill-dot"></span>
+              }
+            </button>
+          }
+        }
+      </div>
+    </app-card>
+
     <app-card padding="none" class="upcoming-card">
       <div class="upcoming-header">
         <div>
-          <h2>Próximas visitas</h2>
-          <p>{{ upcomingVisits().length }} programadas</p>
+          <h2>{{ selectedDayKey() ? selectedDayLabel() : 'Próximas visitas' }}</h2>
+          <p>{{ displayedSubtitle() }}</p>
         </div>
-        <app-icon name="calendar-days" />
+        @if (selectedDayKey()) {
+          <button
+            type="button"
+            class="clear-day-btn"
+            (click)="clearSelectedDay()"
+            aria-label="Volver a próximas visitas"
+          >
+            <app-icon name="x" />
+          </button>
+        } @else {
+          <app-icon name="calendar-days" />
+        }
       </div>
 
-      @if (upcomingVisits().length === 0) {
-        <p class="agenda-empty">No hay visitas próximas para este filtro.</p>
+      @if (displayedVisits().length === 0) {
+        <p class="agenda-empty">{{ displayedEmptyMessage() }}</p>
       } @else {
         <div class="upcoming-list">
-          @for (visit of upcomingVisits(); track visit.id) {
+          @for (visit of displayedVisits(); track visit.id) {
             <article class="visit-block">
-              <a class="visit-summary" routerLink="/ordenes">
+              <a class="visit-summary" [routerLink]="orderDetailRoute()" [queryParams]="{ open: visit.id }">
                 <div class="upcoming-date">
                   <strong>{{ visit.scheduledStart!.getDate() }}</strong>
                   <span>{{
@@ -142,7 +260,7 @@
                 </div>
               </a>
 
-              <a class="visit-detail" routerLink="/ordenes">
+              <a class="visit-detail" [routerLink]="orderDetailRoute()" [queryParams]="{ open: visit.id }">
                 <div class="upcoming-title-row">
                   <h3>{{ visit.title || visit.serviceSummary }}</h3>
                   <app-status-badge [label]="statusLabel(visit)" [color]="statusColor(visit)" />

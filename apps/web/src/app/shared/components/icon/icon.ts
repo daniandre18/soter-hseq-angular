@@ -31,7 +31,8 @@ export type IconName =
   | 'chevron-up'
   | 'chevron-down'
   | 'chevrons-down'
-  | 'search';
+  | 'search'
+  | 'sliders-horizontal';
 
 @Component({
   selector: 'app-icon',

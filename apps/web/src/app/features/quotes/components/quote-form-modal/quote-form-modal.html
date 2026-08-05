@@ -1,4 +1,9 @@
-<app-modal [open]="open()" title="Nueva Cotización" size="xl" (closeRequested)="close()">
+<app-modal
+  [open]="open()"
+  [title]="editingQuote() ? 'Editar Cotización' : 'Nueva Cotización'"
+  size="xl"
+  (closeRequested)="close()"
+>
   <form class="quote-form" (submit)="onSubmit(); $event.preventDefault()">
     <div class="quote-form-grid">
       <label class="field">
@@ -95,8 +100,15 @@
 
   <div modalFooter>
     <app-button variant="outline" (click)="close()">Cancelar</app-button>
-    <app-button (click)="onSubmit()" [disabled]="quoteForm().invalid() || saving()">
-      {{ saving() ? 'Creando…' : 'Crear Cotización' }}
+    <app-button
+      (click)="onSubmit()"
+      [disabled]="quoteForm().invalid() || saving() || loadingDraft()"
+    >
+      @if (saving()) {
+        {{ editingQuote() ? 'Guardando…' : 'Creando…' }}
+      } @else {
+        {{ editingQuote() ? 'Guardar cambios' : 'Crear Cotización' }}
+      }
     </app-button>
   </div>
 </app-modal>

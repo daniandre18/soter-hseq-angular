@@ -7,7 +7,9 @@
     "emulators": "firebase emulators:start --project demo-soter-hseq",
     "emulators:export": "firebase emulators:start --project demo-soter-hseq --export-on-exit=./.emulator-data --import=./.emulator-data",
     "seed": "npm --prefix scripts run seed",
-    "seed:catalog": "npm --prefix scripts run seed:catalog"
+    "seed:catalog": "npm --prefix scripts run seed:catalog",
+    "seed:clients": "npm --prefix scripts run seed:clients",
+    "seed:clients:production": "npm --prefix scripts run seed:clients:production"
   },
   "devDependencies": {
     "firebase-tools": "^15.25.0"

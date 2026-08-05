@@ -1,32 +1,54 @@
 <section class="quotes-page">
-  <div class="quotes-toolbar">
-    <div class="quotes-filters">
-      <input
-        type="search"
-        class="search-input"
-        placeholder="Buscar por número o cliente..."
-        aria-label="Buscar cotizaciones"
-        [value]="search()"
-        (input)="onSearchInput($event)"
-      />
-      <select
-        class="status-select"
-        aria-label="Filtrar por estado"
-        [value]="statusFilter()"
-        (change)="onStatusChange($event)"
-      >
-        <option value="all">Todos los estados</option>
-        @for (entry of statusOptions; track entry[0]) {
-          <option [value]="entry[0]">{{ entry[1].label }}</option>
-        }
-      </select>
+  <div class="quotes-page-header">
+    <div>
+      <h2>Gestión de cotizaciones</h2>
+      <p>Consulta y administra las propuestas comerciales de tus clientes.</p>
     </div>
     @if (canManageQuotes()) {
       <app-button (click)="openCreate()">+ Nueva Cotización</app-button>
     }
   </div>
 
-  <p class="quotes-summary">{{ filtered().length }} cotizaciones</p>
+  <app-card class="quotes-filter-card" padding="sm">
+    <div class="filter-panel-header">
+      <div>
+        <h3>Buscar y filtrar cotizaciones</h3>
+      </div>
+      @if (hasActiveFilters()) {
+        <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+          Limpiar filtros ({{ activeFilterCount() }})
+        </button>
+      }
+    </div>
+
+    <div class="quotes-filters">
+      <label class="filter-field">
+        <span>Buscar</span>
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Número de cotización o cliente..."
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        />
+      </label>
+
+      <label class="filter-field">
+        <span>Estado</span>
+        <select class="status-select" [value]="statusFilter()" (change)="onStatusChange($event)">
+          <option value="all">Todos los estados</option>
+          @for (entry of statusOptions; track entry[0]) {
+            <option [value]="entry[0]">{{ entry[1].label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="quotes-summary" aria-live="polite">
+      Mostrando {{ filtered().length }}
+      {{ filtered().length === 1 ? 'cotización' : 'cotizaciones' }}
+    </div>
+  </app-card>
 
   @if (filtered().length === 0) {
     <app-card class="empty-card">
@@ -43,6 +65,9 @@
               <th class="align-right">Total</th>
               <th>Estado</th>
               <th>Válida hasta</th>
+              @if (canEditDraftQuotes()) {
+                <th aria-label="Acciones"></th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -64,16 +89,117 @@
                   />
                 </td>
                 <td>{{ quote.validUntil ? formatDate(quote.validUntil) : '—' }}</td>
+                @if (canEditDraftQuotes()) {
+                  <td class="actions-cell">
+                    @if (quote.status === 'DRAFT') {
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="openEdit(quote, $event)"
+                        aria-label="Editar cotización"
+                        title="Editar"
+                      >
+                        <app-icon name="square-pen" />
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-btn icon-btn--danger"
+                        (click)="confirmDelete(quote, $event)"
+                        aria-label="Eliminar cotización"
+                        title="Eliminar"
+                      >
+                        <app-icon name="trash-2" />
+                      </button>
+                    }
+                  </td>
+                }
               </tr>
             }
           </tbody>
         </table>
+      </div>
+      <div class="quotes-mobile-list">
+        @for (quote of filtered(); track quote.id) {
+          <article
+            class="mobile-quote-row"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="'Ver detalle de la cotización ' + quote.quoteNumber"
+            (click)="openDetail(quote)"
+            (keydown.enter)="openDetail(quote)"
+          >
+            <div class="mobile-quote-header">
+              <div class="mobile-quote-identity">
+                <strong>{{ quote.quoteNumber }}</strong>
+                <span>{{ quote.clientBusinessName }}</span>
+              </div>
+              <div class="mobile-quote-actions">
+                <app-status-badge
+                  [label]="statusLabel(quote.status)"
+                  [color]="statusColor(quote.status)"
+                />
+                @if (canEditDraftQuotes() && quote.status === 'DRAFT') {
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="openEdit(quote, $event)"
+                    aria-label="Editar cotización"
+                    title="Editar"
+                  >
+                    <app-icon name="square-pen" />
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    (click)="confirmDelete(quote, $event)"
+                    aria-label="Eliminar cotización"
+                    title="Eliminar"
+                  >
+                    <app-icon name="trash-2" />
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="mobile-quote-footer">
+              <div>
+                <span class="mobile-field-label">Total</span>
+                <strong class="mobile-quote-total">{{ formatCurrency(quote.total) }}</strong>
+              </div>
+              <div class="mobile-validity">
+                <span class="mobile-field-label">Válida hasta</span>
+                <span>{{ quote.validUntil ? formatDate(quote.validUntil) : 'Sin fecha' }}</span>
+              </div>
+            </div>
+          </article>
+        }
       </div>
     </app-card>
   }
 </section>
 
 @if (canManageQuotes()) {
-  <app-quote-form-modal [open]="formOpen()" (closeRequested)="closeForm()" />
+  <app-quote-form-modal
+    [open]="formOpen()"
+    [editingQuote]="editingQuote()"
+    (closeRequested)="closeForm()"
+  />
 }
 <app-quote-detail-modal [quote]="liveDetailQuote()" (closeRequested)="closeDetail()" />
+
+<app-modal
+  [open]="!!deletingQuote()"
+  title="¿Eliminar esta cotización?"
+  size="sm"
+  (closeRequested)="cancelDelete()"
+>
+  <p class="confirm-text">
+    Se eliminarán la cotización {{ deletingQuote()?.quoteNumber }} y todos sus servicios. Esta
+    acción no se puede deshacer.
+  </p>
+  <div modalFooter>
+    <app-button variant="outline" (click)="cancelDelete()">Cancelar</app-button>
+    <app-button variant="danger" (click)="deleteConfirmed()" [disabled]="deleting()">
+      {{ deleting() ? 'Eliminando…' : 'Eliminar' }}
+    </app-button>
+  </div>
+</app-modal>

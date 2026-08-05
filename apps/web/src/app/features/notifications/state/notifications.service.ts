@@ -31,6 +31,7 @@ function toNotification(id: string, data: DocumentData): AppNotification {
     entityType: data['entityType'],
     entityId: data['entityId'],
     readBy: data['readBy'] ?? [],
+    dismissedBy: data['dismissedBy'] ?? [],
     createdAt: toDate(data['createdAt']),
     createdBy: data['createdBy'],
   };
@@ -78,6 +79,25 @@ export class NotificationsService {
     const batch = writeBatch(this.firestore);
     for (const id of notificationIds) {
       batch.update(doc(this.firestore, 'notifications', id), { readBy: arrayUnion(userId) });
+    }
+    await batch.commit();
+  }
+
+  async dismiss(notificationId: string, userId: string): Promise<void> {
+    await updateDoc(doc(this.firestore, 'notifications', notificationId), {
+      dismissedBy: arrayUnion(userId),
+    });
+  }
+
+  async dismissAll(notificationIds: string[], userId: string): Promise<void> {
+    if (notificationIds.length === 0) {
+      return;
+    }
+    const batch = writeBatch(this.firestore);
+    for (const id of notificationIds) {
+      batch.update(doc(this.firestore, 'notifications', id), {
+        dismissedBy: arrayUnion(userId),
+      });
     }
     await batch.commit();
   }

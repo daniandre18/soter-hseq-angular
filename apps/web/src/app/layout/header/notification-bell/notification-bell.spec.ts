@@ -15,6 +15,8 @@ describe('NotificationBell', () => {
   let fixture: ComponentFixture<NotificationBell>;
   let markAsRead: ReturnType<typeof vi.fn>;
   let markAllAsRead: ReturnType<typeof vi.fn>;
+  let dismiss: ReturnType<typeof vi.fn>;
+  let dismissAll: ReturnType<typeof vi.fn>;
 
   const notification: AppNotification = {
     id: 'notif-1',
@@ -24,6 +26,7 @@ describe('NotificationBell', () => {
     entityType: 'ORDER',
     entityId: 'order-1',
     readBy: [],
+    dismissedBy: [],
     createdAt: new Date(),
     createdBy: 'tech-1',
   };
@@ -31,6 +34,8 @@ describe('NotificationBell', () => {
   beforeEach(async () => {
     markAsRead = vi.fn().mockResolvedValue(undefined);
     markAllAsRead = vi.fn().mockResolvedValue(undefined);
+    dismiss = vi.fn().mockResolvedValue(undefined);
+    dismissAll = vi.fn().mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [NotificationBell],
@@ -46,6 +51,8 @@ describe('NotificationBell', () => {
             unreadCount: signal(1),
             markAsRead,
             markAllAsRead,
+            dismiss,
+            dismissAll,
           },
         },
         {
@@ -94,5 +101,23 @@ describe('NotificationBell', () => {
     fixture.nativeElement.querySelector('.mark-all-read-btn').click();
 
     expect(markAllAsRead).toHaveBeenCalled();
+  });
+
+  it('dismisses one notification from its close button', () => {
+    fixture.nativeElement.querySelector('.bell-button').click();
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.notification-dismiss-btn').click();
+
+    expect(dismiss).toHaveBeenCalledWith('notif-1');
+  });
+
+  it('dismisses all notifications from the footer action', () => {
+    fixture.nativeElement.querySelector('.bell-button').click();
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.dismiss-all-btn').click();
+
+    expect(dismissAll).toHaveBeenCalled();
   });
 });

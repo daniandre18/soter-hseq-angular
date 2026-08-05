@@ -19,6 +19,10 @@ export class QuotesFacade {
     const role = this.authFacade.currentRole();
     return role === 'ADMIN' || role === 'COMMERCIAL';
   });
+  readonly canEditDraftQuotes = computed(() => {
+    const role = this.authFacade.currentRole();
+    return role === 'ADMIN' || role === 'COMMERCIAL';
+  });
 
   init(): void {
     // El guard puede resolver su propia lectura de perfil una fracción antes
@@ -38,6 +42,15 @@ export class QuotesFacade {
   async addQuote(data: NewQuote, items: NewQuoteItem[]): Promise<string> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     return this.service.addQuote(data, items, userId);
+  }
+
+  async updateDraft(quoteId: string, data: NewQuote, items: NewQuoteItem[]): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.updateDraft(quoteId, data, items, userId);
+  }
+
+  async deleteDraft(quoteId: string): Promise<void> {
+    await this.service.deleteDraft(quoteId);
   }
 
   async updateStatus(quoteId: string, status: QuoteStatus): Promise<void> {

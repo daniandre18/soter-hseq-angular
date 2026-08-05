@@ -33,6 +33,17 @@
               class="notification-item"
               [class.notification-item--unread]="isUnread(notification)"
             >
+              <button
+                type="button"
+                class="notification-dismiss-btn"
+                [attr.aria-label]="
+                  'Eliminar notificación: ' + translateDomainCodes(notification.title)
+                "
+                title="Eliminar notificación"
+                (click)="dismiss(notification.id)"
+              >
+                <app-icon name="x" />
+              </button>
               <span class="notification-icon">
                 <app-icon [name]="typeIcon[notification.type]" />
               </span>
@@ -61,6 +72,12 @@
             </li>
           }
         </ul>
+        <div class="notification-panel-footer">
+          <button type="button" class="dismiss-all-btn" (click)="dismissAll()">
+            <app-icon name="trash-2" />
+            Eliminar todas las notificaciones
+          </button>
+        </div>
       }
     </div>
   }
