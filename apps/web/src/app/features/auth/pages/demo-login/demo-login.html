@@ -1,4 +1,14 @@
 <main class="demo-login-page">
+  @if (transitioning()) {
+    <div class="login-transition" role="status" aria-live="polite" aria-busy="true">
+      <div class="login-transition__content">
+        <span class="login-transition__spinner" aria-hidden="true"></span>
+        <strong>Preparando tu perfil</strong>
+        <span>Validando permisos y cargando la información…</span>
+      </div>
+    </div>
+  }
+
   <header class="demo-brand">
     <img src="soter-hseq-login.png" alt="SOTER HSEQ — Salud y Seguridad en el Trabajo" />
     <p>Gestión Integral HSEQ &amp; SST</p>
@@ -16,7 +26,7 @@
         <button
           type="button"
           [class]="'profile-card profile-card--' + profile.color"
-          [disabled]="loading()"
+          [disabled]="loading() || transitioning()"
           (click)="loginAs(profile)"
           [attr.aria-label]="'Ingresar como ' + profile.role"
         >

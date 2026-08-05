@@ -72,10 +72,12 @@ export class DemoLogin {
   protected readonly loading = this.authFacade.loading;
   protected readonly authError = this.authFacade.error;
   protected readonly selectedEmail = signal<string | null>(null);
+  protected readonly transitioning = signal(false);
 
   protected async loginAs(profile: DemoProfile): Promise<void> {
-    if (this.loading()) return;
+    if (this.loading() || this.transitioning()) return;
     this.selectedEmail.set(profile.email);
+    this.transitioning.set(true);
     const success = await this.authFacade.login(profile.email, DEMO_PASSWORD);
     if (success) {
       await this.router.navigateByUrl('/');
@@ -88,5 +90,6 @@ export class DemoLogin {
       return;
     }
     this.selectedEmail.set(null);
+    this.transitioning.set(false);
   }
 }

@@ -1,14 +1,86 @@
 <!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <title>SOTER HSEQ</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/png" sizes="256x256" href="favicon.png">
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-</head>
-<body>
-  <app-root></app-root>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>SOTER HSEQ</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" sizes="256x256" href="favicon.png" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <style>
+      .app-boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 1.5rem;
+        color: #fff;
+        font-family:
+          Poppins,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        text-align: center;
+        background:
+          radial-gradient(circle at 80% 90%, rgb(143 20 20 / 30%), transparent 34%),
+          linear-gradient(145deg, #0d0a2a, #171144 62%, #230b2b);
+      }
+
+      .app-boot-loader__content {
+        display: grid;
+        justify-items: center;
+        gap: 0.75rem;
+      }
+
+      .app-boot-loader__spinner {
+        width: 2.75rem;
+        height: 2.75rem;
+        border: 0.25rem solid rgb(255 255 255 / 22%);
+        border-top-color: #f42626;
+        border-radius: 50%;
+        animation: app-boot-spin 750ms linear infinite;
+      }
+
+      .app-boot-loader__brand {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+
+      .app-boot-loader__message {
+        color: rgb(255 255 255 / 65%);
+        font-size: 0.8rem;
+      }
+
+      @keyframes app-boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .app-boot-loader__spinner {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <app-root>
+      <div
+        class="app-boot-loader"
+        role="status"
+        aria-live="polite"
+        aria-label="Cargando SOTER HSEQ"
+      >
+        <div class="app-boot-loader__content">
+          <span class="app-boot-loader__spinner" aria-hidden="true"></span>
+          <strong class="app-boot-loader__brand">SOTER HSEQ</strong>
+          <span class="app-boot-loader__message">Cargando tu espacio de trabajo…</span>
+        </div>
+      </div>
+    </app-root>
+  </body>
 </html>

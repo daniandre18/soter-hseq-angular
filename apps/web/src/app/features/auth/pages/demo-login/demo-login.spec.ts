@@ -58,4 +58,13 @@ describe('DemoLogin', () => {
     expect(navigateByUrl).toHaveBeenCalledExactlyOnceWith('/');
     expect(reload).toHaveBeenCalledOnce();
   });
+
+  it('keeps a full-screen loading state visible through the login transition', async () => {
+    fixture.nativeElement.querySelector('.profile-card').click();
+    await fixture.whenStable();
+
+    const transition: HTMLElement | null = fixture.nativeElement.querySelector('.login-transition');
+    expect(transition?.textContent).toContain('Preparando tu perfil');
+    expect(transition?.getAttribute('aria-busy')).toBe('true');
+  });
 });
