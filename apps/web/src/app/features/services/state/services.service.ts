@@ -45,6 +45,7 @@ export class ServicesService {
   private readonly firestore = inject(FIREBASE_FIRESTORE);
 
   private unsubscribeFromServices: Unsubscribe | null = null;
+  private servicesRetriedAfterError = false;
 
   watchServices(): void {
     if (this.unsubscribeFromServices) {
@@ -55,6 +56,7 @@ export class ServicesService {
     this.unsubscribeFromServices = onSnapshot(
       collection(this.firestore, 'services'),
       (snapshot) => {
+        this.servicesRetriedAfterError = false;
         this.store.set(
           snapshot.docs.map((docSnapshot) => toService(docSnapshot.id, docSnapshot.data())),
         );
@@ -63,6 +65,14 @@ export class ServicesService {
       (error) => {
         this.store.setError(error.message);
         this.store.setLoading(false);
+        // Ver el mismo comentario en OrdersService.watchOrders: sin limpiar
+        // el guard, un permission-denied transitorio justo tras el login
+        // deja el listener atascado hasta recargar la página.
+        this.unsubscribeFromServices = null;
+        if (error.code === 'permission-denied' && !this.servicesRetriedAfterError) {
+          this.servicesRetriedAfterError = true;
+          setTimeout(() => this.watchServices(), 1000);
+        }
       },
     );
   }

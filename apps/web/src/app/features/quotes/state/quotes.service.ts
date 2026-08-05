@@ -71,6 +71,7 @@ export class QuotesService {
   private readonly firestore = inject(FIREBASE_FIRESTORE);
 
   private unsubscribeFromQuotes: Unsubscribe | null = null;
+  private quotesRetriedAfterError = false;
 
   watchQuotes(): void {
     if (this.unsubscribeFromQuotes) {
@@ -81,12 +82,21 @@ export class QuotesService {
     this.unsubscribeFromQuotes = onSnapshot(
       collection(this.firestore, 'quotes'),
       (snapshot) => {
+        this.quotesRetriedAfterError = false;
         this.store.set(snapshot.docs.map((docSnapshot) => toQuote(docSnapshot.id, docSnapshot.data())));
         this.store.setLoading(false);
       },
       (error) => {
         this.store.setError(error.message);
         this.store.setLoading(false);
+        // Ver el mismo comentario en OrdersService.watchOrders: sin limpiar
+        // el guard, un permission-denied transitorio justo tras el login
+        // deja el listener atascado hasta recargar la página.
+        this.unsubscribeFromQuotes = null;
+        if (error.code === 'permission-denied' && !this.quotesRetriedAfterError) {
+          this.quotesRetriedAfterError = true;
+          setTimeout(() => this.watchQuotes(), 1000);
+        }
       },
     );
   }

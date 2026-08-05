@@ -39,6 +39,7 @@ export class ClientTagsService {
   private readonly firestore = inject(FIREBASE_FIRESTORE);
 
   private unsubscribeFromTags: Unsubscribe | null = null;
+  private tagsRetriedAfterError = false;
 
   watchTags(): void {
     if (this.unsubscribeFromTags) {
@@ -49,6 +50,7 @@ export class ClientTagsService {
     this.unsubscribeFromTags = onSnapshot(
       collection(this.firestore, 'clientTags'),
       (snapshot) => {
+        this.tagsRetriedAfterError = false;
         this.store.set(
           snapshot.docs.map((docSnapshot) => toClientTag(docSnapshot.id, docSnapshot.data())),
         );
@@ -57,6 +59,14 @@ export class ClientTagsService {
       (error) => {
         this.store.setError(error.message);
         this.store.setLoading(false);
+        // Ver el mismo comentario en OrdersService.watchOrders: sin limpiar
+        // el guard, un permission-denied transitorio justo tras el login
+        // deja el listener atascado hasta recargar la página.
+        this.unsubscribeFromTags = null;
+        if (error.code === 'permission-denied' && !this.tagsRetriedAfterError) {
+          this.tagsRetriedAfterError = true;
+          setTimeout(() => this.watchTags(), 1000);
+        }
       },
     );
   }

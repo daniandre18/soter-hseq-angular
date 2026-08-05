@@ -205,6 +205,7 @@ export class OrdersService {
   private readonly storage = inject(FIREBASE_STORAGE);
 
   private unsubscribeFromOrders: Unsubscribe | null = null;
+  private ordersRetriedAfterError = false;
 
   /**
    * Para un técnico, Firestore Rules exige `resource.data.assignedTechnicianIds`
@@ -228,6 +229,7 @@ export class OrdersService {
     this.unsubscribeFromOrders = onSnapshot(
       ordersQuery,
       (snapshot) => {
+        this.ordersRetriedAfterError = false;
         const orders = snapshot.docs.map((docSnapshot) =>
           toServiceOrder(docSnapshot.id, docSnapshot.data()),
         );
@@ -237,6 +239,16 @@ export class OrdersService {
       (error) => {
         this.store.setError(error.message);
         this.store.setLoading(false);
+        // El guard de arriba impediría reabrir el listener más adelante si
+        // no se limpia acá. Un `permission-denied` justo después de iniciar
+        // sesión suele ser una carrera del SDK (el canal de Firestore aún no
+        // tiene el token nuevo) y no un rechazo real — se reintenta una sola
+        // vez para no quedar atascado hasta que el usuario recargue.
+        this.unsubscribeFromOrders = null;
+        if (error.code === 'permission-denied' && !this.ordersRetriedAfterError) {
+          this.ordersRetriedAfterError = true;
+          setTimeout(() => this.watchOrders(technicianUid), 1000);
+        }
       },
     );
   }
