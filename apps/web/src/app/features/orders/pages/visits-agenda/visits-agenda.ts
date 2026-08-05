@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrdersFacade } from '../../facades/orders.facade';
+import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import { Card } from '../../../../shared/components/card/card';
 import { Icon } from '../../../../shared/components/icon/icon';
@@ -40,8 +41,16 @@ function dateKey(date: Date): string {
 })
 export class VisitsAgenda {
   protected readonly ordersFacade = inject(OrdersFacade);
+  private readonly authFacade = inject(AuthFacade);
   protected readonly weekdays = WEEKDAYS;
   protected readonly visibleVisitsPerDay = VISIBLE_VISITS_PER_DAY;
+
+  /** Un técnico solo debe ver su propia agenda (CLAUDE.md §3.4 "no puede
+   *  consultar órdenes de otros técnicos") — `OrdersFacade.init()` ya filtra
+   *  `orders()` a las suyas del lado de Firestore, pero el selector de
+   *  "Técnico" no tiene sentido para él (no hay nadie más entre quien elegir)
+   *  y sugiere una capacidad que no debería tener, así que se oculta. */
+  protected readonly isTechnician = computed(() => this.authFacade.currentRole() === 'TECHNICIAN');
 
   protected readonly selectedTechnicianId = signal('all');
   protected readonly visibleMonth = signal(startOfDay(new Date()));

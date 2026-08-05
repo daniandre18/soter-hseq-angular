@@ -20,15 +20,17 @@
           <option [value]="entry[0]">{{ entry[1].label }}</option>
         }
       </select>
-      <label class="technician-filter">
-        <span>Técnico</span>
-        <select [value]="selectedTechnicianId()" (change)="onTechnicianChange($event)">
-          <option value="all">Todos los técnicos</option>
-          @for (technician of ordersFacade.technicians(); track technician.id) {
-            <option [value]="technician.id">{{ technician.displayName }}</option>
-          }
-        </select>
-      </label>
+      @if (!isTechnician()) {
+        <label class="technician-filter">
+          <span>Técnico</span>
+          <select [value]="selectedTechnicianId()" (change)="onTechnicianChange($event)">
+            <option value="all">Todos los técnicos</option>
+            @for (technician of ordersFacade.technicians(); track technician.id) {
+              <option [value]="technician.id">{{ technician.displayName }}</option>
+            }
+          </select>
+        </label>
+      }
       <label class="date-filter">
         <span>Desde</span>
         <input type="date" [value]="dateFrom()" (change)="onDateFromChange($event)" />

@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { VisitsAgenda } from './visits-agenda';
 import { OrdersFacade } from '../../facades/orders.facade';
+import { AuthFacade } from '../../../auth/facades/auth.facade';
 import type { ServiceOrder } from '../../models/order.model';
 
 function buildOrder(overrides: Partial<ServiceOrder>): ServiceOrder {
@@ -50,6 +51,7 @@ describe('VisitsAgenda', () => {
             technicianName: () => 'Técnico',
           },
         },
+        { provide: AuthFacade, useValue: { currentRole: signal('ADMIN') } },
       ],
     }).compileComponents();
 
@@ -104,5 +106,37 @@ describe('VisitsAgenda', () => {
 
     component['clearFilters']();
     expect(component['scheduledVisits']().length).toBe(3);
+  });
+
+  it('shows the technician filter for non-technician roles', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.technician-filter')).toBeTruthy();
+  });
+});
+
+describe('VisitsAgenda (TECHNICIAN)', () => {
+  it('hides the technician filter — a technician only sees their own agenda', async () => {
+    await TestBed.configureTestingModule({
+      imports: [VisitsAgenda],
+      providers: [
+        provideRouter([]),
+        {
+          provide: OrdersFacade,
+          useValue: {
+            orders: signal([]),
+            technicians: signal([]),
+            error: signal(null),
+            init: () => undefined,
+            technicianName: () => 'Técnico',
+          },
+        },
+        { provide: AuthFacade, useValue: { currentRole: signal('TECHNICIAN') } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(VisitsAgenda);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.technician-filter')).toBeFalsy();
   });
 });
