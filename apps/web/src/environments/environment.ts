@@ -5,9 +5,9 @@ export const environment: AppEnvironment = {
   useEmulators: false,
   // Cambiar a `false` recupera inmediatamente el formulario tradicional.
   demoQuickLoginEnabled: true,
-  // GitHub Pages + Firebase Spark: las evidencias migradas son estáticas y
-  // Firebase Storage no está disponible sin asociar facturación (Blaze).
-  evidenceUploadsEnabled: false,
+  // El proyecto productivo usa Firebase Storage (plan Blaze) para permitir
+  // evidencias reales desde el demo publicado en GitHub Pages.
+  evidenceUploadsEnabled: true,
   firebase: {
     apiKey: 'AIzaSyAXOTIPT04Zk4r6mSBYah_-Zmar5Wm67_4',
     authDomain: 'soter-hseq.firebaseapp.com',
