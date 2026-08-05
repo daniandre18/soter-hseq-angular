@@ -4,6 +4,7 @@ import { roleGuard } from './core/guards/role.guard';
 import { homeRedirectGuard } from './core/guards/home-redirect.guard';
 import { Shell } from './layout/shell/shell';
 import { Login } from './features/auth/pages/login/login';
+import { DemoLogin } from './features/auth/pages/demo-login/demo-login';
 import { ForgotPassword } from './features/auth/pages/forgot-password/forgot-password';
 import { AccessDenied } from './shared/pages/access-denied/access-denied';
 import { NotFound } from './shared/pages/not-found/not-found';
@@ -16,9 +17,12 @@ import { VisitsAgenda } from './features/orders/pages/visits-agenda/visits-agend
 import { ServicesList } from './features/services/pages/services-list/services-list';
 import { ServiceCategories } from './features/services/pages/service-categories/service-categories';
 import { TechniciansList } from './features/users/pages/technicians-list/technicians-list';
+import { environment } from '../environments/environment';
+
+const loginComponent = environment.demoQuickLoginEnabled ? DemoLogin : Login;
 
 export const routes: Routes = [
-  { path: 'login', component: Login, title: 'Iniciar sesión — SOTER HSEQ' },
+  { path: 'login', component: loginComponent, title: 'Acceso demo — SOTER HSEQ' },
   {
     path: 'recuperar-contrasena',
     component: ForgotPassword,

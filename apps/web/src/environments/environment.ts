@@ -3,6 +3,8 @@ import type { AppEnvironment } from '../app/core/models/app-environment.model';
 export const environment: AppEnvironment = {
   production: true,
   useEmulators: false,
+  // Cambiar a `false` recupera inmediatamente el formulario tradicional.
+  demoQuickLoginEnabled: true,
   // GitHub Pages + Firebase Spark: las evidencias migradas son estáticas y
   // Firebase Storage no está disponible sin asociar facturación (Blaze).
   evidenceUploadsEnabled: false,

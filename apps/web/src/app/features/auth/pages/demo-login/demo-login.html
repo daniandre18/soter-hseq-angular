@@ -1,0 +1,44 @@
+<main class="demo-login-page">
+  <header class="demo-brand">
+    <img src="soter-hseq-logo-menu.jpeg" alt="SOTER HSEQ" />
+    <p>Gestión Integral HSEQ &amp; SST</p>
+  </header>
+
+  <section class="demo-card" aria-labelledby="demo-title">
+    <div class="demo-card-heading">
+      <span class="demo-badge">DEMO</span>
+      <h1 id="demo-title">Selecciona un perfil</h1>
+      <p>Explora la plataforma con las funciones de cada rol</p>
+    </div>
+
+    <div class="profile-list">
+      @for (profile of profiles; track profile.email) {
+        <button
+          type="button"
+          [class]="'profile-card profile-card--' + profile.color"
+          [disabled]="loading()"
+          (click)="loginAs(profile)"
+          [attr.aria-label]="'Ingresar como ' + profile.role"
+        >
+          <span class="profile-icon" aria-hidden="true">{{ profile.icon }}</span>
+          <span class="profile-copy">
+            <span class="profile-title">
+              <strong>{{ profile.role }}</strong>
+              <span>— {{ profile.name }}</span>
+            </span>
+            <span class="profile-description">{{ profile.description }}</span>
+          </span>
+          <span class="profile-action" aria-hidden="true">
+            {{ selectedEmail() === profile.email && loading() ? '···' : '›' }}
+          </span>
+        </button>
+      }
+    </div>
+
+    @if (authError()) {
+      <p class="form-error" role="alert">{{ authError() }}</p>
+    }
+  </section>
+
+  <footer>SOTER HSEQ · Demo académica · Colombia</footer>
+</main>
