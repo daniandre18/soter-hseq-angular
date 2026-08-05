@@ -20,7 +20,7 @@
           <option [value]="entry[0]">{{ entry[1].label }}</option>
         }
       </select>
-      @if (!isTechnician()) {
+      @if (showTechnicianFilter()) {
         <label class="technician-filter">
           <span>Técnico</span>
           <select [value]="selectedTechnicianId()" (change)="onTechnicianChange($event)">

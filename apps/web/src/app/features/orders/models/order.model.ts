@@ -31,6 +31,11 @@ export interface ServiceOrder {
   clientId: string;
   clientBusinessName: string;
   assignedTechnicianIds: string[];
+  /** Denormalizado junto con `assignedTechnicianIds` (mismo criterio que
+   *  `clientBusinessName`/`quoteNumber`): un VIEWER solo puede leer su propia
+   *  orden, no la colección `users`, así que el nombre debe venir copiado
+   *  aquí para poder mostrar "qué técnico va a ir" sin una lectura aparte. */
+  assignedTechnicianNames?: string[];
   coordinatorId?: string;
   title: string;
   priority: OrderPriority;

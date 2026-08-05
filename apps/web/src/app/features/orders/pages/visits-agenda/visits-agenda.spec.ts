@@ -140,3 +140,42 @@ describe('VisitsAgenda (TECHNICIAN)', () => {
     expect(fixture.nativeElement.querySelector('.technician-filter')).toBeFalsy();
   });
 });
+
+describe('VisitsAgenda (VIEWER)', () => {
+  it('hides the technician filter and shows the assigned technician by name', async () => {
+    const orders = signal<ServiceOrder[]>([
+      buildOrder({
+        id: 'order-1',
+        assignedTechnicianIds: ['tech-1'],
+        assignedTechnicianNames: ['Carlos Pérez'],
+      }),
+    ]);
+
+    await TestBed.configureTestingModule({
+      imports: [VisitsAgenda],
+      providers: [
+        provideRouter([]),
+        {
+          provide: OrdersFacade,
+          useValue: {
+            orders,
+            // Rules no permiten a un VIEWER listar `users`, así que la
+            // fachada siempre resuelve esto vacío para su rol.
+            technicians: signal([]),
+            error: signal(null),
+            init: () => undefined,
+            technicianName: () => 'Técnico',
+          },
+        },
+        { provide: AuthFacade, useValue: { currentRole: signal('VIEWER') } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(VisitsAgenda);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.technician-filter')).toBeFalsy();
+    expect(component['primaryTechnicianName'](orders()[0])).toBe('Carlos Pérez');
+  });
+});

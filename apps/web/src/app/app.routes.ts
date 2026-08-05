@@ -68,7 +68,7 @@ export const routes: Routes = [
         component: VisitsAgenda,
         title: 'Agenda de visitas — SOTER HSEQ',
         data: { title: 'Agenda de visitas' },
-        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN'])],
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN', 'VIEWER'])],
       },
       {
         path: 'servicios/categorias',

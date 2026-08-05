@@ -45,12 +45,18 @@ export class VisitsAgenda {
   protected readonly weekdays = WEEKDAYS;
   protected readonly visibleVisitsPerDay = VISIBLE_VISITS_PER_DAY;
 
-  /** Un técnico solo debe ver su propia agenda (CLAUDE.md §3.4 "no puede
-   *  consultar órdenes de otros técnicos") — `OrdersFacade.init()` ya filtra
-   *  `orders()` a las suyas del lado de Firestore, pero el selector de
-   *  "Técnico" no tiene sentido para él (no hay nadie más entre quien elegir)
-   *  y sugiere una capacidad que no debería tener, así que se oculta. */
-  protected readonly isTechnician = computed(() => this.authFacade.currentRole() === 'TECHNICIAN');
+  /** El selector "Técnico" solo tiene sentido para roles internos con
+   *  visibilidad de todo el equipo. Un TECHNICIAN solo debe ver su propia
+   *  agenda (CLAUDE.md §3.4 "no puede consultar órdenes de otros técnicos")
+   *  y un VIEWER (perfil de cliente, CLAUDE.md §3.5) solo ve sus propias
+   *  visitas — `OrdersFacade.init()` ya filtra `orders()` del lado de
+   *  Firestore para ambos, pero además `OrdersFacade.technicians()` viene
+   *  vacío para VIEWER (Rules no le permiten listar `users`), así que el
+   *  selector quedaría vacío y sin sentido si se mostrara. */
+  protected readonly showTechnicianFilter = computed(() => {
+    const role = this.authFacade.currentRole();
+    return role === 'ADMIN' || role === 'COMMERCIAL' || role === 'COORDINATOR';
+  });
 
   protected readonly selectedTechnicianId = signal('all');
   protected readonly visibleMonth = signal(startOfDay(new Date()));
@@ -201,10 +207,16 @@ export class VisitsAgenda {
 
   protected technicianNames(order: ServiceOrder): string {
     if (order.assignedTechnicianIds.length === 0) return 'Sin técnico asignado';
+    if (order.assignedTechnicianNames?.length) {
+      return order.assignedTechnicianNames.join(', ');
+    }
     return order.assignedTechnicianIds.map((id) => this.ordersFacade.technicianName(id)).join(', ');
   }
 
   protected primaryTechnicianName(order: ServiceOrder): string {
+    if (order.assignedTechnicianNames?.[0]) {
+      return order.assignedTechnicianNames[0];
+    }
     const technicianId = order.assignedTechnicianIds[0];
     return technicianId ? this.ordersFacade.technicianName(technicianId) : 'Sin técnico asignado';
   }

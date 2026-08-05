@@ -88,7 +88,7 @@ const NAV_SECTIONS: NavSection[] = [
         path: '/agenda',
         label: 'Agenda de visitas',
         icon: 'calendar-days',
-        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN'],
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN', 'VIEWER'],
       },
     ],
   },

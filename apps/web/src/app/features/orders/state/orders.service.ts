@@ -58,6 +58,7 @@ type OrderUpdate = Partial<
     | 'scheduledStart'
     | 'scheduledEnd'
     | 'assignedTechnicianIds'
+    | 'assignedTechnicianNames'
     | 'status'
     | 'actualStart'
     | 'actualEnd'
@@ -162,6 +163,7 @@ function toServiceOrder(id: string, data: DocumentData): ServiceOrder {
     clientId: data['clientId'],
     clientBusinessName: data['clientBusinessName'],
     assignedTechnicianIds: data['assignedTechnicianIds'] ?? [],
+    assignedTechnicianNames: data['assignedTechnicianNames'] ?? [],
     coordinatorId: data['coordinatorId'],
     // `title`/`priority`/`progress` no existían antes de agregar la creación
     // manual de órdenes: los documentos previos (venidos de una cotización)
@@ -290,6 +292,7 @@ export class OrdersService {
   async assignTechnicians(
     orderId: string,
     technicianIds: string[],
+    technicianNames: string[],
     updatedBy: string,
   ): Promise<void> {
     const current = this.store.getValue().entities?.[orderId];
@@ -297,7 +300,11 @@ export class OrdersService {
       current?.status === 'SCHEDULED' && technicianIds.length > 0 ? 'ASSIGNED' : undefined;
     await this.updateOrder(
       orderId,
-      { assignedTechnicianIds: technicianIds, ...(status && { status }) },
+      {
+        assignedTechnicianIds: technicianIds,
+        assignedTechnicianNames: technicianNames,
+        ...(status && { status }),
+      },
       updatedBy,
     );
   }

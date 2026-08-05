@@ -214,7 +214,8 @@ export class OrdersFacade {
 
   async assignTechnicians(orderId: string, technicianIds: string[]): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
-    await this.service.assignTechnicians(orderId, technicianIds, userId);
+    const technicianNames = technicianIds.map((id) => this.technicianName(id));
+    await this.service.assignTechnicians(orderId, technicianIds, technicianNames, userId);
   }
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<void> {
