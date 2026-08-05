@@ -81,6 +81,8 @@ describe('OrderFormModal', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('.order-form')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('label.field--full select[aria-label="Cliente"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.order-rows-section')).toBeTruthy();
     expect(fixture.nativeElement.querySelectorAll('.order-form-action')).toHaveLength(2);
   });
 

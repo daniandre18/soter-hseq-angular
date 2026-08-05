@@ -12,12 +12,17 @@
 }
 
 .demo-brand {
+  width: min(32rem, 92vw);
   text-align: center;
 
   img {
-    width: min(22rem, 80vw);
-    height: auto;
     display: block;
+    width: 100%;
+    aspect-ratio: 4 / 1;
+    border-radius: 0.8rem;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
   }
 
   p {

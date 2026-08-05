@@ -29,6 +29,7 @@ describe('QuotesList', () => {
           useValue: {
             quotes: signal([]),
             loading: signal(false),
+            canManageQuotes: signal(true),
             init: () => undefined,
           },
         },
@@ -89,6 +90,7 @@ describe('QuotesList', () => {
             useValue: {
               quotes: signal([quote]),
               loading: signal(false),
+              canManageQuotes: signal(true),
               init: () => undefined,
               watchItems: () => of([]),
             },

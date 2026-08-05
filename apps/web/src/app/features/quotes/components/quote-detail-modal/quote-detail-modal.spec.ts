@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -10,13 +10,21 @@ import { OrdersFacade } from '../../../orders/facades/orders.facade';
 describe('QuoteDetailModal', () => {
   let component: QuoteDetailModal;
   let fixture: ComponentFixture<QuoteDetailModal>;
+  let canManageQuotes: WritableSignal<boolean>;
+  let updateStatus: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    canManageQuotes = signal(true);
+    updateStatus = vi.fn().mockResolvedValue(undefined);
+
     await TestBed.configureTestingModule({
       imports: [QuoteDetailModal],
       providers: [
         provideRouter([]),
-        { provide: QuotesFacade, useValue: { watchItems: () => of([]) } },
+        {
+          provide: QuotesFacade,
+          useValue: { watchItems: () => of([]), canManageQuotes, updateStatus },
+        },
         { provide: OrdersFacade, useValue: { orders: signal([]), init: () => undefined } },
       ],
     }).compileComponents();
@@ -30,13 +38,49 @@ describe('QuoteDetailModal', () => {
     expect(component).toBeTruthy();
   });
 
+  it('hides state transitions for a read-only role', async () => {
+    canManageQuotes.set(false);
+    fixture.componentRef.setInput('quote', {
+      id: 'quote-1',
+      quoteNumber: 'COT-0001',
+      clientBusinessName: 'Cliente Uno',
+      status: 'DRAFT',
+      total: 100,
+    });
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('[modalFooter] app-button')).toBeFalsy();
+  });
+
+  it('shows an error instead of silently returning to draft when Firestore rejects the change', async () => {
+    updateStatus.mockRejectedValueOnce(new Error('Missing or insufficient permissions.'));
+    fixture.componentRef.setInput('quote', {
+      id: 'quote-1',
+      quoteNumber: 'COT-0001',
+      clientBusinessName: 'Cliente Uno',
+      status: 'DRAFT',
+      total: 100,
+    });
+    await fixture.whenStable();
+
+    fixture.nativeElement.querySelector('[modalFooter] button').click();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
+      'No fue posible cambiar el estado',
+    );
+  });
+
   it('lists the orders generated from this quote', async () => {
     await TestBed.resetTestingModule()
       .configureTestingModule({
         imports: [QuoteDetailModal],
         providers: [
           provideRouter([]),
-          { provide: QuotesFacade, useValue: { watchItems: () => of([]) } },
+          {
+            provide: QuotesFacade,
+            useValue: { watchItems: () => of([]), canManageQuotes: signal(true) },
+          },
           {
             provide: OrdersFacade,
             useValue: {

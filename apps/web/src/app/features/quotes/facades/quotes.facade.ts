@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { QuotesQuery } from '../state/quotes.query';
@@ -15,6 +15,10 @@ export class QuotesFacade {
   readonly quotes = toSignal(this.query.quotes$, { initialValue: [] });
   readonly loading = toSignal(this.query.loading$, { initialValue: false });
   readonly error = toSignal(this.query.error$, { initialValue: null });
+  readonly canManageQuotes = computed(() => {
+    const role = this.authFacade.currentRole();
+    return role === 'ADMIN' || role === 'COMMERCIAL';
+  });
 
   init(): void {
     this.service.watchQuotes();

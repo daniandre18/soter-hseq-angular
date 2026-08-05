@@ -33,4 +33,10 @@ describe('Login', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('uses the PNG logo provided for the login', () => {
+    expect(fixture.nativeElement.querySelector('.login-brand img')?.getAttribute('src')).toBe(
+      'soter-hseq-login.png',
+    );
+  });
 });

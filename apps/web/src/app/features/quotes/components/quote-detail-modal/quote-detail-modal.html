@@ -66,10 +66,14 @@
           </ul>
         </div>
       }
+
+      @if (actionError()) {
+        <p class="action-error" role="alert">{{ actionError() }}</p>
+      }
     </div>
 
     <div modalFooter>
-      @if (q.status === 'APPROVED') {
+      @if (canManageQuotes() && q.status === 'APPROVED') {
         <app-button (click)="convertToOrder()" [disabled]="saving()">
           {{ saving() ? 'Convirtiendo…' : 'Convertir a Orden' }}
         </app-button>

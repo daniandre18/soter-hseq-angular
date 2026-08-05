@@ -9,13 +9,13 @@ import {
   onSnapshot,
   runTransaction,
   serverTimestamp,
-  updateDoc,
   writeBatch,
 } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
 import { QuotesStore } from './quotes.store';
 import type { NewQuote, NewQuoteItem, Quote, QuoteItem, QuoteStatus } from '../models/quote.model';
+import { nextQuoteStatuses } from '../models/quote-status-config';
 
 function toDate(value: Timestamp | undefined): Date | undefined {
   return value ? value.toDate() : undefined;
@@ -158,10 +158,23 @@ export class QuotesService {
   }
 
   async updateStatus(quoteId: string, status: QuoteStatus, updatedBy: string): Promise<void> {
-    await updateDoc(doc(this.firestore, 'quotes', quoteId), {
-      status,
-      updatedAt: serverTimestamp(),
-      updatedBy,
+    const quoteRef = doc(this.firestore, 'quotes', quoteId);
+    await runTransaction(this.firestore, async (transaction) => {
+      const snapshot = await transaction.get(quoteRef);
+      if (!snapshot.exists()) {
+        throw new Error('La cotización no existe.');
+      }
+
+      const currentStatus = snapshot.data()['status'] as QuoteStatus;
+      if (!nextQuoteStatuses(currentStatus).includes(status) || status === 'CONVERTED') {
+        throw new Error(`La cotización no puede pasar de ${currentStatus} a ${status}.`);
+      }
+
+      transaction.update(quoteRef, {
+        status,
+        updatedAt: serverTimestamp(),
+        updatedBy,
+      });
     });
   }
 

@@ -47,6 +47,7 @@ export class QuotesList {
 
   protected readonly formatCurrency = formatCurrency;
   protected readonly formatDate = formatDate;
+  protected readonly canManageQuotes = this.quotesFacade.canManageQuotes;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();

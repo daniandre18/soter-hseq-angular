@@ -21,7 +21,9 @@
         }
       </select>
     </div>
-    <app-button (click)="openCreate()">+ Nueva Cotización</app-button>
+    @if (canManageQuotes()) {
+      <app-button (click)="openCreate()">+ Nueva Cotización</app-button>
+    }
   </div>
 
   <p class="quotes-summary">{{ filtered().length }} cotizaciones</p>
@@ -71,5 +73,7 @@
   }
 </section>
 
-<app-quote-form-modal [open]="formOpen()" (closeRequested)="closeForm()" />
+@if (canManageQuotes()) {
+  <app-quote-form-modal [open]="formOpen()" (closeRequested)="closeForm()" />
+}
 <app-quote-detail-modal [quote]="liveDetailQuote()" (closeRequested)="closeDetail()" />

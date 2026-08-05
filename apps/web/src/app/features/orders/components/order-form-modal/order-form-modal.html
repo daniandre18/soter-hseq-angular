@@ -1,6 +1,6 @@
 <app-modal [open]="open()" [title]="title()" [size]="modalSize()" (closeRequested)="close()">
   <form class="order-form" (submit)="onSubmit(); $event.preventDefault()">
-    <label class="field">
+    <label class="field" [class.field--full]="!editingOrder()">
       Cliente *
       <select aria-label="Cliente" [formField]="orderForm.clientId">
         <option value="">Seleccionar cliente...</option>

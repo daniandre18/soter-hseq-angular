@@ -41,6 +41,12 @@ describe('DemoLogin', () => {
     expect(fixture.nativeElement.querySelectorAll('.profile-card')).toHaveLength(4);
   });
 
+  it('uses the PNG logo provided for the login', () => {
+    expect(fixture.nativeElement.querySelector('.demo-brand img')?.getAttribute('src')).toBe(
+      'soter-hseq-login.png',
+    );
+  });
+
   it('reloads once after navigating from a successful demo login', async () => {
     fixture.nativeElement.querySelector('.profile-card').click();
     await fixture.whenStable();

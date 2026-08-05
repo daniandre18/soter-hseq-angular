@@ -28,9 +28,11 @@ export class QuoteDetailModal {
   readonly closeRequested = output<void>();
 
   protected readonly saving = signal(false);
+  protected readonly actionError = signal<string | null>(null);
   protected readonly formatCurrency = formatCurrency;
   protected readonly formatDate = formatDate;
   protected readonly orderStatusConfig = ORDER_STATUS_CONFIG;
+  protected readonly canManageQuotes = this.quotesFacade.canManageQuotes;
 
   protected readonly items = toSignal(
     toObservable(this.quote).pipe(
@@ -68,7 +70,9 @@ export class QuoteDetailModal {
 
   protected readonly nextStatuses = computed(() => {
     const quote = this.quote();
-    return quote ? nextQuoteStatuses(quote.status).filter((status) => status !== 'CONVERTED') : [];
+    return quote && this.canManageQuotes()
+      ? nextQuoteStatuses(quote.status).filter((status) => status !== 'CONVERTED')
+      : [];
   });
 
   protected statusButtonLabel(status: QuoteStatus): string {
@@ -81,13 +85,18 @@ export class QuoteDetailModal {
 
   protected async setStatus(status: QuoteStatus): Promise<void> {
     const quote = this.quote();
-    if (!quote) {
+    if (!quote || !this.canManageQuotes()) {
       return;
     }
     this.saving.set(true);
+    this.actionError.set(null);
     try {
       await this.quotesFacade.updateStatus(quote.id, status);
       this.close();
+    } catch {
+      this.actionError.set(
+        'No fue posible cambiar el estado. Verifica los permisos del perfil e inténtalo nuevamente.',
+      );
     } finally {
       this.saving.set(false);
     }
@@ -95,13 +104,18 @@ export class QuoteDetailModal {
 
   protected async convertToOrder(): Promise<void> {
     const quote = this.quote();
-    if (!quote) {
+    if (!quote || !this.canManageQuotes()) {
       return;
     }
     this.saving.set(true);
+    this.actionError.set(null);
     try {
       await this.quotesFacade.convertToOrder(quote.id);
       this.close();
+    } catch {
+      this.actionError.set(
+        'No fue posible convertir la cotización. Verifica su estado e inténtalo nuevamente.',
+      );
     } finally {
       this.saving.set(false);
     }
