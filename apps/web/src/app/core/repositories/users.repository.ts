@@ -9,7 +9,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { Observable } from 'rxjs';
+import { Observable, retry, throwError, timer } from 'rxjs';
 import { FIREBASE_FIRESTORE } from '../firebase/firebase.tokens';
 import type { AppUser } from '../models/app-user.model';
 import type { UserRole } from '../models/user-role.model';
@@ -36,6 +36,34 @@ function toAppUser(id: string, data: DocumentData): AppUser {
   };
 }
 
+const AUTH_SYNC_RETRY_COUNT = 5;
+
+/**
+ * Firebase Auth y el canal interno de Firestore no terminan de adoptar la
+ * sesión exactamente en el mismo instante. Si un listener se abre durante
+ * esa ventana, Firestore puede responder `permission-denied` aunque el login
+ * ya haya finalizado. Un Observable que llega con error a `toSignal` queda
+ * inutilizable y Angular vuelve a lanzar ese error cada vez que lee el
+ * Signal, así que el reintento debe ocurrir aquí, antes de exponerlo.
+ */
+function retryAfterAuthSync<T>() {
+  return retry<T>({
+    count: AUTH_SYNC_RETRY_COUNT,
+    delay: (error: unknown, retryCount: number) => {
+      const code =
+        typeof error === 'object' && error !== null && 'code' in error
+          ? (error as { code?: unknown }).code
+          : undefined;
+
+      if (code !== 'permission-denied') {
+        return throwError(() => error);
+      }
+
+      return timer(250 * retryCount);
+    },
+  });
+}
+
 /**
  * Encapsula el acceso a la colección `users` de Firestore. Nada fuera de
  * `core` debe importar `firebase/firestore` directamente (CLAUDE.md §6.2).
@@ -59,7 +87,7 @@ export class UsersRepository {
         },
         (error) => subscriber.error(error),
       );
-    });
+    }).pipe(retryAfterAuthSync());
   }
 
   /** Para resolver nombres de autor en feeds de actividad, sin importar el rol. */
@@ -72,7 +100,7 @@ export class UsersRepository {
         },
         (error) => subscriber.error(error),
       );
-    });
+    }).pipe(retryAfterAuthSync());
   }
 
   /** Para selectores de asignación (p. ej. técnicos disponibles en Órdenes). */
@@ -86,6 +114,6 @@ export class UsersRepository {
         },
         (error) => subscriber.error(error),
       );
-    });
+    }).pipe(retryAfterAuthSync());
   }
 }

@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthFacade } from '../../facades/auth.facade';
+import { BrowserReloadService } from '../../../../core/services/browser-reload.service';
 
 interface DemoProfile {
   email: string;
@@ -22,6 +23,7 @@ const DEMO_PASSWORD = '123456';
 export class DemoLogin {
   private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
+  private readonly browserReload = inject(BrowserReloadService);
 
   protected readonly profiles: readonly DemoProfile[] = [
     {
@@ -68,6 +70,12 @@ export class DemoLogin {
     const success = await this.authFacade.login(profile.email, DEMO_PASSWORD);
     if (success) {
       await this.router.navigateByUrl('/');
+      // En producción Firestore puede tardar un instante en sincronizar el
+      // token recién creado con sus listeners. La navegación deja la URL en
+      // el destino correcto y esta única recarga arranca esos listeners con
+      // la sesión ya persistida. No puede formar un bucle: solo se ejecuta
+      // como consecuencia directa de un nuevo clic de acceso exitoso.
+      this.browserReload.reload();
       return;
     }
     this.selectedEmail.set(null);
