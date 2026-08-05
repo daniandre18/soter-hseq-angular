@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Button } from '../../../../shared/components/button/button';
 import { Card } from '../../../../shared/components/card/card';
 import { Icon } from '../../../../shared/components/icon/icon';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
 import { ServicesFacade } from '../../facades/services.facade';
 import {
@@ -22,6 +23,7 @@ import {
 export class ServiceCategories {
   private readonly categoriesFacade = inject(ServiceCategoriesFacade);
   private readonly servicesFacade = inject(ServicesFacade);
+  private readonly toast = inject(ToastService);
 
   protected readonly categories = this.categoriesFacade.categories;
   protected readonly loading = this.categoriesFacade.loading;
@@ -95,15 +97,17 @@ export class ServiceCategories {
       const editingId = this.editingId();
       if (editingId) {
         await this.categoriesFacade.updateCategory(editingId, data);
+        this.toast.success('Categoría actualizada correctamente.');
       } else {
         await this.categoriesFacade.addCategory(data);
+        this.toast.success('Categoría creada correctamente.');
       }
       this.creating.set(false);
       this.editingId.set(null);
     } catch (error) {
-      this.saveError.set(
-        error instanceof Error ? error.message : 'No fue posible guardar la categoría.',
-      );
+      const message = error instanceof Error ? error.message : 'No fue posible guardar la categoría.';
+      this.saveError.set(message);
+      this.toast.error(message);
     } finally {
       this.saving.set(false);
     }
@@ -113,6 +117,13 @@ export class ServiceCategories {
     this.deletingId.set(id);
     try {
       await this.categoriesFacade.deleteCategory(id);
+      this.toast.success('Categoría eliminada correctamente.');
+    } catch (error) {
+      this.toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : 'No fue posible eliminar la categoría.',
+      );
     } finally {
       this.deletingId.set(null);
     }

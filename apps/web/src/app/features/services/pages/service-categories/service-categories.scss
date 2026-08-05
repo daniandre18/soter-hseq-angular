@@ -4,22 +4,24 @@
   gap: 1rem;
 }
 
-.page-heading {
+.categories-page-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
 
-  h1 {
+  h2 {
     margin: 0;
     color: var(--color-gray-900);
-    font-size: 1.25rem;
+    font-size: 1.125rem;
+    line-height: 1.35;
   }
 
   p {
     margin: 0.25rem 0 0;
     color: var(--color-gray-500);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 }
 
@@ -228,13 +230,17 @@
 }
 
 @media (max-width: 639px) {
-  .page-heading,
+  .categories-page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
   .create-row {
+    align-items: stretch;
     flex-direction: column;
   }
 
-  .page-heading app-button,
-  .create-row app-button,
   .create-row input {
     width: 100%;
   }

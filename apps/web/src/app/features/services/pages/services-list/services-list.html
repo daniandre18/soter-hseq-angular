@@ -1,35 +1,60 @@
 <section class="services-page">
-  <div class="services-toolbar">
-    <div class="services-filters">
-      <input
-        type="search"
-        class="search-input"
-        placeholder="Buscar servicio..."
-        aria-label="Buscar servicios"
-        [value]="search()"
-        (input)="onSearchInput($event)"
-      />
-      <select
-        class="category-select"
-        aria-label="Filtrar por categoría"
-        [value]="categoryFilter()"
-        (change)="onCategoryChange($event)"
-      >
-        <option value="all">Todas las categorías</option>
-        @for (category of categoriesFacade.categories(); track category.id) {
-          <option [value]="category.id">
-            {{ category.icon ? category.icon + ' ' : '' }}{{ category.label }}
-          </option>
-        }
-      </select>
-      <a class="manage-categories-link" routerLink="/servicios/categorias">
-        Administrar categorías
-      </a>
+  <div class="services-page-header">
+    <div>
+      <h2>Gestión de servicios</h2>
+      <p>Administra el catálogo de servicios, categorías y precios.</p>
     </div>
     <app-button (click)="openCreate()">+ Nuevo Servicio</app-button>
   </div>
 
-  <p class="services-summary">{{ filtered().length }} servicios</p>
+  <app-card class="services-filter-card" padding="sm">
+    <div class="filter-panel-header">
+      <h3>Buscar y filtrar servicios</h3>
+      @if (hasActiveFilters()) {
+        <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+          Limpiar filtros ({{ activeFilterCount() }})
+        </button>
+      }
+    </div>
+
+    <div class="services-filters">
+      <label class="filter-field">
+        <span>Buscar</span>
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Nombre del servicio..."
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        />
+      </label>
+      <label class="filter-field">
+        <span>Categoría</span>
+        <select
+          class="category-select"
+          [value]="categoryFilter()"
+          (change)="onCategoryChange($event)"
+        >
+          <option value="all">Todas las categorías</option>
+          @for (category of categoriesFacade.categories(); track category.id) {
+            <option [value]="category.id">
+              {{ category.icon ? category.icon + ' ' : '' }}{{ category.label }}
+            </option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="services-filter-footer">
+      <span class="services-summary">
+        Mostrando {{ filtered().length }}
+        {{ filtered().length === 1 ? 'servicio' : 'servicios' }}
+      </span>
+      <a class="manage-categories-link" routerLink="/servicios/categorias">
+        Administrar categorías
+      </a>
+    </div>
+  </app-card>
 
   @if (filtered().length === 0) {
     <app-card class="empty-card">

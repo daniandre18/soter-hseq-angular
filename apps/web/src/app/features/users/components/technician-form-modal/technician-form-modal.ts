@@ -4,6 +4,7 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { TechniciansFacade } from '../../facades/technicians.facade';
 import type { AppUser } from '../../../../core/models/app-user.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 interface TechnicianFormModel {
   displayName: string;
@@ -29,6 +30,7 @@ const EMPTY_MODEL: TechnicianFormModel = {
 })
 export class TechnicianFormModal {
   private readonly techniciansFacade = inject(TechniciansFacade);
+  private readonly toast = inject(ToastService);
 
   readonly open = input(false);
   readonly editingTechnician = input<AppUser | null>(null);
@@ -101,6 +103,7 @@ export class TechnicianFormModal {
             phone: value.phone || undefined,
             specialty: value.specialty || undefined,
           });
+          this.toast.success('Técnico actualizado correctamente.');
         } else {
           await this.techniciansFacade.createTechnician({
             displayName: value.displayName,
@@ -109,12 +112,14 @@ export class TechnicianFormModal {
             phone: value.phone || undefined,
             specialty: value.specialty || undefined,
           });
+          this.toast.success('Técnico creado correctamente.');
         }
         this.close();
       } catch (error) {
-        this.errorMessage.set(
-          error instanceof Error && error.message ? error.message : 'No se pudo guardar el técnico.',
-        );
+        const message =
+          error instanceof Error && error.message ? error.message : 'No se pudo guardar el técnico.';
+        this.errorMessage.set(message);
+        this.toast.error(message);
       } finally {
         this.saving.set(false);
       }
