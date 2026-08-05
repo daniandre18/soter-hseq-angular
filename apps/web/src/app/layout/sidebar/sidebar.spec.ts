@@ -38,7 +38,7 @@ describe('Sidebar', () => {
     const logo: HTMLImageElement | null =
       fixture.nativeElement.querySelector('.sidebar-logo-image');
 
-    expect(logo?.getAttribute('src')).toBe('/soter-hseq-logo-menu.jpeg');
+    expect(logo?.getAttribute('src')).toBe('soter-hseq-logo-menu.jpeg');
     expect(logo?.getAttribute('alt')).toContain('SOTER HSEQ');
   });
 
