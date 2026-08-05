@@ -230,6 +230,7 @@ export class OrdersService {
       ordersQuery,
       (snapshot) => {
         this.ordersRetriedAfterError = false;
+        this.store.setError(null);
         const orders = snapshot.docs.map((docSnapshot) =>
           toServiceOrder(docSnapshot.id, docSnapshot.data()),
         );

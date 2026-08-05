@@ -51,6 +51,7 @@ export class ClientTagsService {
       collection(this.firestore, 'clientTags'),
       (snapshot) => {
         this.tagsRetriedAfterError = false;
+        this.store.setError(null);
         this.store.set(
           snapshot.docs.map((docSnapshot) => toClientTag(docSnapshot.id, docSnapshot.data())),
         );

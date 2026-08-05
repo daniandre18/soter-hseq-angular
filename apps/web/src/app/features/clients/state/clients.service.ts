@@ -104,6 +104,7 @@ export class ClientsService {
       collection(this.firestore, 'clients'),
       (snapshot) => {
         this.clientsRetriedAfterError = false;
+        this.store.setError(null);
         this.store.set(snapshot.docs.map((doc) => toClient(doc.id, doc.data())));
         this.store.setLoading(false);
       },

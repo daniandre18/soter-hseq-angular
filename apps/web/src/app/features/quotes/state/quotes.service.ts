@@ -83,6 +83,7 @@ export class QuotesService {
       collection(this.firestore, 'quotes'),
       (snapshot) => {
         this.quotesRetriedAfterError = false;
+        this.store.setError(null);
         this.store.set(snapshot.docs.map((docSnapshot) => toQuote(docSnapshot.id, docSnapshot.data())));
         this.store.setLoading(false);
       },

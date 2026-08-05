@@ -53,6 +53,7 @@ export class ServiceCategoriesService {
       collection(this.firestore, 'serviceCategories'),
       (snapshot) => {
         this.categoriesRetriedAfterError = false;
+        this.store.setError(null);
         this.store.set(
           snapshot.docs.map((docSnapshot) => toServiceCategory(docSnapshot.id, docSnapshot.data())),
         );

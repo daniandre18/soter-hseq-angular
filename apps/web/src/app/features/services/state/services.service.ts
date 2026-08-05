@@ -57,6 +57,7 @@ export class ServicesService {
       collection(this.firestore, 'services'),
       (snapshot) => {
         this.servicesRetriedAfterError = false;
+        this.store.setError(null);
         this.store.set(
           snapshot.docs.map((docSnapshot) => toService(docSnapshot.id, docSnapshot.data())),
         );
