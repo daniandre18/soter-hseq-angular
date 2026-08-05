@@ -32,6 +32,13 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<User> {
     const credential = await signInWithEmailAndPassword(this.auth, email, password);
+    // Firestore sincroniza el token nuevo de forma asíncrona por su cuenta;
+    // sin este await, el primer listener que se abre justo después de
+    // iniciar sesión (p. ej. OrdersFacade.init() en el guard de la ruta)
+    // puede salir con el token viejo — y un `onSnapshot` que ya falló con
+    // permission-denied no se reintenta solo. Forzar el refresh aquí
+    // garantiza que el SDK ya tiene el token nuevo antes de navegar.
+    await credential.user.getIdToken(true);
     return credential.user;
   }
 
