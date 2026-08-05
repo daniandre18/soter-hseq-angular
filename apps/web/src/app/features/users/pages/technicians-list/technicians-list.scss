@@ -1,15 +1,72 @@
-.technicians-toolbar {
+.technicians-page-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    color: var(--color-gray-900);
+    font-size: 1.125rem;
+    line-height: 1.35;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: var(--color-gray-500);
+    font-size: 0.8125rem;
+  }
+}
+
+.technicians-filter-card {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.filter-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0;
+    color: var(--color-gray-900);
+    font-size: 0.9375rem;
+  }
+}
+
+.clear-filters-btn {
+  flex-shrink: 0;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-50);
+  color: var(--color-gray-600);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  max-width: 32rem;
+
+  > span {
+    color: var(--color-gray-600);
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
 }
 
 .search-input {
-  flex: 1 1 12rem;
+  width: 100%;
   min-width: 0;
-  max-width: 24rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--color-gray-300);
   border-radius: var(--radius-md);
@@ -26,13 +83,11 @@
 }
 
 .technicians-summary {
-  font-size: 0.875rem;
-  color: var(--color-gray-400);
-  white-space: nowrap;
-}
-
-.new-technician-btn {
-  margin-left: auto;
+  margin-top: 1rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--color-gray-100);
+  color: var(--color-gray-500);
+  font-size: 0.75rem;
 }
 
 .empty-card {
@@ -200,24 +255,24 @@
 }
 
 @media (max-width: 767px) {
-  .technicians-toolbar {
+  .technicians-page-header {
     align-items: stretch;
+    flex-direction: column;
     gap: 0.75rem;
   }
 
-  .search-input {
-    flex-basis: 100%;
+  .filter-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .clear-filters-btn {
+    align-self: flex-start;
+  }
+
+  .filter-field {
     max-width: none;
-  }
-
-  .technicians-summary {
-    display: flex;
-    align-items: center;
-    font-size: 0.75rem;
-  }
-
-  .new-technician-btn {
-    margin-left: auto;
   }
 
   .table-scroll {

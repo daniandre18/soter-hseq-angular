@@ -1,0 +1,19 @@
+<div class="toast-region" aria-live="polite" aria-atomic="false">
+  @for (toast of toast.messages(); track toast.id) {
+    <div
+      class="toast"
+      [class.toast--success]="toast.type === 'success'"
+      [class.toast--error]="toast.type === 'error'"
+      [class.toast--info]="toast.type === 'info'"
+      [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+    >
+      <span class="toast-icon" aria-hidden="true">
+        <app-icon [name]="toast.type === 'success' ? 'circle-check-big' : toast.type === 'error' ? 'triangle-alert' : 'bell'" />
+      </span>
+      <p>{{ toast.message }}</p>
+      <button type="button" class="toast-close" (click)="dismiss(toast.id)" aria-label="Cerrar mensaje">
+        <app-icon name="x" />
+      </button>
+    </div>
+  }
+</div>

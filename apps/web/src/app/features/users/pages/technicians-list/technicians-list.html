@@ -1,16 +1,36 @@
 <section class="technicians-page">
-  <div class="technicians-toolbar">
-    <input
-      type="search"
-      class="search-input"
-      placeholder="Buscar técnico..."
-      aria-label="Buscar técnicos"
-      [value]="search()"
-      (input)="onSearchInput($event)"
-    />
-    <span class="technicians-summary">{{ filtered().length }} técnicos</span>
-    <app-button class="new-technician-btn" (click)="openCreate()">+ Nuevo Técnico</app-button>
+  <div class="technicians-page-header">
+    <div>
+      <h2>Gestión de técnicos</h2>
+      <p>Administra el equipo técnico, sus especialidades y estado de acceso.</p>
+    </div>
+    <app-button (click)="openCreate()">+ Nuevo Técnico</app-button>
   </div>
+
+  <app-card class="technicians-filter-card" padding="sm">
+    <div class="filter-panel-header">
+      <h3>Buscar técnicos</h3>
+      @if (hasActiveFilters()) {
+        <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+          Limpiar filtros (1)
+        </button>
+      }
+    </div>
+    <label class="filter-field">
+      <span>Buscar</span>
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Nombre o correo del técnico..."
+        [value]="search()"
+        (input)="onSearchInput($event)"
+      />
+    </label>
+    <div class="technicians-summary" aria-live="polite">
+      Mostrando {{ filtered().length }}
+      {{ filtered().length === 1 ? 'técnico' : 'técnicos' }}
+    </div>
+  </app-card>
 
   @if (techniciansFacade.loading()) {
     <app-card class="empty-card">

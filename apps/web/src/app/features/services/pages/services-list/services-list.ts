@@ -43,7 +43,15 @@ export class ServicesList {
     });
   });
 
-  protected readonly visibleServices = computed(() => this.filtered().slice(0, this.visibleCount()));
+  protected readonly visibleServices = computed(() =>
+    this.filtered().slice(0, this.visibleCount()),
+  );
+  protected readonly hasActiveFilters = computed(
+    () => this.search().trim().length > 0 || this.categoryFilter() !== 'all',
+  );
+  protected readonly activeFilterCount = computed(
+    () => Number(this.search().trim().length > 0) + Number(this.categoryFilter() !== 'all'),
+  );
   protected readonly hasMore = computed(() => this.visibleCount() < this.filtered().length);
   protected readonly hasCollapsed = computed(() => this.visibleCount() > PAGE_SIZE);
   protected readonly nextBatchSize = computed(() =>
@@ -62,6 +70,12 @@ export class ServicesList {
 
   protected onCategoryChange(event: Event): void {
     this.categoryFilter.set((event.target as HTMLSelectElement).value);
+    this.visibleCount.set(PAGE_SIZE);
+  }
+
+  protected clearFilters(): void {
+    this.search.set('');
+    this.categoryFilter.set('all');
     this.visibleCount.set(PAGE_SIZE);
   }
 

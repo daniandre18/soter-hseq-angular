@@ -8,6 +8,7 @@ import { Icon } from '../../../../shared/components/icon/icon';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { TechnicianFormModal } from '../../components/technician-form-modal/technician-form-modal';
 import type { AppUser } from '../../../../core/models/app-user.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 const PAGE_SIZE = 10;
 
@@ -19,6 +20,7 @@ const PAGE_SIZE = 10;
 })
 export class TechniciansList {
   protected readonly techniciansFacade = inject(TechniciansFacade);
+  private readonly toast = inject(ToastService);
 
   protected readonly search = signal('');
   protected readonly visibleCount = signal(PAGE_SIZE);
@@ -41,8 +43,11 @@ export class TechniciansList {
       )
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
   });
+  protected readonly hasActiveFilters = computed(() => this.search().trim().length > 0);
 
-  protected readonly visibleTechnicians = computed(() => this.filtered().slice(0, this.visibleCount()));
+  protected readonly visibleTechnicians = computed(() =>
+    this.filtered().slice(0, this.visibleCount()),
+  );
   protected readonly hasMore = computed(() => this.visibleCount() < this.filtered().length);
   protected readonly hasCollapsed = computed(() => this.visibleCount() > PAGE_SIZE);
   protected readonly nextBatchSize = computed(() =>
@@ -55,6 +60,11 @@ export class TechniciansList {
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(PAGE_SIZE);
+  }
+
+  protected clearFilters(): void {
+    this.search.set('');
     this.visibleCount.set(PAGE_SIZE);
   }
 
@@ -92,6 +102,17 @@ export class TechniciansList {
         technician.id,
         technician.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE',
       );
+      this.toast.success(
+        technician.status === 'ACTIVE'
+          ? 'Técnico desactivado correctamente.'
+          : 'Técnico activado correctamente.',
+      );
+    } catch (error) {
+      this.toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : 'No se pudo cambiar el estado del técnico.',
+      );
     } finally {
       this.togglingId.set(null);
     }
@@ -116,10 +137,12 @@ export class TechniciansList {
     try {
       await this.techniciansFacade.deleteTechnician(technician.id);
       this.deletingTechnician.set(null);
+      this.toast.success('Técnico eliminado correctamente.');
     } catch (error) {
-      this.deleteError.set(
-        error instanceof Error && error.message ? error.message : 'No se pudo eliminar el técnico.',
-      );
+      const message =
+        error instanceof Error && error.message ? error.message : 'No se pudo eliminar el técnico.';
+      this.deleteError.set(message);
+      this.toast.error(message);
     } finally {
       this.deleting.set(false);
     }
