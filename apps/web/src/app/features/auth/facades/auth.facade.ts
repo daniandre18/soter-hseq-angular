@@ -56,7 +56,12 @@ export class AuthFacade {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     try {
-      await this.authService.login(email, password);
+      const user = await this.authService.login(email, password);
+      // `getIdToken(true)` confirma el token en Firebase Auth, pero el
+      // proveedor interno de Firestore puede procesarlo unos milisegundos
+      // después. Antes de montar Shell/Dashboard (que abre varios listeners
+      // simultáneos), comprobamos una lectura real protegida por Rules.
+      await this.waitForFirestoreProfile(user.uid);
       return true;
     } catch (error) {
       this.errorSignal.set(mapAuthErrorMessage(error));
@@ -64,6 +69,25 @@ export class AuthFacade {
     } finally {
       this.loadingSignal.set(false);
     }
+  }
+
+  private async waitForFirestoreProfile(uid: string): Promise<void> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      try {
+        const profile = await this.usersRepository.getById(uid);
+        if (!profile) {
+          throw new Error('El usuario no tiene un perfil asociado en Firestore.');
+        }
+        return;
+      } catch (error) {
+        lastError = error;
+        if (attempt < 5) {
+          await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
+        }
+      }
+    }
+    throw lastError;
   }
 
   async logout(): Promise<void> {
