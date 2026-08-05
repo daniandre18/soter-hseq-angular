@@ -7,23 +7,28 @@
   ></button>
 }
 
-<aside class="sidebar" [class.sidebar--open]="mobileOpen()" [class.sidebar--collapsed]="collapsed()">
-  <div class="sidebar-brand" [class.sidebar-brand--collapsed]="collapsed()">
-    <div class="sidebar-logo">S</div>
-    @if (!collapsed()) {
-      <div class="sidebar-brand-text">
-        <p class="sidebar-brand-name">SOTER HSEQ</p>
-        <p class="sidebar-brand-tagline">Gestión HSEQ &amp; SST</p>
-      </div>
-    }
+<aside
+  class="sidebar"
+  [class.sidebar--open]="mobileOpen()"
+  [class.sidebar--collapsed]="isCollapsed()"
+>
+  <div class="sidebar-brand" [class.sidebar-brand--collapsed]="isCollapsed()">
+    <div class="sidebar-logo">
+      <img
+        class="sidebar-logo-image"
+        src="/soter-hseq-logo-menu.jpeg"
+        alt="SOTER HSEQ — Salud y Seguridad en el Trabajo"
+        decoding="async"
+      />
+    </div>
     <button
       type="button"
       class="sidebar-icon-btn sidebar-collapse-btn"
       (click)="toggleCollapsed()"
-      [attr.aria-label]="collapsed() ? 'Expandir menú' : 'Colapsar menú'"
-      [title]="collapsed() ? 'Expandir menú' : 'Colapsar menú'"
+      [attr.aria-label]="isCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
+      [title]="isCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
     >
-      <app-icon [name]="collapsed() ? 'chevron-right' : 'chevron-left'" />
+      <app-icon [name]="isCollapsed() ? 'chevron-right' : 'chevron-left'" />
     </button>
     <button
       type="button"
@@ -35,32 +40,87 @@
     </button>
   </div>
 
-  <nav class="sidebar-nav">
-    <ul>
-      @for (item of navItems(); track item.path) {
-        <li>
-          <a
-            [routerLink]="item.path"
-            routerLinkActive="sidebar-link--active"
-            (click)="close()"
-            class="sidebar-link"
-            [title]="collapsed() ? item.label : null"
-          >
-            <app-icon [name]="item.icon" class="sidebar-link-icon" />
-            @if (!collapsed()) {
-              <span class="sidebar-link-label">{{ item.label }}</span>
+  <nav class="sidebar-nav" aria-label="Menú principal">
+    @for (section of navSections(); track section.id) {
+      <section
+        class="sidebar-nav-section"
+        [attr.aria-label]="isCollapsed() ? section.label : null"
+        [attr.aria-labelledby]="isCollapsed() ? null : 'sidebar-section-' + section.id"
+      >
+        @if (!isCollapsed()) {
+          <h2 class="sidebar-section-title" [id]="'sidebar-section-' + section.id">
+            {{ section.label }}
+          </h2>
+        }
+        <ul>
+          @for (entry of section.entries; track entry.kind === 'link' ? entry.path : entry.id) {
+            @if (entry.kind === 'group') {
+              <li class="sidebar-group">
+                <button
+                  type="button"
+                  class="sidebar-link sidebar-group-toggle"
+                  [class.sidebar-group-toggle--active]="servicesExpanded()"
+                  [attr.aria-expanded]="servicesExpanded()"
+                  aria-controls="services-submenu"
+                  [title]="isCollapsed() ? entry.label : null"
+                  (click)="toggleServices()"
+                >
+                  <app-icon [name]="entry.icon" class="sidebar-link-icon" />
+                  @if (!isCollapsed()) {
+                    <span class="sidebar-link-label">{{ entry.label }}</span>
+                    <app-icon
+                      name="chevron-down"
+                      class="sidebar-group-chevron"
+                      [class.sidebar-group-chevron--expanded]="servicesExpanded()"
+                    />
+                  }
+                </button>
+                @if (servicesExpanded() && !isCollapsed()) {
+                  <ul id="services-submenu" class="sidebar-submenu">
+                    @for (child of entry.children; track child.path) {
+                      <li>
+                        <a
+                          [routerLink]="child.path"
+                          routerLinkActive="sidebar-sublink--active"
+                          [routerLinkActiveOptions]="{ exact: true }"
+                          (click)="close()"
+                          class="sidebar-sublink"
+                        >
+                          <app-icon [name]="child.icon" class="sidebar-link-icon" />
+                          <span>{{ child.label }}</span>
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            } @else {
+              <li>
+                <a
+                  [routerLink]="entry.path"
+                  routerLinkActive="sidebar-link--active"
+                  (click)="close()"
+                  class="sidebar-link"
+                  [title]="isCollapsed() ? entry.label : null"
+                >
+                  <app-icon [name]="entry.icon" class="sidebar-link-icon" />
+                  @if (!isCollapsed()) {
+                    <span class="sidebar-link-label">{{ entry.label }}</span>
+                  }
+                </a>
+              </li>
             }
-          </a>
-        </li>
-      }
-    </ul>
+          }
+        </ul>
+      </section>
+    }
   </nav>
 
   <div class="sidebar-footer">
     @if (currentUser(); as user) {
-      <div class="sidebar-user" [class.sidebar-user--collapsed]="collapsed()">
+      <div class="sidebar-user" [class.sidebar-user--collapsed]="isCollapsed()">
         <app-avatar [name]="user.displayName" size="sm" />
-        @if (!collapsed()) {
+        @if (!isCollapsed()) {
           <div class="sidebar-user-info">
             <p class="sidebar-user-name">{{ user.displayName }}</p>
             <p class="sidebar-user-role">{{ roleLabel() }}</p>
@@ -73,10 +133,10 @@
       type="button"
       class="sidebar-logout"
       (click)="logout()"
-      [title]="collapsed() ? 'Cerrar sesión' : null"
+      [title]="isCollapsed() ? 'Cerrar sesión' : null"
     >
       <app-icon name="log-out" class="sidebar-logout-icon" />
-      @if (!collapsed()) {
+      @if (!isCollapsed()) {
         <span>Cerrar sesión</span>
       }
     </button>

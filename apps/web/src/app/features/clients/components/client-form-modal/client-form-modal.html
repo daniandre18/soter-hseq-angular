@@ -45,9 +45,200 @@
     </label>
   </form>
 
+  @if (!editingClient()) {
+    <section class="new-client-sites">
+      <div class="new-client-sites-heading">
+        <div>
+          <div class="new-client-sites-title">
+            <span class="sites-shortcut-icon"><app-icon name="building-2" /></span>
+            <div>
+              <strong>Sedes y responsables</strong>
+              <span>Opcional · puedes agregar una o varias antes de guardar.</span>
+            </div>
+          </div>
+        </div>
+        @if (draftSites().length > 0) {
+          <span class="draft-sites-count">{{ draftSites().length }}</span>
+        }
+      </div>
+
+      @if (draftSites().length > 0) {
+        <div class="draft-sites-list">
+          @for (site of draftSites(); track $index) {
+            <article class="draft-site-card">
+              <span class="draft-site-icon"><app-icon name="map-pin" /></span>
+              <div class="draft-site-copy">
+                <strong>{{ site.name }}</strong>
+                <span>{{ site.address }} · {{ site.city }}</span>
+                <small>
+                  Responsable: {{ site.responsible.name }} · {{ site.responsible.phone }}
+                </small>
+              </div>
+              <div class="draft-site-actions">
+                <button
+                  type="button"
+                  (click)="editSiteDraft($index)"
+                  [attr.aria-label]="'Editar sede ' + site.name"
+                  title="Editar sede"
+                >
+                  <app-icon name="square-pen" />
+                </button>
+                <button
+                  type="button"
+                  class="draft-site-delete"
+                  (click)="removeSiteDraft($index)"
+                  [attr.aria-label]="'Eliminar sede ' + site.name"
+                  title="Eliminar sede"
+                >
+                  <app-icon name="trash-2" />
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+
+      @if (siteDraftEditorOpen()) {
+        <form
+          class="site-draft-form"
+          novalidate
+          (submit)="saveSiteDraft(); $event.preventDefault()"
+        >
+          <div class="site-draft-form-heading">
+            <strong>{{ siteDraftTitle() }}</strong>
+            <button
+              type="button"
+              aria-label="Cerrar formulario de sede"
+              (click)="cancelSiteDraft()"
+            >
+              <app-icon name="x" />
+            </button>
+          </div>
+
+          <div class="site-draft-grid">
+            <label class="site-draft-field site-draft-field--full">
+              Nombre de la sede *
+              <input [formField]="siteDraftForm.name" placeholder="Ej. Sede Norte" />
+              @if (siteDraftForm.name().touched() && siteDraftForm.name().errors().length) {
+                <span class="field-error">{{ siteDraftForm.name().errors()[0].message }}</span>
+              }
+            </label>
+
+            <label class="site-draft-field site-draft-field--full">
+              Dirección *
+              <input [formField]="siteDraftForm.address" placeholder="Calle 80 # 45-22" />
+              @if (siteDraftForm.address().touched() && siteDraftForm.address().errors().length) {
+                <span class="field-error">{{ siteDraftForm.address().errors()[0].message }}</span>
+              }
+            </label>
+
+            <label class="site-draft-field">
+              Ciudad *
+              <input [formField]="siteDraftForm.city" placeholder="Bogotá" />
+              @if (siteDraftForm.city().touched() && siteDraftForm.city().errors().length) {
+                <span class="field-error">{{ siteDraftForm.city().errors()[0].message }}</span>
+              }
+            </label>
+
+            <label class="site-draft-field">
+              Responsable *
+              <input [formField]="siteDraftForm.responsibleName" placeholder="Nombre completo" />
+              @if (
+                siteDraftForm.responsibleName().touched() &&
+                siteDraftForm.responsibleName().errors().length
+              ) {
+                <span class="field-error">
+                  {{ siteDraftForm.responsibleName().errors()[0].message }}
+                </span>
+              }
+            </label>
+
+            <label class="site-draft-field">
+              Cargo
+              <input
+                [formField]="siteDraftForm.responsiblePosition"
+                placeholder="Ej. Coordinador HSEQ"
+              />
+            </label>
+
+            <label class="site-draft-field">
+              Teléfono *
+              <input
+                type="tel"
+                [formField]="siteDraftForm.responsiblePhone"
+                placeholder="+57 300 000 0000"
+              />
+              @if (
+                siteDraftForm.responsiblePhone().touched() &&
+                siteDraftForm.responsiblePhone().errors().length
+              ) {
+                <span class="field-error">
+                  {{ siteDraftForm.responsiblePhone().errors()[0].message }}
+                </span>
+              }
+            </label>
+
+            <label class="site-draft-field site-draft-field--full">
+              Correo
+              <input
+                type="email"
+                [formField]="siteDraftForm.responsibleEmail"
+                placeholder="responsable@empresa.com"
+              />
+              @if (
+                siteDraftForm.responsibleEmail().touched() &&
+                siteDraftForm.responsibleEmail().errors().length
+              ) {
+                <span class="field-error">
+                  {{ siteDraftForm.responsibleEmail().errors()[0].message }}
+                </span>
+              }
+            </label>
+          </div>
+
+          @if (siteDraftError()) {
+            <p class="site-draft-error" role="alert">{{ siteDraftError() }}</p>
+          }
+
+          <div class="site-draft-form-actions">
+            <app-button variant="outline" size="sm" (click)="cancelSiteDraft()">
+              Cancelar
+            </app-button>
+            <app-button type="submit" size="sm" [disabled]="siteDraftForm().invalid()">
+              {{ editingDraftIndex() === null ? 'Agregar sede' : 'Guardar cambios' }}
+            </app-button>
+          </div>
+        </form>
+      } @else {
+        <button type="button" class="add-site-draft-btn" (click)="openNewSiteDraft()">
+          <app-icon name="building-2" />
+          {{ draftSites().length === 0 ? 'Agregar una sede' : 'Agregar otra sede' }}
+        </button>
+      }
+    </section>
+  } @else if (editingClient(); as client) {
+    <aside class="sites-shortcut">
+      <span class="sites-shortcut-icon"><app-icon name="building-2" /></span>
+      <div class="sites-shortcut-copy">
+        <strong>Sedes y responsables</strong>
+        <span>Administra las ubicaciones y contactos de {{ client.businessName }}.</span>
+      </div>
+      <app-button variant="secondary" size="sm" (click)="manageSites()">
+        Administrar sedes
+      </app-button>
+    </aside>
+  }
+
+  @if (saveError()) {
+    <p class="form-save-error" role="alert">{{ saveError() }}</p>
+  }
+
   <div modalFooter>
     <app-button variant="outline" (click)="close()">Cancelar</app-button>
-    <app-button (click)="onSubmit()" [disabled]="clientForm().invalid() || saving()">
+    <app-button
+      (click)="onSubmit()"
+      [disabled]="clientForm().invalid() || saving() || siteDraftEditorOpen()"
+    >
       {{ saving() ? 'Guardando…' : 'Guardar' }}
     </app-button>
   </div>

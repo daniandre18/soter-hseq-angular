@@ -6,7 +6,7 @@ Ver [`CLAUDE.md`](./CLAUDE.md) para la especificación técnica completa (roles,
 
 ## Estado actual
 
-Fases 0-7 del plan de `CLAUDE.md` §27 completas: autenticación y roles, clientes, cotizaciones, conversión a orden, asignación y programación, ejecución en campo (notas/hallazgos/recomendaciones/evidencia con vista previa), acta de cierre asistida por IA (generación, edición, aprobación, cierre con PDF), y dashboard con indicadores y alertas operativas. Firebase todavía no está conectado a un proyecto real — todo el desarrollo corre contra el Firebase Emulator Suite (`demo-soter-hseq`, proyecto ficticio, sin `firebase login`).
+Fases 0-7 del plan de `CLAUDE.md` §27 completas: autenticación y roles, clientes, cotizaciones, conversión a orden, asignación y programación, ejecución en campo (notas/hallazgos/recomendaciones/evidencia con vista previa), acta de cierre asistida por IA (generación, edición, aprobación, cierre con PDF), y dashboard con indicadores y alertas operativas. Producción está conectada al proyecto Firebase `soter-hseq` (Authentication + Firestore en Spark). El desarrollo local continúa usando Firebase Emulator Suite (`demo-soter-hseq`). La demo pública usa GitHub Pages y evidencias estáticas de solo lectura porque Cloud Storage requiere Blaze.
 
 Pendiente (Fase 8): datos semilla más completos, revisión de seguridad y responsive antes de una demo.
 
@@ -49,6 +49,12 @@ npm run build       # ng build
 npm run lint        # eslint
 npm test            # vitest (unitarios: facades, componentes)
 ```
+
+### Demo en GitHub Pages
+
+Cada `push` a `main` ejecuta `.github/workflows/deploy-pages.yml`. El workflow compila Angular con la ruta base del repositorio y publica `apps/web/dist/web/browser`. La navegación usa hash routing para funcionar en hosting estático.
+
+En producción gratuita no se pueden subir evidencias nuevas ni desplegar Cloud Functions. Las 11 evidencias migradas están en `apps/web/public/demo-evidence/` y se publican como archivos estáticos visibles para cualquier visitante que conozca su URL.
 
 Dentro de `functions/`:
 

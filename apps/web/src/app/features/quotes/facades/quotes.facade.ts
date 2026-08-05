@@ -34,7 +34,7 @@ export class QuotesFacade {
     await this.service.updateStatus(quoteId, status, userId);
   }
 
-  async convertToOrder(quoteId: string): Promise<string> {
+  async convertToOrder(quoteId: string): Promise<string[]> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     return this.service.convertToOrder(quoteId, userId);
   }

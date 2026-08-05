@@ -1,37 +1,43 @@
 @if (order(); as o) {
-  <app-modal [open]="true" [title]="o.orderNumber" size="lg" (closeRequested)="close()">
+  <app-modal [open]="true" [title]="o.orderNumber" size="xl" (closeRequested)="close()">
     <div class="detail-sections">
       <div class="detail-header">
-        <div>
+        <div class="order-client-summary">
           <p class="client-name">{{ o.clientBusinessName }}</p>
           @if (o.city) {
             <p class="valid-until">{{ o.serviceAddress }} · {{ o.city }}</p>
           }
         </div>
         <div class="header-actions">
-          <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
-          <app-status-badge [label]="priorityLabel()" [color]="priorityColor()" />
-          @if (canChangeStatusFreely()) {
-            <app-button variant="outline" size="sm" (click)="openStatusChange()">Cambiar Estado</app-button>
-          }
-          @if (canEditOrder()) {
-            <app-button variant="outline" size="sm" (click)="editOrder()">Editar</app-button>
-          }
-          @if (canExecute()) {
-            <app-button size="sm" (click)="startExecution()" [disabled]="saving()">
-              {{ saving() ? 'Iniciando…' : 'Iniciar Ejecución' }}
-            </app-button>
-          }
-          @if (canSendToReview()) {
-            <app-button
-              size="sm"
-              (click)="sendToReview()"
-              [disabled]="saving() || !!sendToReviewBlockedReason()"
-              [title]="sendToReviewBlockedReason() ?? ''"
-            >
-              {{ saving() ? 'Enviando…' : sendToReviewLabel() }}
-            </app-button>
-          }
+          <div class="header-badges">
+            <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+            <app-status-badge [label]="priorityLabel()" [color]="priorityColor()" />
+          </div>
+          <div class="header-buttons">
+            @if (canChangeStatusFreely()) {
+              <app-button variant="outline" size="sm" (click)="openStatusChange()">
+                Cambiar Estado
+              </app-button>
+            }
+            @if (canEditOrder()) {
+              <app-button variant="outline" size="sm" (click)="editOrder()">Editar</app-button>
+            }
+            @if (canExecute()) {
+              <app-button size="sm" (click)="startExecution()" [disabled]="saving()">
+                {{ saving() ? 'Iniciando…' : 'Iniciar Ejecución' }}
+              </app-button>
+            }
+            @if (canSendToReview()) {
+              <app-button
+                size="sm"
+                (click)="sendToReview()"
+                [disabled]="saving() || !!sendToReviewBlockedReason()"
+                [title]="sendToReviewBlockedReason() ?? ''"
+              >
+                {{ saving() ? 'Enviando…' : sendToReviewLabel() }}
+              </app-button>
+            }
+          </div>
         </div>
       </div>
       @if (canSendToReview() && sendToReviewBlockedReason()) {
@@ -39,21 +45,28 @@
       }
 
       <div class="tabs">
-        <button type="button" class="tab" [class.tab--active]="activeTab() === 'info'" (click)="setActiveTab('info')">
+        <button
+          type="button"
+          class="tab"
+          [class.tab--active]="activeTab() === 'info'"
+          (click)="setActiveTab('info')"
+        >
           Información
-        </button>
-        <button type="button" class="tab" [class.tab--active]="activeTab() === 'log'" (click)="setActiveTab('log')">
-          Bitácora ({{ notes().length }})
         </button>
         <button
           type="button"
           class="tab"
-          [class.tab--active]="activeTab() === 'evidence'"
-          (click)="setActiveTab('evidence')"
+          [class.tab--active]="activeTab() === 'activity'"
+          (click)="setActiveTab('activity')"
         >
-          Evidencias ({{ evidenceList().length }})
+          Actividad ({{ notes().length + evidenceList().length }})
         </button>
-        <button type="button" class="tab" [class.tab--active]="activeTab() === 'acta'" (click)="setActiveTab('acta')">
+        <button
+          type="button"
+          class="tab"
+          [class.tab--active]="activeTab() === 'acta'"
+          (click)="setActiveTab('acta')"
+        >
           Acta
         </button>
       </div>
@@ -66,6 +79,14 @@
                 <p class="info-label">Servicio</p>
                 <p class="info-value">{{ o.serviceSummary }}</p>
               </div>
+              @if (o.quoteId) {
+                <div>
+                  <p class="info-label">Cotización de origen</p>
+                  <a class="info-value info-value--link" [routerLink]="['/cotizaciones']" [queryParams]="{ open: o.quoteId }">
+                    {{ o.quoteNumber ?? o.quoteId }}
+                  </a>
+                </div>
+              }
               @if (o.dueDate) {
                 <div>
                   <p class="info-label">Fecha límite</p>
@@ -120,8 +141,8 @@
             }
 
             <div class="action-section">
-              <h4>Avance</h4>
-              <div class="progress-header">
+              <div class="progress-heading">
+                <h4>Avance</h4>
                 <span class="progress-percent">{{ progressValue() }}%</span>
               </div>
               <app-progress-bar [value]="progressValue()" />
@@ -208,7 +229,7 @@
           </div>
         }
 
-        @case ('log') {
+        @case ('activity') {
           <div class="tab-panel">
             @if (o.findings && o.findings.length > 0) {
               <div class="chip-group">
@@ -231,7 +252,10 @@
               <div class="action-section">
                 <h4>Registrar nota</h4>
                 <div class="note-form">
-                  <select [value]="newNoteType()" (change)="newNoteType.set($any($event.target).value)">
+                  <select
+                    [value]="newNoteType()"
+                    (change)="newNoteType.set($any($event.target).value)"
+                  >
                     @for (entry of noteTypeLabels | keyvalue; track entry.key) {
                       <option [value]="entry.key">{{ entry.value }}</option>
                     }
@@ -242,6 +266,13 @@
                     [value]="newNoteContent()"
                     (input)="newNoteContent.set($any($event.target).value)"
                   ></textarea>
+                  <input
+                    type="file"
+                    aria-label="Adjuntar archivo a la nota"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    [disabled]="!evidenceUploadsEnabled"
+                    (change)="onNoteAttachmentSelected($event)"
+                  />
                   <app-button
                     size="sm"
                     (click)="addNoteSubmit()"
@@ -250,6 +281,17 @@
                     {{ addingNote() ? 'Guardando…' : 'Agregar' }}
                   </app-button>
                 </div>
+                @if (noteAttachment()) {
+                  <p class="field-help">Adjunto: {{ noteAttachment()?.name }}</p>
+                }
+                @if (noteAttachmentError()) {
+                  <p class="field-error">{{ noteAttachmentError() }}</p>
+                }
+                @if (!evidenceUploadsEnabled) {
+                  <p class="field-help">
+                    Modo demo gratuito: puedes registrar notas, pero no adjuntar archivos nuevos.
+                  </p>
+                }
               </div>
             }
 
@@ -275,82 +317,92 @@
               </div>
             }
 
-            @if (notes().length === 0) {
-              <p class="info-value info-value--muted">Sin notas registradas.</p>
-            } @else {
-              <div class="timeline">
-                @for (note of notes(); track note.id) {
-                  <div class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div class="timeline-content">
-                      <span class="chip" [class.chip--finding]="note.noteType === 'FINDING'"
-                        [class.chip--recommendation]="note.noteType === 'RECOMMENDATION'">
-                        {{ noteTypeLabels[note.noteType] }}
-                      </span>
-                      <p class="timeline-text">{{ note.content }}</p>
-                      <p class="timeline-meta">{{ formatDateTime(note.createdAt) }}</p>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-
-        @case ('evidence') {
-          <div class="tab-panel">
             @if (canLog()) {
               <div class="action-section">
                 <h4>Subir evidencia</h4>
-                <div class="evidence-form">
-                  <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="onFileSelected($event)" />
-                  <select [value]="evidenceCategory()" (change)="evidenceCategory.set($any($event.target).value)">
+                @if (!evidenceUploadsEnabled) {
+                  <p class="field-help">
+                    Modo demo gratuito: las evidencias migradas están disponibles en modo lectura;
+                    la carga de archivos nuevos requiere almacenamiento externo.
+                  </p>
+                } @else {
+                  <div class="evidence-form">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    (change)="onFileSelected($event)"
+                  />
+                  <select
+                    aria-label="Categoría de la evidencia"
+                    [value]="evidenceCategory()"
+                    (change)="evidenceCategory.set($any($event.target).value)"
+                  >
                     <option value="">Sin categoría</option>
                     @for (entry of evidenceCategoryLabels | keyvalue; track entry.key) {
                       <option [value]="entry.key">{{ entry.value }}</option>
                     }
                   </select>
-                  <input
-                    type="text"
-                    placeholder="Descripción (opcional)"
-                    [value]="evidenceDescription()"
-                    (input)="evidenceDescription.set($any($event.target).value)"
-                  />
-                  <app-button size="sm" (click)="uploadSelectedFile()" [disabled]="uploading() || !selectedFile()">
-                    {{ uploading() ? (uploadProgress() ?? 0) + '%' : 'Subir' }}
-                  </app-button>
-                </div>
+                  <div class="evidence-editor-field">
+                    <div class="evidence-editor-heading">
+                      <label for="evidence-description">Descripción profesional (opcional)</label>
+                      <span aria-live="polite">
+                        {{ evidenceDescriptionTextLength() }}/{{ evidenceDescriptionMaxLength }}
+                      </span>
+                    </div>
+                    <quill-editor
+                      id="evidence-description"
+                      class="evidence-rich-editor"
+                      aria-label="Descripción enriquecida de la evidencia"
+                      aria-describedby="evidence-description-help"
+                      [formControl]="evidenceDescriptionControl"
+                      [modules]="evidenceEditorModules"
+                      [formats]="evidenceEditorFormats"
+                      [sanitize]="true"
+                      [maxLength]="evidenceDescriptionMaxLength"
+                      [defaultEmptyValue]="''"
+                      format="html"
+                      theme="snow"
+                      bounds="self"
+                      placeholder="Describe el contexto, hallazgos y observaciones de esta evidencia..."
+                    />
+                    <p id="evidence-description-help" class="field-help">
+                      Usa formato para destacar hallazgos, actividades y observaciones importantes.
+                    </p>
+                    @if (
+                      evidenceDescriptionControl.invalid &&
+                      (evidenceDescriptionControl.dirty || evidenceDescriptionControl.touched)
+                    ) {
+                      <p class="field-error">
+                        La descripción no puede superar
+                        {{ evidenceDescriptionMaxLength }} caracteres.
+                      </p>
+                    }
+                  </div>
+                  <div class="evidence-upload-actions">
+                    <app-button
+                      size="sm"
+                      (click)="uploadSelectedFile()"
+                      [disabled]="
+                        uploading() || !selectedFile() || evidenceDescriptionControl.invalid
+                      "
+                    >
+                      {{ uploading() ? (uploadProgress() ?? 0) + '%' : 'Subir evidencia' }}
+                    </app-button>
+                  </div>
+                  </div>
+                }
                 @if (fileError()) {
                   <p class="field-error">{{ fileError() }}</p>
                 }
               </div>
             }
 
-            @if (evidenceList().length === 0) {
-              <p class="info-value info-value--muted">Sin evidencias cargadas.</p>
-            } @else {
-              <div class="evidence-grid">
-                @for (item of evidenceList(); track item.id) {
-                  <a class="evidence-card" [href]="item.downloadUrl" target="_blank" rel="noopener">
-                    @if (item.type === 'PHOTO') {
-                      <img class="evidence-thumb" [src]="item.downloadUrl" [alt]="item.fileName" />
-                    } @else {
-                      <div class="evidence-thumb evidence-thumb--file">PDF</div>
-                    }
-                    <div class="evidence-info">
-                      <p class="evidence-name">{{ item.fileName }}</p>
-                      @if (item.category) {
-                        <span class="chip">{{ evidenceCategoryLabels[item.category] }}</span>
-                      }
-                      @if (item.description) {
-                        <p class="evidence-description">{{ item.description }}</p>
-                      }
-                      <p class="timeline-meta">{{ formatDateTime(item.uploadedAt) }}</p>
-                    </div>
-                  </a>
-                }
-              </div>
-            }
+            <app-order-activity-feed
+              [notes]="notes()"
+              [evidence]="evidenceList()"
+              [events]="events()"
+              [resolveAuthorName]="resolveAuthorName"
+            />
           </div>
         }
 
@@ -364,8 +416,8 @@
                 <div class="action-section">
                   <h4>Generar borrador con IA</h4>
                   <p class="info-value info-value--muted">
-                    Se enviará un resumen de las notas de campo a la IA para redactar un borrador. Siempre
-                    queda sujeto a revisión y aprobación humana antes del cierre.
+                    Se enviará un resumen de las notas de campo a la IA para redactar un borrador.
+                    Siempre queda sujeto a revisión y aprobación humana antes del cierre.
                   </p>
                   <app-button size="sm" (click)="generateActa()" [disabled]="generatingActa()">
                     {{ generatingActa() ? 'Generando…' : 'Generar borrador con IA' }}
@@ -444,7 +496,12 @@
 
               <div class="acta-actions">
                 @if (canEditActa()) {
-                  <app-button variant="outline" size="sm" (click)="saveActaContent()" [disabled]="savingActa()">
+                  <app-button
+                    variant="outline"
+                    size="sm"
+                    (click)="saveActaContent()"
+                    [disabled]="savingActa()"
+                  >
                     {{ savingActa() ? 'Guardando…' : 'Guardar cambios' }}
                   </app-button>
                 }
@@ -454,14 +511,22 @@
                   </app-button>
                 }
                 @if (canCloseOrder()) {
-                  <app-button size="sm" (click)="closeOrderAndGeneratePdf()" [disabled]="closingOrder()">
+                  <app-button
+                    size="sm"
+                    (click)="closeOrderAndGeneratePdf()"
+                    [disabled]="closingOrder()"
+                  >
                     {{ closingOrder() ? 'Generando PDF…' : 'Cerrar Orden y Generar PDF' }}
                   </app-button>
                 }
                 @if (pdfUrl()) {
-                  <a class="pdf-link" [href]="pdfUrl()" target="_blank" rel="noopener">Descargar PDF</a>
+                  <a class="pdf-link" [href]="pdfUrl()" target="_blank" rel="noopener"
+                    >Descargar PDF</a
+                  >
                 } @else if (closingAct()!.pdfPath) {
-                  <button type="button" class="pdf-link" (click)="viewExistingPdf()">Ver PDF</button>
+                  <button type="button" class="pdf-link" (click)="viewExistingPdf()">
+                    Ver PDF
+                  </button>
                 }
               </div>
             }
@@ -487,7 +552,10 @@
   >
     <label class="field field--full">
       Nuevo estado
-      <select [value]="statusChangeTarget()" (change)="statusChangeTarget.set($any($event.target).value)">
+      <select
+        [value]="statusChangeTarget()"
+        (change)="statusChangeTarget.set($any($event.target).value)"
+      >
         @for (status of freelySettableStatuses; track status) {
           <option [value]="status">{{ statusOptionLabel(status) }}</option>
         }

@@ -1,44 +1,136 @@
 <section class="clients-page">
-  <div class="clients-toolbar">
-    <div class="clients-filters">
-      <input
-        type="search"
-        class="search-input"
-        placeholder="Buscar por nombre, NIT o ciudad..."
-        aria-label="Buscar clientes"
-        [value]="search()"
-        (input)="onSearchInput($event)"
-      />
-      <select
-        class="status-select"
-        aria-label="Filtrar por estado"
-        [value]="statusFilter()"
-        (change)="onStatusChange($event)"
-      >
-        <option value="all">Todos</option>
-        <option value="ACTIVE">Activos</option>
-        <option value="INACTIVE">Inactivos</option>
-      </select>
+  <div class="clients-page-header">
+    <div>
+      <h2>Gestión de clientes</h2>
+      <p>Consulta, segmenta y administra la información de tus clientes.</p>
     </div>
     <app-button (click)="openCreate()">+ Nuevo Cliente</app-button>
   </div>
 
-  <div class="clients-summary">
-    <span>{{ filtered().length }} clientes</span>
-    <span class="summary-active">{{ activeInFiltered() }} activos</span>
-    <span class="summary-inactive">{{ inactiveInFiltered() }} inactivos</span>
+  <div class="client-stats-grid" aria-label="Resumen de clientes">
+    <app-stat-card
+      label="Total clientes"
+      [value]="totalClients()"
+      icon="building-2"
+      color="blue"
+      [compact]="true"
+    />
+    <app-stat-card
+      label="Clientes activos"
+      [value]="activeClients()"
+      icon="circle-check-big"
+      color="green"
+      [compact]="true"
+    />
+    <app-stat-card
+      label="Tasa de actividad"
+      [value]="activeClientRate()"
+      icon="chart-pie"
+      color="purple"
+      [compact]="true"
+    />
+    <app-stat-card
+      label="Ciudades cubiertas"
+      [value]="coveredCities()"
+      icon="map-pin"
+      color="orange"
+      [compact]="true"
+    />
   </div>
+
+  <app-card class="clients-filter-card" padding="sm">
+    <div class="filter-panel-header">
+      <div>
+        <h3>Buscar y filtrar clientes</h3>
+        <p>Combina los filtros para encontrar resultados específicos.</p>
+      </div>
+      @if (hasActiveFilters()) {
+        <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+          Limpiar filtros ({{ activeFilterCount() }})
+        </button>
+      }
+    </div>
+
+    <div class="clients-filters">
+      <label class="filter-field filter-field--search">
+        <span>Buscar</span>
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Nombre, NIT, correo, teléfono o ciudad..."
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        />
+      </label>
+
+      <label class="filter-field">
+        <span>Estado</span>
+        <select class="status-select" [value]="statusFilter()" (change)="onStatusChange($event)">
+          <option value="all">Todos los estados</option>
+          <option value="ACTIVE">Activos</option>
+          <option value="INACTIVE">Inactivos</option>
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Ciudad</span>
+        <select class="city-select" [value]="cityFilter()" (change)="onCityChange($event)">
+          <option value="all">Todas las ciudades</option>
+          @for (city of cityOptions(); track city.value) {
+            <option [value]="city.value">{{ city.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Etiqueta</span>
+        <select
+          class="tag-filter-select"
+          [value]="tagFilter()"
+          (change)="onTagFilterChange($event)"
+        >
+          <option value="all">Todas las etiquetas</option>
+          @for (tag of tagsFacade.tags(); track tag.id) {
+            <option [value]="tag.id">{{ tag.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="clients-summary" aria-live="polite">
+      <span>
+        Mostrando {{ filtered().length }}
+        {{ filtered().length === 1 ? 'cliente' : 'clientes' }}
+      </span>
+      <span class="summary-active">
+        {{ activeInFiltered() }} {{ activeInFiltered() === 1 ? 'activo' : 'activos' }}
+      </span>
+      <span class="summary-inactive">
+        {{ inactiveInFiltered() }} {{ inactiveInFiltered() === 1 ? 'inactivo' : 'inactivos' }}
+      </span>
+    </div>
+  </app-card>
 
   @if (selectedCount() > 0) {
     <div class="selection-bar">
       <span class="selection-count">{{ selectedCount() }}</span>
       <span>{{ selectedCount() === 1 ? 'cliente seleccionado' : 'clientes seleccionados' }}</span>
       @if (canDelete()) {
-        <app-button variant="danger" size="sm" class="selection-delete-btn" (click)="confirmBulkDelete()">
+        <app-button
+          variant="danger"
+          size="sm"
+          class="selection-delete-btn"
+          (click)="confirmBulkDelete()"
+        >
           Eliminar
         </app-button>
       }
-      <button type="button" class="selection-close" (click)="clearSelection()" aria-label="Quitar selección">
+      <button
+        type="button"
+        class="selection-close"
+        (click)="clearSelection()"
+        aria-label="Quitar selección"
+      >
         <app-icon name="x" />
       </button>
     </div>
@@ -89,7 +181,11 @@
                   <div class="tag-chips">
                     @for (tagId of client.tags; track tagId) {
                       @if (tagsFacade.byId(tagId); as tag) {
-                        <span class="tag-chip" [style.background]="tag.color + '1a'" [style.color]="tag.color">
+                        <span
+                          class="tag-chip"
+                          [style.background]="tag.color + '1a'"
+                          [style.color]="tag.color"
+                        >
                           {{ tag.label }}
                         </span>
                       }
@@ -106,6 +202,16 @@
                   />
                 </td>
                 <td class="actions-cell">
+                  <button
+                    type="button"
+                    class="sites-btn"
+                    (click)="openSites(client, $event)"
+                    [attr.aria-label]="'Administrar sedes de ' + client.businessName"
+                    title="Sedes y responsables"
+                  >
+                    <app-icon name="building-2" />
+                    Sedes
+                  </button>
                   <div class="tag-picker-wrapper">
                     <button
                       type="button"
@@ -128,13 +234,21 @@
                         />
                         <div class="tag-options-scroll">
                           @if (canCreateTagFromSearch()) {
-                            <button type="button" class="tag-option tag-option--create" (click)="createAndApplyTag(client, $event)">
+                            <button
+                              type="button"
+                              class="tag-option tag-option--create"
+                              (click)="createAndApplyTag(client, $event)"
+                            >
                               <app-icon name="tag" class="tag-check" />
                               <span class="tag-option-label">Crear "{{ tagSearch().trim() }}"</span>
                             </button>
                           }
                           @for (tag of filteredTags(); track tag.id) {
-                            <button type="button" class="tag-option" (click)="toggleTag(client, tag.id, $event)">
+                            <button
+                              type="button"
+                              class="tag-option"
+                              (click)="toggleTag(client, tag.id, $event)"
+                            >
                               <span class="tag-dot" [style.background]="tag.color"></span>
                               <span class="tag-option-label">{{ tag.label }}</span>
                               @if (hasTag(client, tag.id)) {
@@ -147,10 +261,18 @@
                           }
                         </div>
                         <div class="tag-picker-footer">
-                          <button type="button" class="tag-picker-manage" (click)="openManager($event)">
+                          <button
+                            type="button"
+                            class="tag-picker-manage"
+                            (click)="openManager($event)"
+                          >
                             Administrar
                           </button>
-                          <button type="button" class="tag-picker-close" (click)="closeTagPicker($event)">
+                          <button
+                            type="button"
+                            class="tag-picker-close"
+                            (click)="closeTagPicker($event)"
+                          >
                             Cerrar
                           </button>
                         </div>
@@ -192,6 +314,146 @@
           </tbody>
         </table>
       </div>
+      <div class="clients-mobile-list">
+        @for (client of visibleClients(); track client.id) {
+          <article class="mobile-client-row">
+            <div class="mobile-client-header">
+              <input
+                type="checkbox"
+                [attr.aria-label]="'Seleccionar ' + client.businessName"
+                [checked]="isSelected(client.id)"
+                (click)="toggleSelect(client.id, $event)"
+              />
+              <button type="button" class="mobile-client-main" (click)="openDetail(client)">
+                <strong>{{ client.businessName }}</strong>
+                <span>{{ client.taxId }}</span>
+              </button>
+              <div class="mobile-client-actions">
+                <div class="tag-picker-wrapper">
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="toggleTagPicker(client.id, $event)"
+                    aria-label="Etiquetar cliente"
+                    title="Etiquetar"
+                  >
+                    <app-icon name="tag" />
+                  </button>
+                  @if (openTagPickerId() === client.id) {
+                    <div class="tag-picker tag-picker--mobile">
+                      <input
+                        type="text"
+                        class="tag-search-input"
+                        placeholder="Buscar o crear etiqueta..."
+                        aria-label="Buscar o crear etiqueta"
+                        [value]="tagSearch()"
+                        (input)="onTagSearchInput($event)"
+                      />
+                      <div class="tag-options-scroll">
+                        @if (canCreateTagFromSearch()) {
+                          <button
+                            type="button"
+                            class="tag-option tag-option--create"
+                            (click)="createAndApplyTag(client, $event)"
+                          >
+                            <app-icon name="tag" class="tag-check" />
+                            <span class="tag-option-label">Crear "{{ tagSearch().trim() }}"</span>
+                          </button>
+                        }
+                        @for (tag of filteredTags(); track tag.id) {
+                          <button
+                            type="button"
+                            class="tag-option"
+                            (click)="toggleTag(client, tag.id, $event)"
+                          >
+                            <span class="tag-dot" [style.background]="tag.color"></span>
+                            <span class="tag-option-label">{{ tag.label }}</span>
+                            @if (hasTag(client, tag.id)) {
+                              <app-icon name="circle-check-big" class="tag-check" />
+                            }
+                          </button>
+                        }
+                      </div>
+                      <div class="tag-picker-footer">
+                        <button
+                          type="button"
+                          class="tag-picker-manage"
+                          (click)="openManager($event)"
+                        >
+                          Administrar
+                        </button>
+                        <button
+                          type="button"
+                          class="tag-picker-close"
+                          (click)="closeTagPicker($event)"
+                        >
+                          Cerrar
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--primary"
+                  (click)="openDetail(client)"
+                  aria-label="Ver cliente"
+                  title="Ver"
+                >
+                  <app-icon name="eye" />
+                </button>
+                @if (canDelete()) {
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    (click)="confirmDelete(client, $event)"
+                    aria-label="Eliminar cliente"
+                    title="Eliminar"
+                  >
+                    <app-icon name="trash-2" />
+                  </button>
+                }
+              </div>
+            </div>
+
+            <p class="mobile-client-location">
+              <app-icon name="map-pin" />
+              {{ client.city || 'Sin ciudad registrada' }}
+            </p>
+
+            <div class="mobile-client-footer">
+              <div class="mobile-client-links">
+                <button type="button" class="mobile-sites-link" (click)="openSites(client, $event)">
+                  <app-icon name="building-2" />
+                  Sedes
+                </button>
+                <button type="button" class="mobile-edit-link" (click)="openEdit(client, $event)">
+                  Editar cliente
+                </button>
+              </div>
+              <div class="mobile-client-tags">
+                @for (tagId of client.tags.slice(0, 2); track tagId) {
+                  @if (tagsFacade.byId(tagId); as tag) {
+                    <span
+                      class="tag-chip"
+                      [style.background]="tag.color + '1a'"
+                      [style.color]="tag.color"
+                    >
+                      {{ tag.label }}
+                    </span>
+                  }
+                }
+                @if (client.tags.length === 0) {
+                  <app-status-badge
+                    [label]="client.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
+                    [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
+                  />
+                }
+              </div>
+            </div>
+          </article>
+        }
+      </div>
       @if (hasMore() || hasCollapsed()) {
         <div class="load-more-bar">
           @if (hasCollapsed()) {
@@ -220,11 +482,16 @@
   [open]="formOpen()"
   [editingClient]="editingClient()"
   (closeRequested)="closeForm()"
+  (manageSitesRequested)="openSites($event)"
 />
 
 <app-modal
   [open]="!!deletingIds()"
-  [title]="(deletingIds()?.length ?? 0) > 1 ? '¿Eliminar ' + deletingIds()!.length + ' clientes?' : '¿Eliminar este cliente?'"
+  [title]="
+    (deletingIds()?.length ?? 0) > 1
+      ? '¿Eliminar ' + deletingIds()!.length + ' clientes?'
+      : '¿Eliminar este cliente?'
+  "
   size="sm"
   (closeRequested)="cancelDelete()"
 >

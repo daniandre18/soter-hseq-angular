@@ -1,4 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { map } from 'rxjs';
 import { QuotesFacade } from '../../facades/quotes.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { Button } from '../../../../shared/components/button/button';
@@ -22,6 +25,15 @@ type StatusFilterOption = 'all' | QuoteStatus;
 export class QuotesList {
   protected readonly quotesFacade = inject(QuotesFacade);
   private readonly clientsFacade = inject(ClientsFacade);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** `?open=<id>` — usado por la campanita de notificaciones para abrir
+   *  directo el detalle en vez de solo aterrizar en el listado. */
+  private readonly openQueryParamId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('open'))),
+    { initialValue: null },
+  );
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilterOption>('all');
@@ -62,6 +74,21 @@ export class QuotesList {
   constructor() {
     this.quotesFacade.init();
     this.clientsFacade.init();
+
+    // Espera a que `quotes()` traiga la cotización pedida (puede llegar
+    // vacío mientras el listener de Firestore aún carga) y limpia el query
+    // param al abrir, para no reabrir el modal si el usuario navega de vuelta.
+    effect(() => {
+      const id = this.openQueryParamId();
+      if (!id) {
+        return;
+      }
+      const quote = this.quotesFacade.quotes().find((candidate) => candidate.id === id);
+      if (quote) {
+        this.detailQuoteId.set(quote.id);
+        void this.router.navigate([], { queryParams: { open: null }, queryParamsHandling: 'merge' });
+      }
+    });
   }
 
   protected statusLabel(status: QuoteStatus): string {

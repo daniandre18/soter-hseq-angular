@@ -1,0 +1,177 @@
+<section class="agenda-page">
+  <div class="agenda-toolbar">
+    <div class="agenda-filters">
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Buscar por empresa..."
+        aria-label="Buscar por empresa"
+        [value]="search()"
+        (input)="onSearchInput($event)"
+      />
+      <select
+        class="status-select"
+        aria-label="Filtrar por estado"
+        [value]="statusFilter()"
+        (change)="onStatusChange($event)"
+      >
+        <option value="all">Todos los estados</option>
+        @for (entry of statusOptions; track entry[0]) {
+          <option [value]="entry[0]">{{ entry[1].label }}</option>
+        }
+      </select>
+      <label class="technician-filter">
+        <span>Técnico</span>
+        <select [value]="selectedTechnicianId()" (change)="onTechnicianChange($event)">
+          <option value="all">Todos los técnicos</option>
+          @for (technician of ordersFacade.technicians(); track technician.id) {
+            <option [value]="technician.id">{{ technician.displayName }}</option>
+          }
+        </select>
+      </label>
+      <label class="date-filter">
+        <span>Desde</span>
+        <input type="date" [value]="dateFrom()" (change)="onDateFromChange($event)" />
+      </label>
+      <label class="date-filter">
+        <span>Hasta</span>
+        <input type="date" [value]="dateTo()" (change)="onDateToChange($event)" />
+      </label>
+      @if (hasActiveFilters()) {
+        <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <div class="month-navigation" aria-label="Navegación del calendario">
+      <button type="button" class="today-button" (click)="goToToday()">Hoy</button>
+      <button
+        type="button"
+        class="month-button"
+        (click)="previousMonth()"
+        aria-label="Mes anterior"
+      >
+        <app-icon name="chevron-left" />
+      </button>
+      <p aria-live="polite">{{ monthLabel() }}</p>
+      <button type="button" class="month-button" (click)="nextMonth()" aria-label="Mes siguiente">
+        <app-icon name="chevron-right" />
+      </button>
+    </div>
+  </div>
+
+  <p class="agenda-results-count">
+    {{ scheduledVisits().length }}
+    {{ scheduledVisits().length === 1 ? 'visita encontrada' : 'visitas encontradas' }}
+  </p>
+
+  @if (ordersFacade.error()) {
+    <p class="agenda-error">{{ ordersFacade.error() }}</p>
+  }
+
+  <div class="agenda-layout">
+    <app-card padding="none" class="calendar-card">
+      <div class="calendar" role="grid" [attr.aria-label]="'Agenda de ' + monthLabel()">
+        @for (weekday of weekdays; track weekday) {
+          <div class="weekday" role="columnheader">{{ weekday }}</div>
+        }
+        @for (day of calendarDays(); track day.key) {
+          <div
+            class="calendar-day"
+            [class.calendar-day--outside]="!day.currentMonth"
+            role="gridcell"
+          >
+            <span class="day-number" [class.day-number--today]="day.today">{{
+              day.dayNumber
+            }}</span>
+            <div class="day-visits">
+              @for (visit of day.visits.slice(0, visibleVisitsPerDay); track visit.id) {
+                <a
+                  class="calendar-visit"
+                  routerLink="/ordenes"
+                  [title]="visit.title + ' · ' + technicianNames(visit)"
+                >
+                  <span>{{ formatTime(visit.scheduledStart!) }}</span>
+                  <strong>{{ visit.title || visit.serviceSummary }}</strong>
+                </a>
+              }
+              @if (day.visits.length > visibleVisitsPerDay) {
+                <span class="more-visits"
+                  >+{{ day.visits.length - visibleVisitsPerDay }} visitas</span
+                >
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </app-card>
+
+    <app-card padding="none" class="upcoming-card">
+      <div class="upcoming-header">
+        <div>
+          <h2>Próximas visitas</h2>
+          <p>{{ upcomingVisits().length }} programadas</p>
+        </div>
+        <app-icon name="calendar-days" />
+      </div>
+
+      @if (upcomingVisits().length === 0) {
+        <p class="agenda-empty">No hay visitas próximas para este filtro.</p>
+      } @else {
+        <div class="upcoming-list">
+          @for (visit of upcomingVisits(); track visit.id) {
+            <article class="visit-block">
+              <a class="visit-summary" routerLink="/ordenes">
+                <div class="upcoming-date">
+                  <strong>{{ visit.scheduledStart!.getDate() }}</strong>
+                  <span>{{
+                    visit.scheduledStart!.toLocaleDateString('es-CO', { month: 'short' })
+                  }}</span>
+                </div>
+                <div>
+                  <h3>{{ visit.title || visit.serviceSummary }}</h3>
+                  <p>
+                    {{ formatTime(visit.scheduledStart!) }}
+                    @if (visit.scheduledEnd) {
+                      – {{ formatTime(visit.scheduledEnd) }}
+                    }
+                  </p>
+                </div>
+              </a>
+
+              <a class="visit-detail" routerLink="/ordenes">
+                <div class="upcoming-title-row">
+                  <h3>{{ visit.title || visit.serviceSummary }}</h3>
+                  <app-status-badge [label]="statusLabel(visit)" [color]="statusColor(visit)" />
+                </div>
+                <div class="visit-metadata">
+                  <p>
+                    <app-icon name="clock" /> {{ formatTime(visit.scheduledStart!) }}
+                    @if (visit.scheduledEnd) {
+                      – {{ formatTime(visit.scheduledEnd) }}
+                    }
+                  </p>
+                  <p>
+                    <app-icon name="building-2" />
+                    {{ visit.clientBusinessName }}
+                    @if (visit.city) {
+                      , {{ visit.city }}
+                    }
+                  </p>
+                </div>
+                <div class="technician-profile">
+                  <app-avatar [name]="primaryTechnicianName(visit)" size="sm" />
+                  <div>
+                    <strong>{{ primaryTechnicianName(visit) }}</strong>
+                    <span>{{ primaryTechnicianSpecialty(visit) }}</span>
+                  </div>
+                </div>
+              </a>
+            </article>
+          }
+        </div>
+      }
+    </app-card>
+  </div>
+</section>

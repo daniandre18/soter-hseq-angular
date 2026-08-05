@@ -20,6 +20,7 @@ export interface EmulatorConfig {
 export interface AppEnvironment {
   production: boolean;
   useEmulators: boolean;
+  evidenceUploadsEnabled: boolean;
   firebase: FirebaseWebConfig;
   emulators?: EmulatorConfig;
   /**

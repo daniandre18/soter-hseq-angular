@@ -44,6 +44,7 @@ export class ServiceFormModal {
   readonly closeRequested = output<void>();
 
   protected readonly saving = signal(false);
+  protected readonly saveError = signal<string | null>(null);
   protected readonly model = signal<ServiceFormModel>({ ...EMPTY_MODEL });
 
   protected readonly categories = this.categoriesFacade.categories;
@@ -66,6 +67,7 @@ export class ServiceFormModal {
       if (!this.open()) {
         return;
       }
+      this.saveError.set(null);
       this.model.set(
         service
           ? {
@@ -87,6 +89,7 @@ export class ServiceFormModal {
 
   protected onSubmit(): void {
     submit(this.serviceForm, async () => {
+      this.saveError.set(null);
       this.saving.set(true);
       try {
         const value = this.model();
@@ -105,6 +108,10 @@ export class ServiceFormModal {
           await this.servicesFacade.addService(data);
         }
         this.close();
+      } catch (error) {
+        this.saveError.set(
+          error instanceof Error ? error.message : 'No fue posible guardar el servicio.',
+        );
       } finally {
         this.saving.set(false);
       }

@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ServicesFacade } from '../../facades/services.facade';
 import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
 import { Card } from '../../../../shared/components/card/card';
@@ -7,7 +8,6 @@ import { StatusBadge } from '../../../../shared/components/status-badge/status-b
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { ServiceFormModal } from '../../components/service-form-modal/service-form-modal';
-import { ServiceCategoriesManagerModal } from '../../components/service-categories-manager-modal/service-categories-manager-modal';
 import { formatCurrency } from '../../../../shared/utils/format-currency';
 import type { Service } from '../../models/service.model';
 
@@ -15,7 +15,7 @@ const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-services-list',
-  imports: [Card, Button, StatusBadge, Modal, Icon, ServiceFormModal, ServiceCategoriesManagerModal],
+  imports: [RouterLink, Card, Button, StatusBadge, Modal, Icon, ServiceFormModal],
   templateUrl: './services-list.html',
   styleUrl: './services-list.scss',
 })
@@ -30,7 +30,6 @@ export class ServicesList {
   protected readonly formOpen = signal(false);
   protected readonly editingService = signal<Service | null>(null);
   protected readonly deletingId = signal<string | null>(null);
-  protected readonly categoriesManagerOpen = signal(false);
 
   protected readonly formatCurrency = formatCurrency;
 
@@ -64,14 +63,6 @@ export class ServicesList {
   protected onCategoryChange(event: Event): void {
     this.categoryFilter.set((event.target as HTMLSelectElement).value);
     this.visibleCount.set(PAGE_SIZE);
-  }
-
-  protected openCategoriesManager(): void {
-    this.categoriesManagerOpen.set(true);
-  }
-
-  protected closeCategoriesManager(): void {
-    this.categoriesManagerOpen.set(false);
   }
 
   protected showMore(): void {

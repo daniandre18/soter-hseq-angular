@@ -7,12 +7,15 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   serverTimestamp,
+  updateDoc,
 } from 'firebase/firestore';
 import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
 import { ServiceCategoriesStore } from './service-categories.store';
 import type { NewServiceCategory, ServiceCategory } from '../models/service-category.model';
+import { normalizeUniqueName } from '../../../shared/utils/normalize-unique-value';
 
 function toDate(value: Timestamp | undefined): Date {
   return value ? value.toDate() : new Date(0);
@@ -61,12 +64,41 @@ export class ServiceCategoriesService {
   }
 
   async addCategory(data: NewServiceCategory, createdBy: string): Promise<string> {
+    const normalizedLabel = normalizeUniqueName(data.label);
+    const snapshot = await getDocs(collection(this.firestore, 'serviceCategories'));
+    const duplicate = snapshot.docs.some(
+      (category) => normalizeUniqueName(category.data()['label'] ?? '') === normalizedLabel,
+    );
+    if (duplicate) {
+      throw new Error('Ya existe una categoría con ese nombre.');
+    }
     const ref = await addDoc(collection(this.firestore, 'serviceCategories'), {
       ...data,
+      labelNormalized: normalizedLabel,
       createdAt: serverTimestamp(),
       createdBy,
     });
     return ref.id;
+  }
+
+  async updateCategory(id: string, data: NewServiceCategory): Promise<void> {
+    const normalizedLabel = normalizeUniqueName(data.label);
+    const snapshot = await getDocs(collection(this.firestore, 'serviceCategories'));
+    const duplicate = snapshot.docs.some(
+      (category) =>
+        category.id !== id &&
+        normalizeUniqueName(category.data()['label'] ?? '') === normalizedLabel,
+    );
+    if (duplicate) {
+      throw new Error('Ya existe una categoría con ese nombre.');
+    }
+
+    await updateDoc(doc(this.firestore, 'serviceCategories', id), {
+      label: data.label,
+      labelNormalized: normalizedLabel,
+      color: data.color,
+      icon: data.icon ?? null,
+    });
   }
 
   /** Hard delete: sin "historial" propio (mismo criterio que `clientTags`).

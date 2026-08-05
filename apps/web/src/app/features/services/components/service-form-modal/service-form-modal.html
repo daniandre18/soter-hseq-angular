@@ -57,6 +57,10 @@
     </label>
   </form>
 
+  @if (saveError()) {
+    <p class="form-save-error" role="alert">{{ saveError() }}</p>
+  }
+
   <div modalFooter>
     <app-button variant="outline" (click)="close()">Cancelar</app-button>
     <app-button (click)="onSubmit()" [disabled]="serviceForm().invalid() || saving()">

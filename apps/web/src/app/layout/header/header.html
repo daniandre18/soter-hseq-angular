@@ -8,6 +8,9 @@
 
   @if (currentUser(); as user) {
     <div class="header-user">
+      @if (showNotifications()) {
+        <app-notification-bell />
+      }
       <app-avatar [name]="user.displayName" size="sm" />
       <div class="header-user-info">
         <p class="header-user-name">{{ user.displayName }}</p>

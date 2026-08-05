@@ -24,6 +24,10 @@ export interface ServiceOrder {
   orderNumber: string;
   /** Ausente en órdenes creadas manualmente (no vienen de una cotización). */
   quoteId?: string;
+  /** Denormalizado junto con `quoteId` (mismo criterio que `clientBusinessName`):
+   *  un técnico puede leer su orden pero no la colección `quotes`, así que el
+   *  número debe venir copiado aquí para poder mostrarse sin una lectura aparte. */
+  quoteNumber?: string;
   clientId: string;
   clientBusinessName: string;
   assignedTechnicianIds: string[];
@@ -55,15 +59,18 @@ export interface ServiceOrder {
   updatedBy: string;
 }
 
-export interface NewOrderData {
-  clientId: string;
-  clientBusinessName: string;
-  title: string;
+/**
+ * Una fila del formulario de creación manual (CLAUDE.md no define varios
+ * servicios por orden — cada fila se convierte en su propia `ServiceOrder`
+ * independiente, ver `OrdersService.createOrders`, no en un ítem anidado).
+ */
+export interface NewOrderServiceRow {
   serviceSummary: string;
   priority: OrderPriority;
   dueDate: Date;
+  scheduledStart?: Date;
+  scheduledEnd?: Date;
   description?: string;
-  technicianId?: string;
 }
 
 export type OrderDetailsUpdate = Partial<

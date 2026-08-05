@@ -14,7 +14,11 @@
           (input)="newLabel.set($any($event.target).value)"
           (keydown.enter)="saveNewCategory()"
         />
-        <app-button size="sm" (click)="saveNewCategory()" [disabled]="saving() || !newLabel().trim()">
+        <app-button
+          size="sm"
+          (click)="saveNewCategory()"
+          [disabled]="saving() || !newLabel().trim()"
+        >
           {{ saving() ? 'Guardando…' : 'Guardar' }}
         </app-button>
         <app-button variant="outline" size="sm" (click)="cancelCreate()">Cancelar</app-button>
@@ -47,6 +51,9 @@
           ></button>
         }
       </div>
+      @if (saveError()) {
+        <p class="form-save-error" role="alert">{{ saveError() }}</p>
+      }
     </div>
   }
 

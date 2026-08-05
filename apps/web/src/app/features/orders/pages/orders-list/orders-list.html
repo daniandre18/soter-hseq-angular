@@ -16,15 +16,92 @@
         (change)="onStatusChange($event)"
       >
         <option value="all">Todos los estados</option>
+        <option value="active">Órdenes activas</option>
+        <option value="closed">Órdenes cerradas</option>
         @for (entry of statusOptions; track entry[0]) {
           <option [value]="entry[0]">{{ entry[1].label }}</option>
         }
       </select>
     </div>
-    <span class="orders-summary">{{ filtered().length }} órdenes</span>
+    <span class="orders-summary">
+      {{ filtered().length }} {{ filtered().length === 1 ? 'orden' : 'órdenes' }}
+    </span>
     @if (canManage()) {
       <app-button class="new-order-btn" (click)="openCreate()">+ Nueva Orden</app-button>
     }
+  </div>
+
+  <div class="orders-mobile-controls">
+    <div class="mobile-order-tabs" role="group" aria-label="Filtros rápidos de órdenes">
+      <button
+        type="button"
+        class="mobile-order-tab"
+        data-status-filter="all"
+        [class.mobile-order-tab--active]="statusFilter() === 'all'"
+        [attr.aria-pressed]="statusFilter() === 'all'"
+        (click)="selectStatusFilter('all')"
+      >
+        Todas ({{ totalOrdersCount() }})
+      </button>
+      <button
+        type="button"
+        class="mobile-order-tab"
+        data-status-filter="active"
+        [class.mobile-order-tab--active]="statusFilter() === 'active'"
+        [attr.aria-pressed]="statusFilter() === 'active'"
+        (click)="selectStatusFilter('active')"
+      >
+        Activas ({{ activeOrdersCount() }})
+      </button>
+      <button
+        type="button"
+        class="mobile-order-tab"
+        data-status-filter="closed"
+        [class.mobile-order-tab--active]="statusFilter() === 'closed'"
+        [attr.aria-pressed]="statusFilter() === 'closed'"
+        (click)="selectStatusFilter('closed')"
+      >
+        Cerradas ({{ closedOrdersCount() }})
+      </button>
+    </div>
+
+    <div class="mobile-order-action-row">
+      @if (canManage()) {
+        <button type="button" class="mobile-create-order-btn" (click)="openCreate()">
+          <span aria-hidden="true">+</span>
+          Nueva orden
+        </button>
+      }
+      <span class="mobile-orders-count">
+        {{ filtered().length }} {{ filtered().length === 1 ? 'orden' : 'órdenes' }}
+      </span>
+    </div>
+
+    <div class="mobile-order-filter-row">
+      <label class="mobile-order-search">
+        <app-icon name="search" />
+        <input
+          type="search"
+          placeholder="Buscar órdenes..."
+          aria-label="Buscar órdenes"
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        />
+      </label>
+      <select
+        class="mobile-order-status"
+        aria-label="Filtrar por estado"
+        [value]="statusFilter()"
+        (change)="onStatusChange($event)"
+      >
+        <option value="all">Todos</option>
+        <option value="active">Activas</option>
+        <option value="closed">Cerradas</option>
+        @for (entry of statusOptions; track entry[0]) {
+          <option [value]="entry[0]">{{ entry[1].label }}</option>
+        }
+      </select>
+    </div>
   </div>
 
   @if (filtered().length === 0) {
@@ -44,6 +121,7 @@
               <th>Estado</th>
               <th>Prioridad</th>
               <th>Avance</th>
+              <th>Visita</th>
               <th>Vence</th>
               <th>Acciones</th>
             </tr>
@@ -67,16 +145,25 @@
                   }
                 </td>
                 <td>
-                  <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
+                  <app-status-badge
+                    [label]="statusLabel(order.status)"
+                    [color]="statusColor(order.status)"
+                  />
                 </td>
                 <td>
-                  <app-status-badge [label]="priorityLabel(order.priority)" [color]="priorityColor(order.priority)" />
+                  <app-status-badge
+                    [label]="priorityLabel(order.priority)"
+                    [color]="priorityColor(order.priority)"
+                  />
                 </td>
                 <td>
                   <div class="progress-cell">
                     <app-progress-bar [value]="order.progress" class="progress-cell-bar" />
                     <span class="progress-cell-value">{{ order.progress }}%</span>
                   </div>
+                </td>
+                <td class="nowrap">
+                  {{ order.scheduledStart ? formatDateTime(order.scheduledStart) : 'Sin programar' }}
                 </td>
                 <td class="nowrap">
                   {{ order.dueDate ? formatDateNumeric(order.dueDate) : '—' }}
@@ -119,6 +206,94 @@
           </tbody>
         </table>
       </div>
+      <div class="orders-mobile-list">
+        @for (order of visibleOrders(); track order.id) {
+          <article class="mobile-order-row">
+            <div class="mobile-order-header">
+              <button type="button" class="mobile-order-main" (click)="openDetail(order)">
+                <span class="mobile-order-number">{{ order.orderNumber }}</span>
+                <strong>{{ order.title || order.serviceSummary }}</strong>
+                <span class="mobile-order-client">{{ order.clientBusinessName }}</span>
+              </button>
+              <div class="mobile-order-actions">
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--primary"
+                  (click)="openDetail(order)"
+                  aria-label="Ver orden"
+                  title="Ver"
+                >
+                  <app-icon name="eye" />
+                </button>
+                @if (canManage()) {
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="openEditFromList(order, $event)"
+                    aria-label="Editar orden"
+                    title="Editar"
+                  >
+                    <app-icon name="square-pen" />
+                  </button>
+                }
+                @if (canDelete() && order.status === 'DRAFT') {
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    (click)="confirmDelete(order, $event)"
+                    aria-label="Eliminar orden"
+                    title="Eliminar"
+                  >
+                    <app-icon name="trash-2" />
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="mobile-order-badges">
+              <app-status-badge
+                [label]="statusLabel(order.status)"
+                [color]="statusColor(order.status)"
+              />
+              <app-status-badge
+                [label]="priorityLabel(order.priority)"
+                [color]="priorityColor(order.priority)"
+              />
+            </div>
+
+            <div class="mobile-order-technicians">
+              @if (technicianNames(order).length > 0) {
+                <div class="mobile-avatar-stack">
+                  @for (name of technicianNames(order); track name) {
+                    <app-avatar [name]="name" size="sm" />
+                  }
+                </div>
+                <span>{{ technicianNames(order).join(', ') }}</span>
+              } @else {
+                <span class="muted">Sin técnico asignado</span>
+              }
+            </div>
+
+            <div class="mobile-order-progress">
+              <app-progress-bar [value]="order.progress" />
+              <span>{{ order.progress }}%</span>
+            </div>
+
+            <div class="mobile-order-footer">
+              <div class="mobile-order-date">
+                <span>Visita</span>
+                <strong>
+                  {{ order.scheduledStart ? formatDateTime(order.scheduledStart) : 'Sin programar' }}
+                </strong>
+              </div>
+              <div class="mobile-order-date mobile-order-date--end">
+                <span>Vence</span>
+                <strong>{{ order.dueDate ? formatDateNumeric(order.dueDate) : 'Sin fecha' }}</strong>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
       @if (hasMore() || hasCollapsed()) {
         <div class="load-more-bar">
           @if (hasCollapsed()) {
@@ -148,9 +323,18 @@
   (closeRequested)="closeDetail()"
   (editRequested)="openEdit($event)"
 />
-<app-order-form-modal [open]="formOpen()" [editingOrder]="editingOrder()" (closeRequested)="closeForm()" />
+<app-order-form-modal
+  [open]="formOpen()"
+  [editingOrder]="editingOrder()"
+  (closeRequested)="closeForm()"
+/>
 
-<app-modal [open]="!!deletingOrder()" title="¿Eliminar esta orden?" size="sm" (closeRequested)="cancelDelete()">
+<app-modal
+  [open]="!!deletingOrder()"
+  title="¿Eliminar esta orden?"
+  size="sm"
+  (closeRequested)="cancelDelete()"
+>
   <p class="confirm-text">
     Esta acción no se puede deshacer. Si la orden viene de una cotización, esa cotización vuelve a
     quedar disponible como "Aprobada" para convertirse de nuevo.

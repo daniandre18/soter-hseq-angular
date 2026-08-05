@@ -1,0 +1,115 @@
+<div class="activity-filters" role="tablist" aria-label="Filtrar actividad">
+  <button
+    type="button"
+    role="tab"
+    class="activity-filter"
+    [class.activity-filter--active]="activeFilter() === 'all'"
+    [attr.aria-selected]="activeFilter() === 'all'"
+    (click)="setFilter('all')"
+  >
+    Todo
+  </button>
+  <button
+    type="button"
+    role="tab"
+    class="activity-filter"
+    [class.activity-filter--active]="activeFilter() === 'comments'"
+    [attr.aria-selected]="activeFilter() === 'comments'"
+    (click)="setFilter('comments')"
+  >
+    Comentarios
+  </button>
+  <button
+    type="button"
+    role="tab"
+    class="activity-filter"
+    [class.activity-filter--active]="activeFilter() === 'history'"
+    [attr.aria-selected]="activeFilter() === 'history'"
+    (click)="setFilter('history')"
+  >
+    Historial
+  </button>
+</div>
+
+@if (filteredItems().length === 0) {
+  <p class="empty-state">Sin actividad registrada.</p>
+} @else {
+  <div class="timeline">
+    @for (item of filteredItems(); track item.id) {
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <app-avatar [name]="resolveAuthorName()(item.createdBy)" size="sm" />
+            <div class="timeline-header-text">
+              <span class="timeline-author">{{ resolveAuthorName()(item.createdBy) }}</span>
+              <span class="timeline-meta">{{ formatDateTime(item.createdAt) }}</span>
+            </div>
+          </div>
+
+          @switch (item.kind) {
+            @case ('note') {
+              <span
+                class="chip"
+                [class.chip--finding]="item.note.noteType === 'FINDING'"
+                [class.chip--recommendation]="item.note.noteType === 'RECOMMENDATION'"
+              >
+                {{ noteTypeLabels[item.note.noteType] }}
+              </span>
+              <p class="timeline-text">{{ item.note.content }}</p>
+              @if (item.attachments.length > 0) {
+                <div class="note-attachments">
+                  @for (file of item.attachments; track file.id) {
+                    <a
+                      class="attachment-chip"
+                      [href]="file.downloadUrl"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      📎 {{ file.fileName }}
+                    </a>
+                  }
+                </div>
+              }
+            }
+            @case ('evidence') {
+              <a class="evidence-card" [href]="item.evidence.downloadUrl" target="_blank" rel="noopener">
+                @if (item.evidence.type === 'PHOTO') {
+                  <img
+                    class="evidence-thumb"
+                    [src]="item.evidence.downloadUrl"
+                    [alt]="item.evidence.fileName"
+                  />
+                } @else {
+                  <div class="evidence-thumb evidence-thumb--file">
+                    {{ item.evidence.type === 'PDF' ? 'PDF' : 'DOC' }}
+                  </div>
+                }
+                <div class="evidence-info">
+                  <p class="evidence-name">{{ item.evidence.fileName }}</p>
+                  @if (item.evidence.category) {
+                    <span class="chip">{{ evidenceCategoryLabels[item.evidence.category] }}</span>
+                  }
+                  @if (item.evidence.description) {
+                    <quill-view-html
+                      class="evidence-description"
+                      [content]="item.evidence.description"
+                      [sanitize]="true"
+                      theme="snow"
+                    />
+                  }
+                </div>
+              </a>
+            }
+            @case ('event') {
+              <p class="timeline-text timeline-text--event">
+                <strong>{{ actionLabels[item.event.action] }}</strong>
+                — {{ translateDomainCodes(item.event.description) }}
+              </p>
+            }
+          }
+        </div>
+      </div>
+    }
+  </div>
+}

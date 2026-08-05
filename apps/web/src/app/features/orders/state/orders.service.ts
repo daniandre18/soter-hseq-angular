@@ -7,13 +7,13 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDoc,
   getDocs,
   increment,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   where,
   writeBatch,
@@ -33,7 +33,7 @@ import {
 import { OrdersStore } from './orders.store';
 import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
 import type {
-  NewOrderData,
+  NewOrderServiceRow,
   OrderDetailsUpdate,
   OrderStatus,
   ServiceOrder,
@@ -41,6 +41,8 @@ import type {
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory, EvidenceType } from '../models/evidence.model';
 import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
+import type { OrderEvent, OrderEventAction } from '../models/order-event.model';
+import { environment } from '../../../../environments/environment';
 
 interface GenerateClosingActResponse {
   closingActId: string;
@@ -71,6 +73,20 @@ function toTechnicalNote(id: string, orderId: string, data: DocumentData): Techn
     orderId,
     content: data['content'],
     noteType: data['noteType'],
+    attachmentIds: data['attachmentIds'] ?? [],
+    createdAt: toDate(data['createdAt']) ?? new Date(0),
+    createdBy: data['createdBy'],
+  };
+}
+
+function toOrderEvent(id: string, orderId: string, data: DocumentData): OrderEvent {
+  return {
+    id,
+    entityType: 'ORDER',
+    entityId: orderId,
+    action: data['action'] as OrderEventAction,
+    description: data['description'],
+    metadata: data['metadata'] ?? undefined,
     createdAt: toDate(data['createdAt']) ?? new Date(0),
     createdBy: data['createdBy'],
   };
@@ -142,6 +158,7 @@ function toServiceOrder(id: string, data: DocumentData): ServiceOrder {
     id,
     orderNumber: data['orderNumber'],
     quoteId: data['quoteId'],
+    quoteNumber: data['quoteNumber'],
     clientId: data['clientId'],
     clientBusinessName: data['clientBusinessName'],
     assignedTechnicianIds: data['assignedTechnicianIds'] ?? [],
@@ -236,12 +253,20 @@ export class OrdersService {
   async schedule(
     orderId: string,
     scheduledStart: Date,
-    scheduledEnd: Date,
+    scheduledEnd: Date | undefined,
     updatedBy: string,
   ): Promise<void> {
     const current = this.store.getValue().entities?.[orderId];
     const status: OrderStatus | undefined = current?.status === 'DRAFT' ? 'SCHEDULED' : undefined;
-    await this.updateOrder(orderId, { scheduledStart, scheduledEnd, ...(status && { status }) }, updatedBy);
+    await this.updateOrder(
+      orderId,
+      {
+        scheduledStart,
+        ...(scheduledEnd && { scheduledEnd }),
+        ...(status && { status }),
+      },
+      updatedBy,
+    );
   }
 
   /**
@@ -311,40 +336,62 @@ export class OrdersService {
   }
 
   /**
-   * Crea una orden manualmente, sin pasar por una cotización (a diferencia
-   * de `QuotesService.convertToOrder`). El consecutivo usa el mismo esquema
+   * Crea una orden por cada fila (servicio) del formulario manual, sin pasar
+   * por una cotización (a diferencia de `QuotesService.convertToOrder`, que
+   * hace lo mismo pero por ítem de cotización). Cada fila es una
+   * `ServiceOrder` totalmente independiente — su propio estado, técnico,
+   * evidencia y acta — no un sub-ítem anidado (CLAUDE.md §9.5 no define
+   * varios servicios por orden). El consecutivo usa el mismo esquema
    * `OT-XXXX` y la misma limitación de carrera aceptada para el MVP (conteo
-   * de colección fuera de una transacción).
+   * de colección fuera de un batch).
    */
-  async createOrder(data: NewOrderData, createdBy: string): Promise<string> {
+  async createOrders(
+    clientId: string,
+    clientBusinessName: string,
+    rows: NewOrderServiceRow[],
+    createdBy: string,
+  ): Promise<string[]> {
+    if (rows.length === 0) {
+      return [];
+    }
+
     const ordersCollection = collection(this.firestore, 'orders');
     const ordersSnapshot = await getDocs(ordersCollection);
-    const orderNumber = `OT-${(ordersSnapshot.size + 1).toString().padStart(4, '0')}`;
+    let nextNumber = ordersSnapshot.size + 1;
 
-    const assignedTechnicianIds = data.technicianId ? [data.technicianId] : [];
-    const status: OrderStatus = assignedTechnicianIds.length > 0 ? 'ASSIGNED' : 'DRAFT';
+    const batch = writeBatch(this.firestore);
+    const orderIds: string[] = [];
+    for (const row of rows) {
+      const orderRef = doc(ordersCollection);
+      const orderNumber = `OT-${nextNumber.toString().padStart(4, '0')}`;
+      nextNumber += 1;
+      const status: OrderStatus = row.scheduledStart ? 'SCHEDULED' : 'DRAFT';
 
-    const orderRef = doc(ordersCollection);
-    await setDoc(orderRef, {
-      orderNumber,
-      clientId: data.clientId,
-      clientBusinessName: data.clientBusinessName,
-      assignedTechnicianIds,
-      title: data.title,
-      serviceSummary: data.serviceSummary,
-      priority: data.priority,
-      dueDate: data.dueDate,
-      description: data.description,
-      progress: 0,
-      status,
-      evidenceCount: 0,
-      createdAt: serverTimestamp(),
-      createdBy,
-      updatedAt: serverTimestamp(),
-      updatedBy: createdBy,
-    });
+      batch.set(orderRef, {
+        orderNumber,
+        clientId,
+        clientBusinessName,
+        assignedTechnicianIds: [],
+        title: row.serviceSummary,
+        serviceSummary: row.serviceSummary,
+        priority: row.priority,
+        dueDate: row.dueDate,
+        ...(row.scheduledStart && { scheduledStart: row.scheduledStart }),
+        ...(row.scheduledEnd && { scheduledEnd: row.scheduledEnd }),
+        description: row.description,
+        progress: 0,
+        status,
+        evidenceCount: 0,
+        createdAt: serverTimestamp(),
+        createdBy,
+        updatedAt: serverTimestamp(),
+        updatedBy: createdBy,
+      });
+      orderIds.push(orderRef.id);
+    }
 
-    return orderRef.id;
+    await batch.commit();
+    return orderIds;
   }
 
   /** Edita los campos "de cabecera" de la orden (CLAUDE.md no cubre esto
@@ -387,19 +434,25 @@ export class OrdersService {
   /**
    * Solo permitido en `DRAFT` (misma condición que exige `firestore.rules`
    * del lado del servidor, no solo aquí). Si la orden viene de una
-   * cotización convertida, la revierte a `APPROVED` y limpia `orderId` en
-   * el mismo batch — de lo contrario la cotización quedaría marcada
-   * `CONVERTED` apuntando a un documento que ya no existe, y
-   * `convertToOrder` la rechazaría para siempre por su chequeo de
-   * `quote.orderId`.
+   * cotización convertida, la quita de `orderIds` — una cotización puede
+   * haber generado varias órdenes hermanas (una por ítem, ver
+   * `QuotesService.convertToOrder`), así que solo se revierte la cotización
+   * a `APPROVED` cuando no queda ninguna orden viva; de lo contrario las
+   * hermanas quedarían huérfanas de una cotización que ya no se vería como
+   * `CONVERTED`.
    */
   async deleteOrder(order: ServiceOrder, updatedBy: string): Promise<void> {
     const batch = writeBatch(this.firestore);
     batch.delete(doc(this.firestore, 'orders', order.id));
     if (order.quoteId) {
-      batch.update(doc(this.firestore, 'quotes', order.quoteId), {
-        status: 'APPROVED',
-        orderId: null,
+      const quoteRef = doc(this.firestore, 'quotes', order.quoteId);
+      const quoteSnapshot = await getDoc(quoteRef);
+      const remainingOrderIds = (
+        (quoteSnapshot.data()?.['orderIds'] as string[] | undefined) ?? []
+      ).filter((id) => id !== order.id);
+      batch.update(quoteRef, {
+        orderIds: remainingOrderIds,
+        ...(remainingOrderIds.length === 0 && { status: 'APPROVED' }),
         updatedAt: serverTimestamp(),
         updatedBy,
       });
@@ -430,11 +483,25 @@ export class OrdersService {
    * `create`). Los hallazgos y recomendaciones también se acumulan en los
    * arreglos del documento de la orden (CLAUDE.md §9.5), que es lo que el
    * prompt de IA de la Fase 6 leerá para redactar el borrador del acta.
+   * `attachmentIds` debe apuntar a evidencia ya subida (p. ej. vía
+   * `uploadEvidence`) — la nota es inmutable, así que el vínculo se fija aquí.
    */
-  async addNote(orderId: string, noteType: NoteType, content: string, createdBy: string): Promise<void> {
+  async addNote(
+    orderId: string,
+    noteType: NoteType,
+    content: string,
+    createdBy: string,
+    attachmentIds?: string[],
+  ): Promise<void> {
     const batch = writeBatch(this.firestore);
     const noteRef = doc(collection(this.firestore, 'orders', orderId, 'notes'));
-    batch.set(noteRef, { content, noteType, createdAt: serverTimestamp(), createdBy });
+    batch.set(noteRef, {
+      content,
+      noteType,
+      attachmentIds: attachmentIds ?? [],
+      createdAt: serverTimestamp(),
+      createdBy,
+    });
 
     if (noteType === 'FINDING' || noteType === 'RECOMMENDATION') {
       const field = noteType === 'FINDING' ? 'findings' : 'recommendations';
@@ -466,11 +533,30 @@ export class OrdersService {
     });
   }
 
+  watchOrderEvents(orderId: string): Observable<OrderEvent[]> {
+    return new Observable<OrderEvent[]>((subscriber) => {
+      const eventsQuery = query(
+        collection(this.firestore, 'orders', orderId, 'events'),
+        orderBy('createdAt', 'desc'),
+      );
+      return onSnapshot(
+        eventsQuery,
+        (snapshot) => {
+          subscriber.next(
+            snapshot.docs.map((docSnapshot) => toOrderEvent(docSnapshot.id, orderId, docSnapshot.data())),
+          );
+        },
+        (error) => subscriber.error(error),
+      );
+    });
+  }
+
   /**
    * Sube el archivo a Storage bajo la convención de `storagePath` de
    * CLAUDE.md §9.6 (nunca se confía en el nombre original para la ruta),
    * reporta el progreso, y solo al terminar crea el documento de evidencia
-   * e incrementa `evidenceCount` en la orden.
+   * e incrementa `evidenceCount` en la orden. Retorna el id del documento de
+   * evidencia creado (p. ej. para vincularlo desde una nota vía `addNote`).
    */
   async uploadEvidence(
     orderId: string,
@@ -479,7 +565,10 @@ export class OrdersService {
     description: string | undefined,
     uploadedBy: string,
     onProgress?: (percent: number) => void,
-  ): Promise<void> {
+  ): Promise<string> {
+    if (!environment.evidenceUploadsEnabled) {
+      throw new Error('La carga de evidencias está deshabilitada en el demo gratuito.');
+    }
     const evidenceRef = doc(collection(this.firestore, 'orders', orderId, 'evidence'));
     const safeFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
     const storagePath = `orders/${orderId}/evidence/${evidenceRef.id}/${safeFileName}`;
@@ -517,6 +606,7 @@ export class OrdersService {
       updatedBy: uploadedBy,
     });
     await batch.commit();
+    return evidenceRef.id;
   }
 
   /**

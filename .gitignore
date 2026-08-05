@@ -22,3 +22,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/settings.json
+
+# Claude Code (config personal de esta máquina, no del proyecto)
+.claude/settings.local.json

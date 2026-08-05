@@ -68,6 +68,24 @@
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--color-gray-100);
   }
+
+  &--actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    a {
+      color: var(--color-brand-600);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover {
+        color: var(--color-brand-800);
+      }
+    }
+  }
 }
 
 .dashboard-card-icon {
@@ -188,3 +206,96 @@
   }
 }
 
+@media (max-width: 767px) {
+  .dashboard {
+    min-width: 0;
+  }
+
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .dashboard-error,
+  .alerts-card {
+    margin-bottom: 1rem;
+  }
+
+  .dashboard-error {
+    padding: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .dashboard-grid {
+    gap: 0.75rem;
+  }
+
+  .dashboard-card {
+    min-width: 0;
+    padding: 0.875rem;
+
+    &--flush {
+      padding: 0.875rem 0 0;
+    }
+  }
+
+  .dashboard-card-header {
+    margin-bottom: 0.75rem;
+    padding: 0 0.875rem;
+
+    .dashboard-card--flush > & {
+      padding: 0 0.875rem;
+    }
+
+    h2 {
+      font-size: 0.875rem;
+    }
+
+    p {
+      font-size: 0.6875rem;
+    }
+
+    &--divided {
+      padding-bottom: 0.75rem;
+    }
+  }
+
+  .dashboard-card:not(.dashboard-card--flush) .dashboard-card-header {
+    padding: 0;
+  }
+
+  .dashboard-empty {
+    padding: 0 0.875rem 0.875rem;
+    font-size: 0.75rem;
+  }
+
+  .list-row {
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+  }
+
+  .list-row-side {
+    gap: 0.25rem;
+
+    .list-row-progress {
+      width: 3.75rem;
+    }
+  }
+
+  .list-row-main {
+    .list-row-title {
+      font-size: 0.8125rem;
+    }
+
+    .list-row-subtitle {
+      font-size: 0.6875rem;
+    }
+  }
+
+  .visit-date {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-md);
+  }
+}

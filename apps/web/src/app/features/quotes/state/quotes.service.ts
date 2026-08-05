@@ -38,7 +38,7 @@ function toQuote(id: string, data: DocumentData): Quote {
     total: data['total'],
     notes: data['notes'],
     terms: data['terms'],
-    orderId: data['orderId'],
+    orderIds: data['orderIds'] ?? [],
     createdAt: toDate(data['createdAt']) ?? new Date(0),
     createdBy: data['createdBy'],
     updatedAt: toDate(data['updatedAt']) ?? new Date(0),
@@ -155,22 +155,31 @@ export class QuotesService {
   }
 
   /**
-   * Convierte una cotización APPROVED en una orden nueva. Idempotente: una
-   * transacción verifica dentro de la misma lectura que la cotización siga
-   * aprobada y sin `orderId` antes de escribir (CLAUDE.md §11.3).
+   * Convierte una cotización APPROVED en una orden por cada ítem/servicio
+   * (CLAUDE.md §11.3) — no en una sola orden colapsada: cada servicio se
+   * ejecuta y rastrea de forma independiente (su propio estado, técnico,
+   * evidencia y acta), ver `OrdersService.createOrders`, que usa el mismo
+   * criterio para la creación manual. Idempotente: una transacción verifica
+   * dentro de la misma lectura que la cotización siga aprobada y sin
+   * `orderIds` antes de escribir.
    */
-  async convertToOrder(quoteId: string, userId: string): Promise<string> {
+  async convertToOrder(quoteId: string, userId: string): Promise<string[]> {
     const quoteRef = doc(this.firestore, 'quotes', quoteId);
     const ordersCollection = collection(this.firestore, 'orders');
-    const orderRef = doc(ordersCollection);
 
-    // El consecutivo se calcula antes de entrar a la transacción: las
+    // Los ítems y el consecutivo se leen antes de la transacción: las
     // lecturas de una transacción de Firestore deben hacerse todas con
-    // `transaction.get()` antes de cualquier escritura, así que un conteo
-    // de colección aparte no pertenece aquí (misma limitación de carrera
-    // que `nextQuoteNumber`, aceptable para el MVP).
+    // `transaction.get()` antes de cualquier escritura, así que una
+    // subcolección/conteo aparte no pertenece ahí (misma limitación de
+    // carrera que `nextQuoteNumber`, aceptable para el MVP).
+    const itemsSnapshot = await getDocs(collection(this.firestore, 'quotes', quoteId, 'items'));
+    const items = itemsSnapshot.docs
+      .map((itemDoc) => toQuoteItem(itemDoc.id, itemDoc.data()))
+      .sort((a, b) => a.position - b.position);
+
     const ordersSnapshot = await getDocs(ordersCollection);
-    const orderNumber = `OT-${(ordersSnapshot.size + 1).toString().padStart(4, '0')}`;
+    const startingNumber = ordersSnapshot.size + 1;
+    const orderRefs = items.map(() => doc(ordersCollection));
 
     await runTransaction(this.firestore, async (transaction) => {
       const quoteSnapshot = await transaction.get(quoteRef);
@@ -181,37 +190,44 @@ export class QuotesService {
       if (quote['status'] !== 'APPROVED') {
         throw new Error('Solo una cotización aprobada puede convertirse en orden.');
       }
-      if (quote['orderId']) {
+      if ((quote['orderIds'] as string[] | undefined)?.length) {
         throw new Error('Esta cotización ya fue convertida en orden.');
       }
+      if (items.length === 0) {
+        throw new Error('La cotización no tiene servicios para convertir.');
+      }
 
-      const serviceSummary = `Servicios de la cotización ${quote['quoteNumber']}`;
-      transaction.set(orderRef, {
-        orderNumber,
-        quoteId,
-        clientId: quote['clientId'],
-        clientBusinessName: quote['clientBusinessName'],
-        assignedTechnicianIds: [],
-        status: 'DRAFT',
-        title: serviceSummary,
-        serviceSummary,
-        priority: 'MEDIUM',
-        progress: 0,
-        evidenceCount: 0,
-        createdAt: serverTimestamp(),
-        createdBy: userId,
-        updatedAt: serverTimestamp(),
-        updatedBy: userId,
+      items.forEach((item, index) => {
+        const orderNumber = `OT-${(startingNumber + index).toString().padStart(4, '0')}`;
+        const serviceSummary = item.description;
+        transaction.set(orderRefs[index], {
+          orderNumber,
+          quoteId,
+          quoteNumber: quote['quoteNumber'],
+          clientId: quote['clientId'],
+          clientBusinessName: quote['clientBusinessName'],
+          assignedTechnicianIds: [],
+          status: 'DRAFT',
+          title: serviceSummary,
+          serviceSummary,
+          priority: 'MEDIUM',
+          progress: 0,
+          evidenceCount: 0,
+          createdAt: serverTimestamp(),
+          createdBy: userId,
+          updatedAt: serverTimestamp(),
+          updatedBy: userId,
+        });
       });
 
       transaction.update(quoteRef, {
         status: 'CONVERTED',
-        orderId: orderRef.id,
+        orderIds: orderRefs.map((ref) => ref.id),
         updatedAt: serverTimestamp(),
         updatedBy: userId,
       });
     });
 
-    return orderRef.id;
+    return orderRefs.map((ref) => ref.id);
   }
 }

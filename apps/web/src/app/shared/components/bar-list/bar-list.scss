@@ -40,3 +40,23 @@
   border-radius: 9999px;
   transition: width 300ms ease;
 }
+
+@media (max-width: 767px) {
+  .bar-list-empty {
+    padding: 1rem 0;
+    font-size: 0.75rem;
+  }
+
+  .bar-list {
+    gap: 0.875rem;
+  }
+
+  .bar-row-top {
+    margin-bottom: 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  .bar-track {
+    height: 0.375rem;
+  }
+}

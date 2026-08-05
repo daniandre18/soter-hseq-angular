@@ -1,16 +1,8 @@
-<app-modal [open]="open()" [title]="title()" size="lg" (closeRequested)="close()">
+<app-modal [open]="open()" [title]="title()" [size]="modalSize()" (closeRequested)="close()">
   <form class="order-form" (submit)="onSubmit(); $event.preventDefault()">
-    <label class="field field--full">
-      Título *
-      <input [formField]="orderForm.title" placeholder="Ej: Inspección de Seguridad — Planta Principal" />
-      @if (orderForm.title().touched() && orderForm.title().errors().length) {
-        <span class="field-error">{{ orderForm.title().errors()[0].message }}</span>
-      }
-    </label>
-
     <label class="field">
       Cliente *
-      <select [formField]="orderForm.clientId">
+      <select aria-label="Cliente" [formField]="orderForm.clientId">
         <option value="">Seleccionar cliente...</option>
         @for (client of activeClients(); track client.id) {
           <option [value]="client.id">{{ client.businessName }}</option>
@@ -21,68 +13,185 @@
       }
     </label>
 
-    <label class="field">
-      Servicio *
-      <select
-        [formField]="orderForm.serviceId"
-        (change)="onServiceSelected($any($event.target).value)"
-      >
-        <option value="">Seleccionar servicio...</option>
-        @for (service of activeServices(); track service.id) {
-          <option [value]="service.id">{{ service.name }}</option>
+    @if (editingOrder()) {
+      <label class="field field--full">
+        Título *
+        <input
+          aria-label="Título de la orden"
+          [formField]="orderForm.title"
+          placeholder="Ej: Inspección de Seguridad — Planta Principal"
+        />
+        @if (orderForm.title().touched() && orderForm.title().errors().length) {
+          <span class="field-error">{{ orderForm.title().errors()[0].message }}</span>
         }
-      </select>
-      @if (currentServiceHint()) {
-        <span class="field-hint">Actual: {{ currentServiceHint() }}</span>
-      }
-      @if (orderForm.serviceSummary().touched() && orderForm.serviceSummary().errors().length) {
-        <span class="field-error">{{ orderForm.serviceSummary().errors()[0].message }}</span>
-      }
-    </label>
+      </label>
 
-    @if (!editingOrder()) {
       <label class="field">
-        Técnico
-        <select [formField]="orderForm.technicianId">
-          <option value="">Sin asignar</option>
-          @for (technician of technicians(); track technician.id) {
-            <option [value]="technician.id">{{ technician.displayName }}</option>
+        Servicio *
+        <select
+          aria-label="Servicio"
+          [formField]="orderForm.serviceId"
+          (change)="onServiceSelected($any($event.target).value)"
+        >
+          <option value="">Seleccionar servicio...</option>
+          @for (service of activeServices(); track service.id) {
+            <option [value]="service.id">{{ service.name }}</option>
+          }
+        </select>
+        @if (currentServiceHint()) {
+          <span class="field-hint">Actual: {{ currentServiceHint() }}</span>
+        }
+        @if (orderForm.serviceSummary().touched() && orderForm.serviceSummary().errors().length) {
+          <span class="field-error">{{ orderForm.serviceSummary().errors()[0].message }}</span>
+        }
+      </label>
+
+      <label class="field">
+        Prioridad
+        <select [formField]="orderForm.priority">
+          @for (key of priorityKeys; track key) {
+            <option [value]="key">{{ priorityLabels[key].label }}</option>
           }
         </select>
       </label>
-    }
 
-    <label class="field">
-      Prioridad
-      <select [formField]="orderForm.priority">
-        @for (key of priorityKeys; track key) {
-          <option [value]="key">{{ priorityLabels[key].label }}</option>
+      <label class="field">
+        Fecha Límite *
+        <input type="date" aria-label="Fecha límite" [formField]="orderForm.dueDate" />
+        @if (orderForm.dueDate().touched() && orderForm.dueDate().errors().length) {
+          <span class="field-error">{{ orderForm.dueDate().errors()[0].message }}</span>
         }
-      </select>
-    </label>
+      </label>
 
-    <label class="field">
-      Fecha Límite *
-      <input type="date" [formField]="orderForm.dueDate" />
-      @if (orderForm.dueDate().touched() && orderForm.dueDate().errors().length) {
-        <span class="field-error">{{ orderForm.dueDate().errors()[0].message }}</span>
-      }
-    </label>
+      <fieldset class="visit-schedule">
+        <legend>Programación de la visita</legend>
+        <p>La fecha y hora se mostrarán en la agenda, el dashboard y la orden del técnico.</p>
+        <div class="visit-schedule-fields">
+          <label class="field">
+            Fecha de visita
+            <input type="date" aria-label="Fecha de visita" [formField]="orderForm.visitDate" />
+            @if (orderForm.visitDate().touched() && orderForm.visitDate().errors().length) {
+              <span class="field-error">{{ orderForm.visitDate().errors()[0].message }}</span>
+            }
+          </label>
 
-    <label class="field field--full">
-      Descripción (opcional)
-      <textarea
-        [formField]="orderForm.description"
-        rows="3"
-        placeholder="Detalles del trabajo a realizar..."
-      ></textarea>
-    </label>
+          <label class="field">
+            Hora de visita
+            <input type="time" aria-label="Hora de visita" [formField]="orderForm.visitTime" />
+            @if (orderForm.visitTime().touched() && orderForm.visitTime().errors().length) {
+              <span class="field-error">{{ orderForm.visitTime().errors()[0].message }}</span>
+            }
+          </label>
+        </div>
+      </fieldset>
+
+      <label class="field field--full">
+        Descripción (opcional)
+        <textarea
+          [formField]="orderForm.description"
+          rows="3"
+          placeholder="Detalles del trabajo a realizar..."
+        ></textarea>
+      </label>
+    } @else {
+      <div class="order-rows-section">
+        <div class="order-rows-header">
+          <h4>Servicios</h4>
+          <button type="button" class="add-row-btn" (click)="addRow()">+ Agregar servicio</button>
+        </div>
+        <p class="field-hint">
+          Cada servicio genera su propia orden, con su propia prioridad, fecha límite y
+          programación de visita.
+        </p>
+
+        @for (row of orderForm.rows; track $index; let i = $index) {
+          <fieldset class="order-service-row">
+            <legend>Servicio {{ i + 1 }}</legend>
+            @if (orderForm.rows.length > 1) {
+              <button
+                type="button"
+                class="remove-row-btn"
+                (click)="removeRow(i)"
+                aria-label="Quitar servicio"
+              >
+                ✕
+              </button>
+            }
+
+            <label class="field">
+              Servicio *
+              <select
+                aria-label="Servicio"
+                [formField]="row.serviceId"
+                (change)="onRowServiceSelected(i, $any($event.target).value)"
+              >
+                <option value="">Seleccionar servicio...</option>
+                @for (service of activeServices(); track service.id) {
+                  <option [value]="service.id">{{ service.name }}</option>
+                }
+              </select>
+              @if (row.serviceId().touched() && row.serviceId().errors().length) {
+                <span class="field-error">{{ row.serviceId().errors()[0].message }}</span>
+              }
+            </label>
+
+            <label class="field">
+              Prioridad
+              <select [formField]="row.priority">
+                @for (key of priorityKeys; track key) {
+                  <option [value]="key">{{ priorityLabels[key].label }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              Fecha Límite *
+              <input type="date" aria-label="Fecha límite" [formField]="row.dueDate" />
+              @if (row.dueDate().touched() && row.dueDate().errors().length) {
+                <span class="field-error">{{ row.dueDate().errors()[0].message }}</span>
+              }
+            </label>
+
+            <div class="visit-schedule-fields">
+              <label class="field">
+                Fecha de visita
+                <input type="date" aria-label="Fecha de visita" [formField]="row.visitDate" />
+                @if (row.visitDate().touched() && row.visitDate().errors().length) {
+                  <span class="field-error">{{ row.visitDate().errors()[0].message }}</span>
+                }
+              </label>
+
+              <label class="field">
+                Hora de visita
+                <input type="time" aria-label="Hora de visita" [formField]="row.visitTime" />
+                @if (row.visitTime().touched() && row.visitTime().errors().length) {
+                  <span class="field-error">{{ row.visitTime().errors()[0].message }}</span>
+                }
+              </label>
+            </div>
+
+            <label class="field field--full">
+              Descripción (opcional)
+              <textarea
+                [formField]="row.description"
+                rows="2"
+                placeholder="Detalles del trabajo a realizar..."
+              ></textarea>
+            </label>
+          </fieldset>
+        }
+      </div>
+    }
   </form>
 
-  <div modalFooter>
-    <app-button variant="outline" (click)="close()">Cancelar</app-button>
-    <app-button (click)="onSubmit()" [disabled]="orderForm().invalid() || saving()">
-      {{ saving() ? 'Guardando…' : editingOrder() ? 'Guardar Cambios' : 'Crear Orden' }}
-    </app-button>
+  <div modalFooter class="order-form-actions">
+    <span class="order-form-action">
+      <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    </span>
+    <span class="order-form-action">
+      <app-button (click)="onSubmit()" [disabled]="orderForm().invalid() || saving()">
+        {{ saving() ? 'Guardando…' : editingOrder() ? 'Guardar Cambios' : 'Crear Orden(es)' }}
+      </app-button>
+    </span>
   </div>
 </app-modal>

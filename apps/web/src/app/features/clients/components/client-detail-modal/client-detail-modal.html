@@ -31,11 +31,248 @@
         </div>
       </div>
 
-      <div class="detail-section">
-        <h4>Contactos</h4>
-        @if (contacts().length === 0) {
-          <p class="empty-text">Sin contactos registrados</p>
-        } @else {
+      <section class="detail-section sites-section">
+        <div class="sites-heading">
+          <div class="sites-title">
+            <span class="sites-title-icon"><app-icon name="building-2" /></span>
+            <div>
+              <strong>Sedes y responsables</strong>
+              <span>Ubicaciones operativas y contacto principal de cada sede.</span>
+            </div>
+          </div>
+          @if (sites().length > 0) {
+            <span class="sites-count">{{ sites().length }}</span>
+          }
+        </div>
+
+        @if (sites().length > 0) {
+          <div class="sites-list">
+            @for (site of sites(); track site.id) {
+              <article
+                class="site-list-card"
+                [class.site-list-card--editing]="editingSite()?.id === site.id"
+              >
+                <span class="site-list-icon"><app-icon name="map-pin" /></span>
+                <div class="site-list-copy">
+                  <div class="site-list-name">
+                    <strong>{{ site.name }}</strong>
+                    <span
+                      class="site-status"
+                      [class.site-status--inactive]="site.status === 'INACTIVE'"
+                    >
+                      {{ site.status === 'ACTIVE' ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </div>
+                  <span>{{ site.address }} · {{ site.city }}</span>
+                  <small>
+                    Responsable: {{ site.responsible.name }} · {{ site.responsible.phone }}
+                    @if (site.responsible.email) {
+                      · {{ site.responsible.email }}
+                    }
+                  </small>
+                </div>
+                @if (canManageSites()) {
+                  <div class="site-list-actions">
+                    <button
+                      type="button"
+                      (click)="openEditSite(site)"
+                      [attr.aria-label]="'Editar sede ' + site.name"
+                      title="Editar sede"
+                    >
+                      <app-icon name="square-pen" />
+                    </button>
+                    <button
+                      type="button"
+                      class="site-list-delete"
+                      (click)="requestDeleteSite(site)"
+                      [attr.aria-label]="'Eliminar sede ' + site.name"
+                      title="Eliminar sede"
+                    >
+                      <app-icon name="trash-2" />
+                    </button>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        } @else if (!canManageSites()) {
+          <p class="sites-empty-text">Aún no hay sedes registradas.</p>
+        }
+
+        @if (siteEditorMode()) {
+          <form class="site-simple-form" novalidate (submit)="saveSite(); $event.preventDefault()">
+            <div class="site-simple-form-heading">
+              <strong>{{ siteEditorTitle() }}</strong>
+              <button
+                type="button"
+                aria-label="Cerrar formulario de sede"
+                (click)="cancelSiteEditor()"
+              >
+                <app-icon name="x" />
+              </button>
+            </div>
+
+            <div class="site-simple-grid">
+              <label class="site-simple-field site-simple-field--full">
+                Nombre de la sede *
+                <input
+                  [formField]="siteForm.name"
+                  placeholder="Ej. Sede Norte"
+                  autocomplete="organization"
+                />
+                @if (siteForm.name().touched() && siteForm.name().errors().length) {
+                  <span class="field-error">{{ siteForm.name().errors()[0].message }}</span>
+                }
+              </label>
+
+              <label class="site-simple-field site-simple-field--full">
+                Dirección *
+                <input
+                  [formField]="siteForm.address"
+                  placeholder="Calle 80 # 45-22"
+                  autocomplete="street-address"
+                />
+                @if (siteForm.address().touched() && siteForm.address().errors().length) {
+                  <span class="field-error">{{ siteForm.address().errors()[0].message }}</span>
+                }
+              </label>
+
+              <label class="site-simple-field">
+                Ciudad *
+                <input
+                  [formField]="siteForm.city"
+                  placeholder="Bogotá"
+                  autocomplete="address-level2"
+                />
+                @if (siteForm.city().touched() && siteForm.city().errors().length) {
+                  <span class="field-error">{{ siteForm.city().errors()[0].message }}</span>
+                }
+              </label>
+
+              <label class="site-simple-field">
+                Estado
+                <select [formField]="siteForm.status">
+                  <option value="ACTIVE">Activa</option>
+                  <option value="INACTIVE">Inactiva</option>
+                </select>
+              </label>
+
+              <label class="site-simple-field">
+                Responsable *
+                <input
+                  [formField]="siteForm.responsibleName"
+                  placeholder="Nombre completo"
+                  autocomplete="name"
+                />
+                @if (
+                  siteForm.responsibleName().touched() && siteForm.responsibleName().errors().length
+                ) {
+                  <span class="field-error">
+                    {{ siteForm.responsibleName().errors()[0].message }}
+                  </span>
+                }
+              </label>
+
+              <label class="site-simple-field">
+                Cargo
+                <input
+                  [formField]="siteForm.responsiblePosition"
+                  placeholder="Ej. Coordinador HSEQ"
+                  autocomplete="organization-title"
+                />
+              </label>
+
+              <label class="site-simple-field">
+                Teléfono *
+                <input
+                  type="tel"
+                  [formField]="siteForm.responsiblePhone"
+                  placeholder="+57 300 000 0000"
+                  autocomplete="tel"
+                />
+                @if (
+                  siteForm.responsiblePhone().touched() &&
+                  siteForm.responsiblePhone().errors().length
+                ) {
+                  <span class="field-error">
+                    {{ siteForm.responsiblePhone().errors()[0].message }}
+                  </span>
+                }
+              </label>
+
+              <label class="site-simple-field site-simple-field--full">
+                Correo
+                <input
+                  type="email"
+                  [formField]="siteForm.responsibleEmail"
+                  placeholder="responsable@empresa.com"
+                  autocomplete="email"
+                />
+                @if (
+                  siteForm.responsibleEmail().touched() &&
+                  siteForm.responsibleEmail().errors().length
+                ) {
+                  <span class="field-error">
+                    {{ siteForm.responsibleEmail().errors()[0].message }}
+                  </span>
+                }
+              </label>
+            </div>
+
+            @if (siteActionError()) {
+              <p class="site-action-error" role="alert">{{ siteActionError() }}</p>
+            }
+
+            <div class="site-simple-form-actions">
+              <app-button variant="outline" size="sm" (click)="cancelSiteEditor()">
+                Cancelar
+              </app-button>
+              <app-button type="submit" size="sm" [disabled]="siteForm().invalid() || savingSite()">
+                @if (savingSite()) {
+                  Guardando…
+                } @else {
+                  {{ siteEditorMode() === 'create' ? 'Agregar sede' : 'Guardar cambios' }}
+                }
+              </app-button>
+            </div>
+          </form>
+        } @else if (canManageSites()) {
+          <button type="button" class="add-site-btn" (click)="openCreateSite()">
+            <app-icon name="building-2" />
+            {{ sites().length === 0 ? 'Agregar una sede' : 'Agregar otra sede' }}
+          </button>
+        }
+
+        @if (siteActionError() && !siteEditorMode()) {
+          <p class="site-action-error" role="alert">{{ siteActionError() }}</p>
+        }
+
+        @if (deletingSite(); as site) {
+          <div class="site-delete-confirmation" role="alertdialog" aria-modal="false">
+            <div>
+              <strong>¿Eliminar {{ site.name }}?</strong>
+              <p>Se eliminarán la ubicación y los datos de su responsable.</p>
+            </div>
+            <div class="site-delete-actions">
+              <app-button variant="outline" size="sm" (click)="cancelDeleteSite()">
+                Cancelar
+              </app-button>
+              <app-button
+                variant="danger"
+                size="sm"
+                (click)="confirmDeleteSite()"
+                [disabled]="deletingSiteInProgress()"
+              >
+                {{ deletingSiteInProgress() ? 'Eliminando…' : 'Sí, eliminar' }}
+              </app-button>
+            </div>
+          </div>
+        }
+      </section>
+
+      @if (contacts().length > 0) {
+        <section class="detail-section">
+          <h4>Contactos generales</h4>
           @for (contact of contacts(); track contact.id) {
             <div class="contact-row">
               <div class="contact-avatar">{{ contact.name.charAt(0) }}</div>
@@ -49,10 +286,10 @@
               </div>
             </div>
           }
-        }
-      </div>
+        </section>
+      }
 
-      <div class="detail-section">
+      <section class="detail-section">
         <h4>Historial de Servicios ({{ clientOrders().length }})</h4>
         @if (clientOrders().length === 0) {
           <p class="empty-text">Sin órdenes registradas</p>
@@ -64,7 +301,7 @@
             </div>
           }
         }
-      </div>
+      </section>
     </div>
   </app-modal>
 }

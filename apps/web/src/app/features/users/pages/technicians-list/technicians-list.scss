@@ -45,6 +45,10 @@
   overflow-x: auto;
 }
 
+.technicians-mobile-list {
+  display: none;
+}
+
 .technicians-table {
   width: 100%;
   border-collapse: collapse;
@@ -105,7 +109,9 @@
   background: none;
   color: var(--color-gray-400);
   cursor: pointer;
-  transition: background-color 150ms, color 150ms;
+  transition:
+    background-color 150ms,
+    color 150ms;
 
   &:hover {
     background: var(--color-gray-100);
@@ -115,6 +121,10 @@
   &--danger:hover {
     background: var(--color-red-50);
     color: var(--color-red-500);
+  }
+
+  &--primary {
+    color: var(--color-blue-600);
   }
 }
 
@@ -186,5 +196,122 @@
     &:hover {
       color: var(--color-red-700);
     }
+  }
+}
+
+@media (max-width: 767px) {
+  .technicians-toolbar {
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .search-input {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .technicians-summary {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+  }
+
+  .new-technician-btn {
+    margin-left: auto;
+  }
+
+  .table-scroll {
+    display: none;
+  }
+
+  .technicians-mobile-list {
+    display: block;
+  }
+
+  .mobile-technician-row {
+    padding: 0.875rem 0.75rem;
+    border-bottom: 1px solid var(--color-gray-200);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .mobile-technician-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+  }
+
+  .mobile-technician-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+
+    strong {
+      overflow: hidden;
+      color: var(--color-gray-900);
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    span {
+      margin-top: 0.125rem;
+      color: var(--color-gray-500);
+      font-size: 0.75rem;
+    }
+  }
+
+  .mobile-technician-actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0.125rem;
+
+    .icon-btn {
+      padding: 0.3rem;
+    }
+
+    .icon-btn--danger {
+      color: var(--color-red-500);
+    }
+  }
+
+  .mobile-technician-contact {
+    margin: 0.625rem 0 0 2.625rem;
+    color: var(--color-gray-600);
+    font-size: 0.75rem;
+
+    p {
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      + p {
+        margin-top: 0.25rem;
+      }
+    }
+  }
+
+  .mobile-technician-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0.75rem 0 0 2.625rem;
+  }
+
+  .load-more-bar {
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    padding: 0.875rem 0.75rem;
+  }
+
+  .load-more-btn {
+    font-size: 0.75rem;
   }
 }

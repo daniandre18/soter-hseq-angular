@@ -50,4 +50,12 @@ export class Dashboard {
   protected formatVisitMonth(date: Date): string {
     return date.toLocaleDateString('es-CO', { month: 'short' });
   }
+
+  protected formatVisitTime(date: Date): string {
+    return date.toLocaleTimeString('es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
 }

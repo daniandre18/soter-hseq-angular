@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "seed": "tsx seed-emulator.ts"
+    "seed": "tsx seed-emulator.ts",
+    "seed:catalog": "tsx seed-emulator.ts --catalog-only"
   },
   "dependencies": {
     "firebase-admin": "^14.2.0"

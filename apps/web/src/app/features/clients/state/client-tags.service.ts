@@ -7,12 +7,14 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
 import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
 import { ClientTagsStore } from './client-tags.store';
 import type { ClientTag, NewClientTag } from '../models/client-tag.model';
+import { normalizeUniqueName } from '../../../shared/utils/normalize-unique-value';
 
 function toDate(value: Timestamp | undefined): Date {
   return value ? value.toDate() : new Date(0);
@@ -47,7 +49,9 @@ export class ClientTagsService {
     this.unsubscribeFromTags = onSnapshot(
       collection(this.firestore, 'clientTags'),
       (snapshot) => {
-        this.store.set(snapshot.docs.map((docSnapshot) => toClientTag(docSnapshot.id, docSnapshot.data())));
+        this.store.set(
+          snapshot.docs.map((docSnapshot) => toClientTag(docSnapshot.id, docSnapshot.data())),
+        );
         this.store.setLoading(false);
       },
       (error) => {
@@ -58,8 +62,17 @@ export class ClientTagsService {
   }
 
   async addTag(data: NewClientTag, createdBy: string): Promise<string> {
+    const normalizedLabel = normalizeUniqueName(data.label);
+    const snapshot = await getDocs(collection(this.firestore, 'clientTags'));
+    const duplicate = snapshot.docs.some(
+      (tag) => normalizeUniqueName(tag.data()['label'] ?? '') === normalizedLabel,
+    );
+    if (duplicate) {
+      throw new Error('Ya existe una etiqueta con ese nombre.');
+    }
     const ref = await addDoc(collection(this.firestore, 'clientTags'), {
       ...data,
+      labelNormalized: normalizedLabel,
       createdAt: serverTimestamp(),
       createdBy,
     });

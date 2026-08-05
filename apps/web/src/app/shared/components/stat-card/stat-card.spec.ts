@@ -22,4 +22,11 @@ describe('StatCard', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should apply the compact variant when requested', () => {
+    fixture.componentRef.setInput('compact', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.stat-card--compact')).toBeTruthy();
+  });
 });

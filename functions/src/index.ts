@@ -3,6 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { defineString } from 'firebase-functions/params';
 import { GoogleGenAI } from '@google/genai';
 import PDFDocument from 'pdfkit';
@@ -25,6 +26,245 @@ async function requireRole(uid: string, allowedRoles: Role[]): Promise<void> {
     throw new HttpsError('permission-denied', 'Tu rol no tiene permiso para esta acción.');
   }
 }
+
+type OrderEventAction =
+  | 'NOTE_ADDED'
+  | 'EVIDENCE_UPLOADED'
+  | 'ORDER_STATUS_CHANGED'
+  | 'ORDER_ASSIGNED'
+  | 'ORDER_CLOSED';
+
+interface OrderEventInput {
+  orderId: string;
+  action: OrderEventAction;
+  description: string;
+  metadata?: Record<string, unknown>;
+  createdBy: string;
+}
+
+/**
+ * Forma normalizada de `AuditEvent` (CLAUDE.md §9.9). La usan tanto la
+ * bitácora por orden (`orders/{orderId}/events`, `firestore.rules`: solo
+ * lectura de cliente) como la global `auditEvents` (solo ADMIN/COORDINATOR),
+ * para que ambas queden consistentes entre sí.
+ */
+function buildOrderEventData(
+  input: OrderEventInput,
+  now: FirebaseFirestore.FieldValue,
+): FirebaseFirestore.DocumentData {
+  return {
+    entityType: 'ORDER' as const,
+    entityId: input.orderId,
+    action: input.action,
+    description: input.description,
+    metadata: input.metadata ?? null,
+    createdAt: now,
+    createdBy: input.createdBy,
+  };
+}
+
+/**
+ * Único escritor de `orders/{orderId}/events` — la regla del cliente es
+ * `write: if false`, así que solo puede poblarse desde aquí, ya sea por un
+ * trigger de Firestore (notas/evidencia/cambios de la orden, que hoy se
+ * escriben directo desde Angular) o por una función `onCall` como
+ * `closeOrder`.
+ */
+async function recordOrderEvent(input: OrderEventInput): Promise<void> {
+  const firestore = getFirestore();
+  await firestore
+    .collection('orders')
+    .doc(input.orderId)
+    .collection('events')
+    .add(buildOrderEventData(input, FieldValue.serverTimestamp()));
+}
+
+type NotificationType =
+  | 'ORDER_STATUS_CHANGED'
+  | 'ORDER_ASSIGNED'
+  | 'NOTE_ADDED'
+  | 'EVIDENCE_UPLOADED'
+  | 'QUOTE_STATUS_CHANGED';
+
+interface NotificationInput {
+  type: NotificationType;
+  title: string;
+  description: string;
+  entityType: 'ORDER' | 'QUOTE';
+  entityId: string;
+  createdBy: string;
+}
+
+/**
+ * Escribe en el inbox global de ADMIN/COORDINATOR (`notifications`,
+ * `firestore.rules`: `allow create: if false`) — un documento por evento,
+ * visible para todo el rol sin fan-out; `readBy` empieza vacío y cada quien
+ * agrega su propio uid al marcarlo leído (ver la regla de `update`).
+ */
+async function notifyAdmins(input: NotificationInput): Promise<void> {
+  const firestore = getFirestore();
+  await firestore.collection('notifications').add({
+    ...input,
+    readBy: [],
+    createdAt: FieldValue.serverTimestamp(),
+  });
+}
+
+/** Nota agregada a una orden (CLAUDE.md §9.7) — la escribe directo Angular, así que se audita por trigger. */
+export const onNoteCreated = onDocumentCreated('orders/{orderId}/notes/{noteId}', async (event) => {
+  const data = event.data?.data();
+  if (!data) {
+    return;
+  }
+  const orderId = event.params.orderId;
+  // `notes` no incluye orderNumber/clientBusinessName del padre — una
+  // lectura acotada (un doc) para que la notificación sea legible.
+  const orderSnapshot = await getFirestore().collection('orders').doc(orderId).get();
+  const orderNumber = orderSnapshot.data()?.['orderNumber'] ?? orderId;
+  const clientBusinessName = orderSnapshot.data()?.['clientBusinessName'] ?? '';
+
+  await Promise.all([
+    recordOrderEvent({
+      orderId,
+      action: 'NOTE_ADDED',
+      description: `Nota registrada (${data['noteType']})`,
+      metadata: { noteId: event.params.noteId, noteType: data['noteType'] },
+      createdBy: data['createdBy'],
+    }),
+    notifyAdmins({
+      type: 'NOTE_ADDED',
+      title: `Nueva nota en la orden ${orderNumber}`,
+      description: `${clientBusinessName} — nota tipo ${data['noteType']}`,
+      entityType: 'ORDER',
+      entityId: orderId,
+      createdBy: data['createdBy'],
+    }),
+  ]);
+});
+
+/** Evidencia cargada a una orden (CLAUDE.md §9.6) — misma razón que `onNoteCreated`. */
+export const onEvidenceCreated = onDocumentCreated(
+  'orders/{orderId}/evidence/{evidenceId}',
+  async (event) => {
+    const data = event.data?.data();
+    if (!data) {
+      return;
+    }
+    const orderId = event.params.orderId;
+    const orderSnapshot = await getFirestore().collection('orders').doc(orderId).get();
+    const orderNumber = orderSnapshot.data()?.['orderNumber'] ?? orderId;
+    const clientBusinessName = orderSnapshot.data()?.['clientBusinessName'] ?? '';
+
+    await Promise.all([
+      recordOrderEvent({
+        orderId,
+        action: 'EVIDENCE_UPLOADED',
+        description: `Evidencia cargada: ${data['fileName']}`,
+        metadata: { evidenceId: event.params.evidenceId, category: data['category'] ?? null },
+        createdBy: data['uploadedBy'],
+      }),
+      notifyAdmins({
+        type: 'EVIDENCE_UPLOADED',
+        title: `Nueva evidencia en la orden ${orderNumber}`,
+        description: `${clientBusinessName} — ${data['fileName']}`,
+        entityType: 'ORDER',
+        entityId: orderId,
+        createdBy: data['uploadedBy'],
+      }),
+    ]);
+  },
+);
+
+/** Cambio de estado de una orden — se dispara y aborta si `status` no cambió. */
+export const onOrderStatusChanged = onDocumentUpdated('orders/{orderId}', async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!before || !after || before['status'] === after['status']) {
+    return;
+  }
+  const orderId = event.params.orderId;
+  const orderNumber = after['orderNumber'] ?? orderId;
+  const updatedBy = after['updatedBy'] ?? 'system';
+  const description = `Estado cambiado de ${before['status']} a ${after['status']}`;
+
+  await Promise.all([
+    recordOrderEvent({
+      orderId,
+      action: 'ORDER_STATUS_CHANGED',
+      description,
+      metadata: { from: before['status'], to: after['status'] },
+      createdBy: updatedBy,
+    }),
+    notifyAdmins({
+      type: 'ORDER_STATUS_CHANGED',
+      title: `Orden ${orderNumber} actualizada`,
+      description,
+      entityType: 'ORDER',
+      entityId: orderId,
+      createdBy: updatedBy,
+    }),
+  ]);
+});
+
+/** Reasignación de técnicos — independiente de `onOrderStatusChanged`, se dispara y aborta si no cambió. */
+export const onOrderAssigned = onDocumentUpdated('orders/{orderId}', async (event) => {
+  const beforeData = event.data?.before.data();
+  const afterData = event.data?.after.data();
+  const before: string[] = beforeData?.['assignedTechnicianIds'] ?? [];
+  const after: string[] = afterData?.['assignedTechnicianIds'] ?? [];
+  const beforeSet = new Set(before);
+  const afterSet = new Set(after);
+  const added = after.filter((id) => !beforeSet.has(id));
+  const removed = before.filter((id) => !afterSet.has(id));
+  if (added.length === 0 && removed.length === 0) {
+    return;
+  }
+  const orderId = event.params.orderId;
+  const orderNumber = afterData?.['orderNumber'] ?? orderId;
+  const updatedBy = afterData?.['updatedBy'] ?? 'system';
+
+  await Promise.all([
+    recordOrderEvent({
+      orderId,
+      action: 'ORDER_ASSIGNED',
+      description: 'Técnicos asignados actualizados',
+      metadata: { added, removed },
+      createdBy: updatedBy,
+    }),
+    notifyAdmins({
+      type: 'ORDER_ASSIGNED',
+      title: `Técnicos actualizados en la orden ${orderNumber}`,
+      description:
+        added.length > 0
+          ? `Se asignaron ${added.length} técnico(s)`
+          : 'Se removieron técnicos asignados',
+      entityType: 'ORDER',
+      entityId: orderId,
+      createdBy: updatedBy,
+    }),
+  ]);
+});
+
+/** Cambio de estado de una cotización (CLAUDE.md §9.4) — misma razón que `onOrderStatusChanged`;
+ *  sin bitácora por cotización (no existe ni se pidió), solo notifica. */
+export const onQuoteStatusChanged = onDocumentUpdated('quotes/{quoteId}', async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!before || !after || before['status'] === after['status']) {
+    return;
+  }
+  const quoteNumber = after['quoteNumber'] ?? event.params.quoteId;
+  const clientBusinessName = after['clientBusinessName'] ?? '';
+
+  await notifyAdmins({
+    type: 'QUOTE_STATUS_CHANGED',
+    title: `Cotización ${quoteNumber} actualizada`,
+    description: `${clientBusinessName} — estado cambiado de ${before['status']} a ${after['status']}`,
+    entityType: 'QUOTE',
+    entityId: event.params.quoteId,
+    createdBy: after['updatedBy'] ?? 'system',
+  });
+});
 
 // `defineString` (no `defineSecret`): para el MVP local con el Emulator
 // Suite y un proyecto "demo-" ficticio no hay cuenta de Google Cloud real
@@ -258,13 +498,21 @@ export const closeOrder = onCall(async (request) => {
   const batch = firestore.batch();
   batch.update(actRef, { status: 'FINAL', pdfPath, updatedAt: now, updatedBy: request.auth.uid });
   batch.update(orderRef, { status: 'CLOSED', updatedAt: now, updatedBy: request.auth.uid });
-  batch.set(firestore.collection('auditEvents').doc(), {
-    type: 'ORDER_CLOSED',
-    orderId,
-    actId,
-    userId: request.auth.uid,
-    timestamp: now,
-  });
+  // Se escribe en ambas colecciones: `auditEvents` es la bitácora global
+  // (CLAUDE.md §9.9, solo ADMIN/COORDINATOR), y `orders/{orderId}/events`
+  // es lo que lee el feed de Actividad de la orden — mismo evento normalizado.
+  const closingEventData = buildOrderEventData(
+    {
+      orderId,
+      action: 'ORDER_CLOSED',
+      description: `Orden ${orderNumber} cerrada`,
+      metadata: { actId },
+      createdBy: request.auth.uid,
+    },
+    now,
+  );
+  batch.set(firestore.collection('auditEvents').doc(), closingEventData);
+  batch.set(orderRef.collection('events').doc(), closingEventData);
   await batch.commit();
 
   return { pdfPath };

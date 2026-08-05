@@ -1,13 +1,15 @@
 .client-form {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  min-width: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-gray-700);
@@ -19,6 +21,9 @@
 
 input,
 select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--color-gray-300);
   border-radius: var(--radius-md);
@@ -36,4 +41,328 @@ select {
 .field-error {
   color: var(--color-red-500);
   font-size: 0.75rem;
+}
+
+.new-client-sites {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-50);
+}
+
+.new-client-sites-heading,
+.new-client-sites-title,
+.draft-site-card,
+.draft-site-actions,
+.site-draft-form-heading,
+.site-draft-form-actions {
+  display: flex;
+  align-items: center;
+}
+
+.new-client-sites-heading,
+.site-draft-form-heading {
+  justify-content: space-between;
+}
+
+.new-client-sites-title {
+  gap: 0.625rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  strong {
+    color: var(--color-gray-900);
+    font-size: 0.8125rem;
+  }
+
+  div > span {
+    color: var(--color-gray-500);
+    font-size: 0.6875rem;
+  }
+}
+
+.draft-sites-count {
+  min-width: 1.5rem;
+  padding: 0.125rem 0.4rem;
+  border-radius: 9999px;
+  background: var(--color-blue-100);
+  color: var(--color-blue-700);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.draft-sites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.draft-site-card {
+  gap: 0.625rem;
+  min-width: 0;
+  padding: 0.625rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: white;
+}
+
+.draft-site-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-blue-50);
+  color: var(--color-blue-600);
+}
+
+.draft-site-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+
+  strong,
+  span,
+  small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    color: var(--color-gray-900);
+    font-size: 0.75rem;
+  }
+
+  span,
+  small {
+    color: var(--color-gray-500);
+    font-size: 0.625rem;
+  }
+}
+
+.draft-site-actions {
+  flex-shrink: 0;
+  gap: 0.125rem;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-gray-500);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-gray-100);
+      color: var(--color-gray-900);
+    }
+  }
+
+  .draft-site-delete {
+    color: var(--color-red-500);
+
+    &:hover {
+      background: var(--color-red-50);
+      color: var(--color-red-700);
+    }
+  }
+}
+
+.add-site-draft-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.625rem;
+  border: 1px dashed var(--color-blue-600);
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--color-blue-600);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-blue-50);
+  }
+}
+
+.site-draft-form {
+  min-width: 0;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-blue-100);
+  border-radius: var(--radius-md);
+  background: white;
+}
+
+.site-draft-form-heading {
+  margin-bottom: 0.75rem;
+
+  strong {
+    color: var(--color-gray-900);
+    font-size: 0.8125rem;
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-gray-500);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-gray-100);
+      color: var(--color-gray-900);
+    }
+  }
+}
+
+.site-draft-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.site-draft-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  color: var(--color-gray-700);
+  font-size: 0.6875rem;
+  font-weight: 500;
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.site-draft-error {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--radius-md);
+  background: var(--color-red-50);
+  color: var(--color-red-700);
+  font-size: 0.6875rem;
+}
+
+.site-draft-form-actions {
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sites-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.875rem;
+  border: 1px solid var(--color-blue-100);
+  border-radius: var(--radius-lg);
+  background: var(--color-blue-50);
+}
+
+.sites-shortcut-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--color-blue-600);
+}
+
+.sites-shortcut-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+
+  strong {
+    color: var(--color-gray-900);
+    font-size: 0.8125rem;
+  }
+
+  span {
+    color: var(--color-gray-500);
+    font-size: 0.6875rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.form-save-error {
+  margin: 0.75rem 0 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-red-50);
+  color: var(--color-red-700);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .client-form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.875rem;
+  }
+
+  .field--full {
+    grid-column: auto;
+  }
+
+  .sites-shortcut {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .sites-shortcut-copy {
+    width: calc(100% - 3rem);
+  }
+
+  .site-draft-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-draft-field--full {
+    grid-column: auto;
+  }
+
+  .draft-site-card {
+    align-items: flex-start;
+  }
+
+  .draft-site-copy {
+    strong,
+    span,
+    small {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+  }
 }

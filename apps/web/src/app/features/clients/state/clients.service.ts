@@ -9,14 +9,24 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   serverTimestamp,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
 import { ClientsStore } from './clients.store';
-import type { Client, ClientContact, NewClient, NewClientContact } from '../models/client.model';
+import type {
+  Client,
+  ClientContact,
+  ClientSite,
+  NewClient,
+  NewClientContact,
+  NewClientSite,
+} from '../models/client.model';
+import { normalizeTaxId, normalizeUniqueName } from '../../../shared/utils/normalize-unique-value';
 
 function toDate(value: Timestamp | undefined): Date {
   return value ? value.toDate() : new Date(0);
@@ -54,6 +64,27 @@ function toClientContact(id: string, data: DocumentData): ClientContact {
   };
 }
 
+function toClientSite(id: string, data: DocumentData): ClientSite {
+  const responsible = (data['responsible'] ?? {}) as DocumentData;
+  return {
+    id,
+    name: data['name'],
+    address: data['address'],
+    city: data['city'],
+    responsible: {
+      name: responsible['name'] ?? '',
+      position: responsible['position'],
+      email: responsible['email'],
+      phone: responsible['phone'] ?? '',
+    },
+    status: data['status'] ?? 'ACTIVE',
+    createdAt: toDate(data['createdAt']),
+    createdBy: data['createdBy'] ?? '',
+    updatedAt: toDate(data['updatedAt']),
+    updatedBy: data['updatedBy'] ?? '',
+  };
+}
+
 /** Mantiene el ClientsStore de Akita sincronizado con la colección `clients`. */
 @Injectable({ providedIn: 'root' })
 export class ClientsService {
@@ -82,19 +113,60 @@ export class ClientsService {
   }
 
   async addClient(data: NewClient, createdBy: string): Promise<string> {
-    const ref = await addDoc(collection(this.firestore, 'clients'), {
+    return this.addClientWithSites(data, [], createdBy);
+  }
+
+  async addClientWithSites(
+    data: NewClient,
+    sites: NewClientSite[],
+    createdBy: string,
+  ): Promise<string> {
+    await this.assertUniqueClient(data.businessName, data.taxId);
+    this.assertUniqueDraftSiteNames(sites);
+
+    const clientRef = doc(collection(this.firestore, 'clients'));
+    const batch = writeBatch(this.firestore);
+    batch.set(clientRef, {
       ...data,
+      businessNameNormalized: normalizeUniqueName(data.businessName),
+      taxIdNormalized: normalizeTaxId(data.taxId),
       createdAt: serverTimestamp(),
       createdBy,
       updatedAt: serverTimestamp(),
       updatedBy: createdBy,
     });
-    return ref.id;
+
+    for (const site of sites) {
+      const siteRef = doc(collection(clientRef, 'sites'));
+      batch.set(siteRef, {
+        ...site,
+        nameNormalized: normalizeUniqueName(site.name),
+        createdAt: serverTimestamp(),
+        createdBy,
+        updatedAt: serverTimestamp(),
+        updatedBy: createdBy,
+      });
+    }
+
+    await batch.commit();
+    return clientRef.id;
   }
 
   async updateClient(id: string, changes: Partial<NewClient>, updatedBy: string): Promise<void> {
+    if (changes.businessName !== undefined || changes.taxId !== undefined) {
+      const current = this.store.getValue().entities?.[id];
+      await this.assertUniqueClient(
+        changes.businessName ?? current?.businessName ?? '',
+        changes.taxId ?? current?.taxId ?? '',
+        id,
+      );
+    }
     await updateDoc(doc(this.firestore, 'clients', id), {
       ...changes,
+      ...(changes.businessName !== undefined && {
+        businessNameNormalized: normalizeUniqueName(changes.businessName),
+      }),
+      ...(changes.taxId !== undefined && { taxIdNormalized: normalizeTaxId(changes.taxId) }),
       updatedAt: serverTimestamp(),
       updatedBy,
     });
@@ -127,7 +199,9 @@ export class ClientsService {
       return onSnapshot(
         collection(this.firestore, 'clients', clientId, 'contacts'),
         (snapshot) => {
-          subscriber.next(snapshot.docs.map((docSnapshot) => toClientContact(docSnapshot.id, docSnapshot.data())));
+          subscriber.next(
+            snapshot.docs.map((docSnapshot) => toClientContact(docSnapshot.id, docSnapshot.data())),
+          );
         },
         (error) => subscriber.error(error),
       );
@@ -136,5 +210,105 @@ export class ClientsService {
 
   async addContact(clientId: string, contact: NewClientContact): Promise<void> {
     await addDoc(collection(this.firestore, 'clients', clientId, 'contacts'), contact);
+  }
+
+  watchSites(clientId: string): Observable<ClientSite[]> {
+    return new Observable<ClientSite[]>((subscriber) => {
+      return onSnapshot(
+        collection(this.firestore, 'clients', clientId, 'sites'),
+        (snapshot) => {
+          const sites = snapshot.docs
+            .map((docSnapshot) => toClientSite(docSnapshot.id, docSnapshot.data()))
+            .sort((left, right) => {
+              if (left.status !== right.status) {
+                return left.status === 'ACTIVE' ? -1 : 1;
+              }
+              return left.name.localeCompare(right.name, 'es', { sensitivity: 'base' });
+            });
+          subscriber.next(sites);
+        },
+        (error) => subscriber.error(error),
+      );
+    });
+  }
+
+  async addSite(clientId: string, site: NewClientSite, createdBy: string): Promise<string> {
+    await this.assertUniqueSiteName(clientId, site.name);
+    const ref = await addDoc(collection(this.firestore, 'clients', clientId, 'sites'), {
+      ...site,
+      nameNormalized: normalizeUniqueName(site.name),
+      createdAt: serverTimestamp(),
+      createdBy,
+      updatedAt: serverTimestamp(),
+      updatedBy: createdBy,
+    });
+    return ref.id;
+  }
+
+  async updateSite(
+    clientId: string,
+    siteId: string,
+    changes: Partial<NewClientSite>,
+    updatedBy: string,
+  ): Promise<void> {
+    if (changes.name !== undefined) {
+      await this.assertUniqueSiteName(clientId, changes.name, siteId);
+    }
+    await updateDoc(doc(this.firestore, 'clients', clientId, 'sites', siteId), {
+      ...changes,
+      ...(changes.name !== undefined && { nameNormalized: normalizeUniqueName(changes.name) }),
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+  }
+
+  async deleteSite(clientId: string, siteId: string): Promise<void> {
+    await deleteDoc(doc(this.firestore, 'clients', clientId, 'sites', siteId));
+  }
+
+  private async assertUniqueClient(
+    businessName: string,
+    taxId: string,
+    currentId?: string,
+  ): Promise<void> {
+    const normalizedName = normalizeUniqueName(businessName);
+    const normalizedTaxId = normalizeTaxId(taxId);
+    const snapshot = await getDocs(collection(this.firestore, 'clients'));
+    for (const client of snapshot.docs) {
+      if (client.id === currentId) continue;
+      const data = client.data();
+      if (normalizeTaxId(data['taxId'] ?? '') === normalizedTaxId) {
+        throw new Error('Ya existe un cliente con ese NIT.');
+      }
+      if (normalizeUniqueName(data['businessName'] ?? '') === normalizedName) {
+        throw new Error('Ya existe un cliente con esa razón social.');
+      }
+    }
+  }
+
+  private async assertUniqueSiteName(
+    clientId: string,
+    name: string,
+    currentSiteId?: string,
+  ): Promise<void> {
+    const normalizedName = normalizeUniqueName(name);
+    const snapshot = await getDocs(collection(this.firestore, 'clients', clientId, 'sites'));
+    for (const site of snapshot.docs) {
+      if (site.id === currentSiteId) continue;
+      if (normalizeUniqueName(site.data()['name'] ?? '') === normalizedName) {
+        throw new Error('Ya existe una sede con ese nombre para este cliente.');
+      }
+    }
+  }
+
+  private assertUniqueDraftSiteNames(sites: NewClientSite[]): void {
+    const names = new Set<string>();
+    for (const site of sites) {
+      const normalizedName = normalizeUniqueName(site.name);
+      if (names.has(normalizedName)) {
+        throw new Error('No puedes registrar dos sedes con el mismo nombre.');
+      }
+      names.add(normalizedName);
+    }
   }
 }

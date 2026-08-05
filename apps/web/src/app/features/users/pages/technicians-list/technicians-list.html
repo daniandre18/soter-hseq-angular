@@ -41,7 +41,9 @@
                     <app-avatar [name]="technician.displayName" size="sm" />
                     <div>
                       <p class="technician-name">{{ technician.displayName }}</p>
-                      <p class="technician-specialty">{{ technician.specialty || 'Técnico HSEQ' }}</p>
+                      <p class="technician-specialty">
+                        {{ technician.specialty || 'Técnico HSEQ' }}
+                      </p>
                     </div>
                   </div>
                 </td>
@@ -87,6 +89,60 @@
           </tbody>
         </table>
       </div>
+      <div class="technicians-mobile-list">
+        @for (technician of visibleTechnicians(); track technician.id) {
+          <article class="mobile-technician-row">
+            <div class="mobile-technician-header">
+              <app-avatar [name]="technician.displayName" size="sm" />
+              <div class="mobile-technician-main">
+                <strong>{{ technician.displayName }}</strong>
+                <span>{{ technician.specialty || 'Técnico HSEQ' }}</span>
+              </div>
+              <div class="mobile-technician-actions">
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--primary"
+                  (click)="openEdit(technician)"
+                  aria-label="Editar técnico"
+                  title="Editar"
+                >
+                  <app-icon name="square-pen" />
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--danger"
+                  (click)="confirmDelete(technician)"
+                  aria-label="Eliminar técnico"
+                  title="Eliminar"
+                >
+                  <app-icon name="trash-2" />
+                </button>
+              </div>
+            </div>
+
+            <div class="mobile-technician-contact">
+              <p>{{ technician.email }}</p>
+              <p>{{ technician.phone || 'Sin teléfono registrado' }}</p>
+            </div>
+
+            <div class="mobile-technician-footer">
+              <app-status-badge
+                [label]="technician.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
+                [color]="technician.status === 'ACTIVE' ? 'green' : 'gray'"
+              />
+              <button
+                type="button"
+                class="toggle-link"
+                [class.toggle-link--danger]="technician.status === 'ACTIVE'"
+                [disabled]="togglingId() === technician.id"
+                (click)="toggleStatus(technician)"
+              >
+                {{ technician.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
       @if (hasMore() || hasCollapsed()) {
         <div class="load-more-bar">
           @if (hasCollapsed()) {
@@ -125,8 +181,8 @@
 >
   <p class="confirm-text">
     Esta acción no se puede deshacer: se elimina la cuenta por completo (ya no podrá iniciar
-    sesión). Las órdenes que ya tenía asignadas conservan su historial, solo dejan de mostrar
-    su nombre.
+    sesión). Las órdenes que ya tenía asignadas conservan su historial, solo dejan de mostrar su
+    nombre.
   </p>
   @if (deleteError()) {
     <p class="delete-error">{{ deleteError() }}</p>

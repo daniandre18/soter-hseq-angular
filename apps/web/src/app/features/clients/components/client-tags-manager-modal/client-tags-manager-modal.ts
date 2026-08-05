@@ -24,6 +24,7 @@ export class ClientTagsManagerModal {
   protected readonly newLabel = signal('');
   protected readonly selectedColor = signal(CLIENT_TAG_COLOR_PALETTE[0]);
   protected readonly saving = signal(false);
+  protected readonly saveError = signal<string | null>(null);
   protected readonly deletingId = signal<string | null>(null);
 
   protected close(): void {
@@ -34,6 +35,7 @@ export class ClientTagsManagerModal {
   protected openCreateForm(): void {
     this.newLabel.set('');
     this.selectedColor.set(CLIENT_TAG_COLOR_PALETTE[0]);
+    this.saveError.set(null);
     this.creating.set(true);
   }
 
@@ -51,9 +53,14 @@ export class ClientTagsManagerModal {
       return;
     }
     this.saving.set(true);
+    this.saveError.set(null);
     try {
       await this.tagsFacade.addTag({ label, color: this.selectedColor() });
       this.creating.set(false);
+    } catch (error) {
+      this.saveError.set(
+        error instanceof Error ? error.message : 'No fue posible guardar la etiqueta.',
+      );
     } finally {
       this.saving.set(false);
     }

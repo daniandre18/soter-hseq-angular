@@ -29,6 +29,7 @@ export class ServiceCategoriesManagerModal {
   protected readonly selectedColor = signal(SERVICE_CATEGORY_COLOR_PALETTE[0]);
   protected readonly selectedIcon = signal<string | null>(null);
   protected readonly saving = signal(false);
+  protected readonly saveError = signal<string | null>(null);
   protected readonly deletingId = signal<string | null>(null);
 
   protected close(): void {
@@ -40,6 +41,7 @@ export class ServiceCategoriesManagerModal {
     this.newLabel.set('');
     this.selectedColor.set(SERVICE_CATEGORY_COLOR_PALETTE[0]);
     this.selectedIcon.set(null);
+    this.saveError.set(null);
     this.creating.set(true);
   }
 
@@ -61,6 +63,7 @@ export class ServiceCategoriesManagerModal {
       return;
     }
     this.saving.set(true);
+    this.saveError.set(null);
     try {
       await this.categoriesFacade.addCategory({
         label,
@@ -68,6 +71,10 @@ export class ServiceCategoriesManagerModal {
         icon: this.selectedIcon() ?? undefined,
       });
       this.creating.set(false);
+    } catch (error) {
+      this.saveError.set(
+        error instanceof Error ? error.message : 'No fue posible guardar la categoría.',
+      );
     } finally {
       this.saving.set(false);
     }

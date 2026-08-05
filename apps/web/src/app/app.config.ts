@@ -1,7 +1,8 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withHashLocation } from '@angular/router';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { provideQuillConfig } from 'ngx-quill/config';
 
 import { routes } from './app.routes';
 import { firebaseProviders } from './core/firebase/firebase.providers';
@@ -9,9 +10,15 @@ import { firebaseProviders } from './core/firebase/firebase.providers';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    provideRouter(routes, withHashLocation()),
     provideHttpClient(),
     provideCharts(withDefaultRegisterables()),
-    ...firebaseProviders
-  ]
+    provideQuillConfig({
+      theme: 'snow',
+      format: 'html',
+      sanitize: true,
+      defaultEmptyValue: '',
+    }),
+    ...firebaseProviders,
+  ],
 };

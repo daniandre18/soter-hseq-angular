@@ -7,6 +7,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   serverTimestamp,
   updateDoc,
@@ -14,6 +15,7 @@ import {
 import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
 import { ServicesStore } from './services.store';
 import type { NewService, Service } from '../models/service.model';
+import { normalizeUniqueName } from '../../../shared/utils/normalize-unique-value';
 
 function toDate(value: Timestamp | undefined): Date {
   return value ? value.toDate() : new Date(0);
@@ -53,7 +55,9 @@ export class ServicesService {
     this.unsubscribeFromServices = onSnapshot(
       collection(this.firestore, 'services'),
       (snapshot) => {
-        this.store.set(snapshot.docs.map((docSnapshot) => toService(docSnapshot.id, docSnapshot.data())));
+        this.store.set(
+          snapshot.docs.map((docSnapshot) => toService(docSnapshot.id, docSnapshot.data())),
+        );
         this.store.setLoading(false);
       },
       (error) => {
@@ -64,8 +68,10 @@ export class ServicesService {
   }
 
   async addService(data: NewService, createdBy: string): Promise<string> {
+    await this.assertUniqueName(data.name);
     const ref = await addDoc(collection(this.firestore, 'services'), {
       ...data,
+      nameNormalized: normalizeUniqueName(data.name),
       createdAt: serverTimestamp(),
       createdBy,
       updatedAt: serverTimestamp(),
@@ -75,8 +81,12 @@ export class ServicesService {
   }
 
   async updateService(id: string, changes: Partial<NewService>, updatedBy: string): Promise<void> {
+    if (changes.name !== undefined) {
+      await this.assertUniqueName(changes.name, id);
+    }
     await updateDoc(doc(this.firestore, 'services', id), {
       ...changes,
+      ...(changes.name !== undefined && { nameNormalized: normalizeUniqueName(changes.name) }),
       updatedAt: serverTimestamp(),
       updatedBy,
     });
@@ -84,5 +94,18 @@ export class ServicesService {
 
   async deleteService(id: string): Promise<void> {
     await deleteDoc(doc(this.firestore, 'services', id));
+  }
+
+  private async assertUniqueName(name: string, currentId?: string): Promise<void> {
+    const normalizedName = normalizeUniqueName(name);
+    const snapshot = await getDocs(collection(this.firestore, 'services'));
+    const duplicate = snapshot.docs.some(
+      (service) =>
+        service.id !== currentId &&
+        normalizeUniqueName(service.data()['name'] ?? '') === normalizedName,
+    );
+    if (duplicate) {
+      throw new Error('Ya existe un servicio con ese nombre.');
+    }
   }
 }

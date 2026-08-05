@@ -4,7 +4,14 @@ import { Observable } from 'rxjs';
 import { ClientsQuery } from '../state/clients.query';
 import { ClientsService } from '../state/clients.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
-import type { Client, ClientContact, NewClient, NewClientContact } from '../models/client.model';
+import type {
+  Client,
+  ClientContact,
+  ClientSite,
+  NewClient,
+  NewClientContact,
+  NewClientSite,
+} from '../models/client.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClientsFacade {
@@ -29,6 +36,11 @@ export class ClientsFacade {
     return this.service.addClient(data, userId);
   }
 
+  async addClientWithSites(data: NewClient, sites: NewClientSite[]): Promise<string> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    return this.service.addClientWithSites(data, sites, userId);
+  }
+
   async updateClient(id: string, changes: Partial<NewClient>): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.updateClient(id, changes, userId);
@@ -49,6 +61,28 @@ export class ClientsFacade {
 
   async addContact(clientId: string, contact: NewClientContact): Promise<void> {
     await this.service.addContact(clientId, contact);
+  }
+
+  watchSites(clientId: string): Observable<ClientSite[]> {
+    return this.service.watchSites(clientId);
+  }
+
+  async addSite(clientId: string, site: NewClientSite): Promise<string> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    return this.service.addSite(clientId, site, userId);
+  }
+
+  async updateSite(
+    clientId: string,
+    siteId: string,
+    changes: Partial<NewClientSite>,
+  ): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.updateSite(clientId, siteId, changes, userId);
+  }
+
+  async deleteSite(clientId: string, siteId: string): Promise<void> {
+    await this.service.deleteSite(clientId, siteId);
   }
 
   byId(id: string): Client | undefined {

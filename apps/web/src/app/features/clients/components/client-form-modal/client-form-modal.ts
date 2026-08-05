@@ -1,9 +1,11 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { FormField, form, required, submit } from '@angular/forms/signals';
+import { FormField, email, form, required, submit } from '@angular/forms/signals';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { ClientsFacade } from '../../facades/clients.facade';
-import type { Client } from '../../models/client.model';
+import type { Client, NewClientSite } from '../../models/client.model';
+import { normalizeUniqueName } from '../../../../shared/utils/normalize-unique-value';
 
 interface ClientFormModel {
   businessName: string;
@@ -25,9 +27,29 @@ const EMPTY_MODEL: ClientFormModel = {
   status: 'ACTIVE',
 };
 
+interface SiteDraftFormModel {
+  name: string;
+  address: string;
+  city: string;
+  responsibleName: string;
+  responsiblePosition: string;
+  responsibleEmail: string;
+  responsiblePhone: string;
+}
+
+const EMPTY_SITE_DRAFT: SiteDraftFormModel = {
+  name: '',
+  address: '',
+  city: '',
+  responsibleName: '',
+  responsiblePosition: '',
+  responsibleEmail: '',
+  responsiblePhone: '',
+};
+
 @Component({
   selector: 'app-client-form-modal',
-  imports: [Modal, Button, FormField],
+  imports: [Modal, Button, Icon, FormField],
   templateUrl: './client-form-modal.html',
   styleUrl: './client-form-modal.scss',
 })
@@ -37,17 +59,36 @@ export class ClientFormModal {
   readonly open = input(false);
   readonly editingClient = input<Client | null>(null);
   readonly closeRequested = output<void>();
+  readonly manageSitesRequested = output<Client>();
 
   protected readonly saving = signal(false);
+  protected readonly saveError = signal<string | null>(null);
   protected readonly model = signal<ClientFormModel>({ ...EMPTY_MODEL });
+  protected readonly draftSites = signal<NewClientSite[]>([]);
+  protected readonly siteDraftEditorOpen = signal(false);
+  protected readonly editingDraftIndex = signal<number | null>(null);
+  protected readonly siteDraftError = signal<string | null>(null);
+  protected readonly siteDraftModel = signal<SiteDraftFormModel>({ ...EMPTY_SITE_DRAFT });
 
   protected readonly clientForm = form(this.model, (schemaPath) => {
     required(schemaPath.businessName, { message: 'La razón social es obligatoria.' });
     required(schemaPath.taxId, { message: 'El NIT es obligatorio.' });
   });
 
+  protected readonly siteDraftForm = form(this.siteDraftModel, (schemaPath) => {
+    required(schemaPath.name, { message: 'El nombre de la sede es obligatorio.' });
+    required(schemaPath.address, { message: 'La dirección es obligatoria.' });
+    required(schemaPath.city, { message: 'La ciudad es obligatoria.' });
+    required(schemaPath.responsibleName, { message: 'El responsable es obligatorio.' });
+    required(schemaPath.responsiblePhone, { message: 'El teléfono es obligatorio.' });
+    email(schemaPath.responsibleEmail, { message: 'Ingresa un correo válido.' });
+  });
+
   protected readonly title = computed(() =>
     this.editingClient() ? 'Editar Cliente' : 'Nuevo Cliente',
+  );
+  protected readonly siteDraftTitle = computed(() =>
+    this.editingDraftIndex() === null ? 'Agregar sede' : 'Editar sede',
   );
 
   constructor() {
@@ -56,7 +97,13 @@ export class ClientFormModal {
       if (!this.open()) {
         return;
       }
-      this.model.set(
+      this.saveError.set(null);
+      this.draftSites.set([]);
+      this.siteDraftEditorOpen.set(false);
+      this.editingDraftIndex.set(null);
+      this.siteDraftError.set(null);
+      this.siteDraftForm().reset({ ...EMPTY_SITE_DRAFT });
+      this.clientForm().reset(
         client
           ? {
               businessName: client.businessName,
@@ -73,11 +120,108 @@ export class ClientFormModal {
   }
 
   protected close(): void {
+    this.cancelSiteDraft();
+    this.draftSites.set([]);
     this.closeRequested.emit();
+  }
+
+  protected manageSites(): void {
+    const client = this.editingClient();
+    if (client) {
+      this.manageSitesRequested.emit(client);
+    }
+  }
+
+  protected openNewSiteDraft(): void {
+    const clientData = this.model();
+    this.editingDraftIndex.set(null);
+    this.siteDraftError.set(null);
+    this.siteDraftForm().reset({
+      ...EMPTY_SITE_DRAFT,
+      address: clientData.address.trim(),
+      city: clientData.city.trim(),
+    });
+    this.siteDraftEditorOpen.set(true);
+  }
+
+  protected editSiteDraft(index: number): void {
+    const site = this.draftSites()[index];
+    if (!site) {
+      return;
+    }
+    this.editingDraftIndex.set(index);
+    this.siteDraftError.set(null);
+    this.siteDraftForm().reset({
+      name: site.name,
+      address: site.address,
+      city: site.city,
+      responsibleName: site.responsible.name,
+      responsiblePosition: site.responsible.position ?? '',
+      responsibleEmail: site.responsible.email ?? '',
+      responsiblePhone: site.responsible.phone,
+    });
+    this.siteDraftEditorOpen.set(true);
+  }
+
+  protected cancelSiteDraft(): void {
+    this.siteDraftEditorOpen.set(false);
+    this.editingDraftIndex.set(null);
+    this.siteDraftError.set(null);
+    this.siteDraftForm().reset({ ...EMPTY_SITE_DRAFT });
+  }
+
+  protected saveSiteDraft(): void {
+    submit(this.siteDraftForm, async () => {
+      const model = this.siteDraftModel();
+      const editingIndex = this.editingDraftIndex();
+      const normalizedName = normalizeUniqueName(model.name);
+      const duplicate = this.draftSites().some(
+        (site, index) =>
+          index !== editingIndex && normalizeUniqueName(site.name) === normalizedName,
+      );
+      if (duplicate) {
+        this.siteDraftError.set('Ya agregaste una sede con ese nombre.');
+        return;
+      }
+
+      const responsible: NewClientSite['responsible'] = {
+        name: model.responsibleName.trim(),
+        phone: model.responsiblePhone.trim(),
+      };
+      const position = model.responsiblePosition.trim();
+      const contactEmail = model.responsibleEmail.trim();
+      if (position) {
+        responsible.position = position;
+      }
+      if (contactEmail) {
+        responsible.email = contactEmail;
+      }
+
+      const site: NewClientSite = {
+        name: model.name.trim(),
+        address: model.address.trim(),
+        city: model.city.trim(),
+        status: 'ACTIVE',
+        responsible,
+      };
+
+      this.draftSites.update((sites) =>
+        editingIndex === null
+          ? [...sites, site]
+          : sites.map((current, index) => (index === editingIndex ? site : current)),
+      );
+      this.cancelSiteDraft();
+    });
+  }
+
+  protected removeSiteDraft(index: number): void {
+    this.draftSites.update((sites) => sites.filter((_, currentIndex) => currentIndex !== index));
+    this.cancelSiteDraft();
   }
 
   protected onSubmit(): void {
     submit(this.clientForm, async () => {
+      this.saveError.set(null);
       this.saving.set(true);
       try {
         const data = this.model();
@@ -85,9 +229,13 @@ export class ClientFormModal {
         if (editing) {
           await this.clientsFacade.updateClient(editing.id, data);
         } else {
-          await this.clientsFacade.addClient(data);
+          await this.clientsFacade.addClientWithSites(data, this.draftSites());
         }
         this.close();
+      } catch (error) {
+        this.saveError.set(
+          error instanceof Error ? error.message : 'No fue posible guardar el cliente.',
+        );
       } finally {
         this.saving.set(false);
       }

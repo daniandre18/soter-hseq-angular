@@ -47,6 +47,25 @@
           <p>{{ q.notes }}</p>
         </div>
       }
+
+      @if (relatedOrders().length > 0) {
+        <div>
+          <h4>Órdenes generadas</h4>
+          <ul class="related-orders">
+            @for (order of relatedOrders(); track order.id) {
+              <li>
+                <a class="related-order-link" [routerLink]="['/ordenes']" [queryParams]="{ open: order.id }">
+                  {{ order.orderNumber }} — {{ order.serviceSummary }}
+                </a>
+                <app-status-badge
+                  [label]="orderStatusConfig[order.status].label"
+                  [color]="orderStatusConfig[order.status].color"
+                />
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </div>
 
     <div modalFooter>

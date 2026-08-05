@@ -1,0 +1,149 @@
+<section class="categories-page">
+  <div class="page-heading">
+    <div>
+      <h1>Categorías de servicios</h1>
+      <p>Organiza el catálogo de servicios mediante categorías visuales.</p>
+    </div>
+    @if (!creating()) {
+      <app-button (click)="openCreateForm()">+ Nueva categoría</app-button>
+    }
+  </div>
+
+  @if (creating()) {
+    <app-card>
+      <div class="create-form">
+        <h2 class="form-title">
+          {{ editingId() ? 'Editar categoría' : 'Nueva categoría' }}
+        </h2>
+        <div class="create-row">
+          <input
+            type="text"
+            placeholder="Nombre de categoría..."
+            aria-label="Nombre de la categoría"
+            [value]="newLabel()"
+            (input)="newLabel.set($any($event.target).value)"
+            (keydown.enter)="saveCategory()"
+          />
+          <app-button
+            size="sm"
+            (click)="saveCategory()"
+            [disabled]="saving() || !newLabel().trim()"
+          >
+            {{ saving() ? 'Guardando…' : editingId() ? 'Actualizar' : 'Guardar' }}
+          </app-button>
+          <app-button variant="outline" size="sm" (click)="cancelCreate()">Cancelar</app-button>
+        </div>
+
+        <p class="field-hint">Ícono (opcional)</p>
+        <div class="icon-grid">
+          @for (icon of iconOptions; track icon) {
+            <button
+              type="button"
+              class="icon-option"
+              [class.icon-option--selected]="selectedIcon() === icon"
+              [attr.aria-label]="'Seleccionar ícono ' + icon"
+              [attr.aria-pressed]="selectedIcon() === icon"
+              (click)="selectIcon(icon)"
+            >
+              {{ icon }}
+            </button>
+          }
+        </div>
+
+        <p class="field-hint">Color</p>
+        <div class="color-grid">
+          @for (color of palette; track color) {
+            <button
+              type="button"
+              class="color-swatch"
+              [class.color-swatch--selected]="selectedColor() === color"
+              [style.background]="color"
+              [attr.aria-label]="'Elegir color ' + color"
+              [attr.aria-pressed]="selectedColor() === color"
+              (click)="selectColor(color)"
+            ></button>
+          }
+        </div>
+        @if (saveError()) {
+          <p class="form-save-error" role="alert">{{ saveError() }}</p>
+        }
+      </div>
+    </app-card>
+  }
+
+  @if (loading()) {
+    <app-card><p class="empty-hint">Cargando categorías…</p></app-card>
+  } @else if (categories().length === 0) {
+    <app-card><p class="empty-hint">Todavía no hay categorías creadas.</p></app-card>
+  } @else {
+    <div class="categories-summary">
+      <span class="summary-icon"><app-icon name="tag" /></span>
+      <strong>Todas</strong>
+      <span class="summary-count">{{ categories().length }}</span>
+    </div>
+
+    <div class="categories-grid">
+      @for (category of categories(); track category.id) {
+        <article class="category-card" [style.border-left-color]="category.color">
+          <div class="category-card-header">
+            <div
+              class="category-card-icon"
+              [style.color]="category.color"
+              [style.border-color]="category.color"
+            >
+              {{ category.icon || '📋' }}
+            </div>
+            <div class="category-card-title">
+              <h2>{{ category.label }}</h2>
+              <p>#CAT-{{ category.id.slice(0, 6).toUpperCase() }}</p>
+            </div>
+          </div>
+
+          <dl class="category-metrics">
+            <div>
+              <dt><app-icon name="wrench" /> Servicios</dt>
+              <dd>{{ serviceCount(category.id) }}</dd>
+            </div>
+            <div>
+              <dt><app-icon name="chart-pie" /> % del catálogo</dt>
+              <dd>{{ catalogPercentage(category.id) }}%</dd>
+            </div>
+            <div>
+              <dt><app-icon name="tag" /> Tipo</dt>
+              <dd>Manual</dd>
+            </div>
+          </dl>
+
+          <div class="category-progress" aria-hidden="true">
+            <span
+              [style.width.%]="catalogPercentage(category.id)"
+              [style.background]="category.color"
+            ></span>
+          </div>
+
+          <div class="category-card-actions">
+            <button
+              type="button"
+              class="edit-category-btn"
+              (click)="openEditForm(category)"
+              [attr.aria-label]="'Editar categoría ' + category.label"
+              title="Editar"
+            >
+              <app-icon name="square-pen" />
+            </button>
+            <button
+              type="button"
+              class="delete-category-btn"
+              [disabled]="deletingId() === category.id"
+              (click)="deleteCategory(category.id)"
+              [attr.aria-label]="'Eliminar categoría ' + category.label"
+              title="Eliminar"
+            >
+              <app-icon name="trash-2" />
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

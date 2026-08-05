@@ -18,7 +18,9 @@ export interface Quote {
   total: number;
   notes?: string;
   terms?: string;
-  orderId?: string;
+  /** Una orden por ítem de la cotización (CLAUDE.md §11.3 — cada servicio se
+   *  ejecuta/rastrea de forma independiente, ver `QuotesService.convertToOrder`). */
+  orderIds?: string[];
   createdAt: Date;
   createdBy: string;
   updatedAt: Date;

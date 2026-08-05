@@ -12,7 +12,9 @@ import { ClientsList } from './features/clients/pages/clients-list/clients-list'
 import { QuotesList } from './features/quotes/pages/quotes-list/quotes-list';
 import { OrdersList } from './features/orders/pages/orders-list/orders-list';
 import { MyOrders } from './features/orders/pages/my-orders/my-orders';
+import { VisitsAgenda } from './features/orders/pages/visits-agenda/visits-agenda';
 import { ServicesList } from './features/services/pages/services-list/services-list';
+import { ServiceCategories } from './features/services/pages/service-categories/service-categories';
 import { TechniciansList } from './features/users/pages/technicians-list/technicians-list';
 
 export const routes: Routes = [
@@ -56,6 +58,20 @@ export const routes: Routes = [
         title: 'Órdenes — SOTER HSEQ',
         data: { title: 'Órdenes' },
         canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
+      },
+      {
+        path: 'agenda',
+        component: VisitsAgenda,
+        title: 'Agenda de visitas — SOTER HSEQ',
+        data: { title: 'Agenda de visitas' },
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN'])],
+      },
+      {
+        path: 'servicios/categorias',
+        component: ServiceCategories,
+        title: 'Categorías de servicios — SOTER HSEQ',
+        data: { title: 'Categorías de servicios' },
+        canActivate: [roleGuard(['ADMIN', 'COMMERCIAL'])],
       },
       {
         path: 'servicios',

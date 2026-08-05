@@ -1,4 +1,4 @@
-<div class="stat-card">
+<div class="stat-card" [class.stat-card--compact]="compact()">
   <div>
     <p class="stat-card-label">{{ label() }}</p>
     <p class="stat-card-value">{{ value() }}</p>

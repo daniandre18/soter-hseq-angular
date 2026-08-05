@@ -1,25 +1,53 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { FormField, form, required, submit } from '@angular/forms/signals';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { FormField, applyEach, form, required, submit } from '@angular/forms/signals';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { ServicesFacade } from '../../../services/facades/services.facade';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { ORDER_PRIORITY_CONFIG, ORDER_PRIORITY_KEYS } from '../../models/order-priority-config';
-import type { OrderPriority, ServiceOrder } from '../../models/order.model';
+import type { NewOrderServiceRow, OrderPriority, ServiceOrder } from '../../models/order.model';
+
+/** Una fila = un servicio = una orden nueva al guardar (ver `onSubmit`). */
+interface OrderServiceRow {
+  serviceId: string;
+  serviceSummary: string;
+  priority: OrderPriority;
+  dueDate: string;
+  visitDate: string;
+  visitTime: string;
+  description: string;
+}
 
 interface OrderFormModel {
   clientId: string;
+  // Campos planos: solo los usa el modo edición (una orden existente).
   title: string;
-  /** Transitorio: solo alimenta el `<select>` del catálogo, nunca se
-   *  persiste — lo que se guarda es `serviceSummary` (texto libre, ver
-   *  `onServiceSelected`), igual que en `ServiceOrder`. */
   serviceId: string;
   serviceSummary: string;
-  technicianId: string;
   priority: OrderPriority;
   dueDate: string;
+  visitDate: string;
+  visitTime: string;
   description: string;
+  // Solo lo usa el modo creación: varias filas = varias órdenes nuevas.
+  rows: OrderServiceRow[];
+}
+
+function normalizeServiceName(value: string): string {
+  return value.trim().toLocaleLowerCase('es-CO');
+}
+
+function emptyRow(): OrderServiceRow {
+  return {
+    serviceId: '',
+    serviceSummary: '',
+    priority: 'MEDIUM',
+    dueDate: '',
+    visitDate: '',
+    visitTime: '',
+    description: '',
+  };
 }
 
 function emptyModel(): OrderFormModel {
@@ -28,15 +56,39 @@ function emptyModel(): OrderFormModel {
     title: '',
     serviceId: '',
     serviceSummary: '',
-    technicianId: '',
     priority: 'MEDIUM',
     dueDate: '',
+    visitDate: '',
+    visitTime: '',
     description: '',
+    rows: [emptyRow()],
   };
 }
 
 function toDateInputValue(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const pad = (value: number) => value.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function toTimeInputValue(date: Date): string {
+  const pad = (value: number) => value.toString().padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toScheduledStart(dateValue: string, timeValue: string): Date | undefined {
+  if (!dateValue || !timeValue) {
+    return undefined;
+  }
+  const scheduledStart = new Date(`${dateValue}T${timeValue}`);
+  return Number.isNaN(scheduledStart.getTime()) ? undefined : scheduledStart;
+}
+
+function shiftedScheduledEnd(order: ServiceOrder, scheduledStart: Date): Date | undefined {
+  if (!order.scheduledStart || !order.scheduledEnd) {
+    return undefined;
+  }
+  const previousDuration = order.scheduledEnd.getTime() - order.scheduledStart.getTime();
+  return previousDuration > 0 ? new Date(scheduledStart.getTime() + previousDuration) : undefined;
 }
 
 @Component({
@@ -56,52 +108,112 @@ export class OrderFormModal {
 
   protected readonly saving = signal(false);
   protected readonly model = signal<OrderFormModel>(emptyModel());
+  private initializedFormKey: string | null = null;
 
   protected readonly activeClients = computed(() =>
     this.clientsFacade.clients().filter((client) => client.status === 'ACTIVE'),
   );
   protected readonly activeServices = this.servicesFacade.activeServices;
-  protected readonly technicians = this.ordersFacade.technicians;
 
   protected readonly priorityLabels = ORDER_PRIORITY_CONFIG;
   protected readonly priorityKeys = ORDER_PRIORITY_KEYS;
 
-  protected readonly title = computed(() => (this.editingOrder() ? 'Editar Orden' : 'Nueva Orden de Trabajo'));
+  protected readonly title = computed(() =>
+    this.editingOrder() ? 'Editar Orden' : 'Nueva Orden de Trabajo',
+  );
+  /** La tabla de varios servicios necesita más ancho que el formulario plano de edición. */
+  protected readonly modalSize = computed(() => (this.editingOrder() ? 'lg' : 'xl'));
 
   protected readonly orderForm = form(this.model, (schemaPath) => {
     required(schemaPath.clientId, { message: 'Selecciona un cliente.' });
-    required(schemaPath.title, { message: 'El título es obligatorio.' });
-    required(schemaPath.serviceSummary, { message: 'Selecciona un servicio.' });
-    required(schemaPath.dueDate, { message: 'La fecha límite es obligatoria.' });
+
+    const editing = () => this.editingOrder() !== null;
+    required(schemaPath.title, { message: 'El título es obligatorio.', when: editing });
+    required(schemaPath.serviceSummary, { message: 'Selecciona un servicio.', when: editing });
+    required(schemaPath.dueDate, { message: 'La fecha límite es obligatoria.', when: editing });
+    required(schemaPath.visitDate, {
+      message: 'Selecciona la fecha de la visita.',
+      when: ({ valueOf }) => editing() && Boolean(valueOf(schemaPath.visitTime)),
+    });
+    required(schemaPath.visitTime, {
+      message: 'Selecciona la hora de la visita.',
+      when: ({ valueOf }) => editing() && Boolean(valueOf(schemaPath.visitDate)),
+    });
+
+    const creating = () => this.editingOrder() === null;
+    applyEach(schemaPath.rows, (row) => {
+      required(row.serviceId, { message: 'Selecciona un servicio.', when: creating });
+      required(row.dueDate, { message: 'La fecha límite es obligatoria.', when: creating });
+      required(row.visitDate, {
+        message: 'Selecciona la fecha de la visita.',
+        when: ({ valueOf }) => creating() && Boolean(valueOf(row.visitTime)),
+      });
+      required(row.visitTime, {
+        message: 'Selecciona la hora de la visita.',
+        when: ({ valueOf }) => creating() && Boolean(valueOf(row.visitDate)),
+      });
+    });
   });
 
   protected readonly currentServiceHint = computed(() => {
     const order = this.editingOrder();
-    const summary = this.model().serviceSummary;
-    return order && summary ? summary : null;
+    const model = this.model();
+    return order && model.serviceSummary && !model.serviceId ? model.serviceSummary : null;
   });
 
   constructor() {
     this.servicesFacade.init();
     effect(() => {
       const order = this.editingOrder();
+      const services = this.activeServices();
       if (!this.open()) {
+        this.initializedFormKey = null;
         return;
       }
-      this.model.set(
-        order
-          ? {
-              clientId: order.clientId,
-              title: order.title,
-              serviceId: '',
-              serviceSummary: order.serviceSummary,
-              technicianId: '',
-              priority: order.priority,
-              dueDate: order.dueDate ? toDateInputValue(order.dueDate) : '',
-              description: order.description ?? '',
-            }
-          : emptyModel(),
-      );
+
+      const formKey = order ? `edit:${order.id}` : 'create';
+      const serviceId = order
+        ? (services.find(
+            (service) =>
+              normalizeServiceName(service.name) === normalizeServiceName(order.serviceSummary),
+          )?.id ?? '')
+        : '';
+
+      if (this.initializedFormKey !== formKey) {
+        this.initializedFormKey = formKey;
+        this.model.set(
+          order
+            ? {
+                ...emptyModel(),
+                clientId: order.clientId,
+                title: order.title,
+                serviceId,
+                serviceSummary: order.serviceSummary,
+                priority: order.priority,
+                dueDate: order.dueDate ? toDateInputValue(order.dueDate) : '',
+                visitDate: order.scheduledStart ? toDateInputValue(order.scheduledStart) : '',
+                visitTime: order.scheduledStart ? toTimeInputValue(order.scheduledStart) : '',
+                description: order.description ?? '',
+                rows: [],
+              }
+            : emptyModel(),
+        );
+        return;
+      }
+
+      // El catálogo puede llegar después de abrir el modal. En ese caso solo
+      // completa el id faltante, sin reiniciar los cambios que el usuario ya
+      // haya realizado en el resto del formulario.
+      const currentModel = untracked(this.model);
+      if (
+        order &&
+        serviceId &&
+        !currentModel.serviceId &&
+        normalizeServiceName(currentModel.serviceSummary) ===
+          normalizeServiceName(order.serviceSummary)
+      ) {
+        this.model.update((current) => ({ ...current, serviceId }));
+      }
     });
   }
 
@@ -111,6 +223,27 @@ export class OrderFormModal {
       return;
     }
     this.model.update((m) => ({ ...m, serviceSummary: service.name }));
+  }
+
+  protected onRowServiceSelected(index: number, serviceId: string): void {
+    const service = this.servicesFacade.byId(serviceId);
+    if (!service) {
+      return;
+    }
+    this.model.update((m) => ({
+      ...m,
+      rows: m.rows.map((row, i) =>
+        i === index ? { ...row, serviceId, serviceSummary: service.name } : row,
+      ),
+    }));
+  }
+
+  protected addRow(): void {
+    this.model.update((m) => ({ ...m, rows: [...m.rows, emptyRow()] }));
+  }
+
+  protected removeRow(index: number): void {
+    this.model.update((m) => ({ ...m, rows: m.rows.filter((_, i) => i !== index) }));
   }
 
   protected close(): void {
@@ -129,6 +262,7 @@ export class OrderFormModal {
       try {
         const editing = this.editingOrder();
         if (editing) {
+          const scheduledStart = toScheduledStart(value.visitDate, value.visitTime);
           await this.ordersFacade.updateOrderDetails(editing.id, {
             clientId: client.id,
             clientBusinessName: client.businessName,
@@ -138,17 +272,24 @@ export class OrderFormModal {
             dueDate: new Date(value.dueDate),
             description: value.description || undefined,
           });
+          if (scheduledStart && scheduledStart.getTime() !== editing.scheduledStart?.getTime()) {
+            await this.ordersFacade.schedule(
+              editing.id,
+              scheduledStart,
+              shiftedScheduledEnd(editing, scheduledStart),
+            );
+          }
         } else {
-          await this.ordersFacade.createOrder({
-            clientId: client.id,
-            clientBusinessName: client.businessName,
-            title: value.title,
-            serviceSummary: value.serviceSummary,
-            priority: value.priority,
-            dueDate: new Date(value.dueDate),
-            description: value.description || undefined,
-            technicianId: value.technicianId || undefined,
-          });
+          const rows: NewOrderServiceRow[] = value.rows
+            .filter((row) => row.serviceId && row.dueDate)
+            .map((row) => ({
+              serviceSummary: row.serviceSummary,
+              priority: row.priority,
+              dueDate: new Date(row.dueDate),
+              scheduledStart: toScheduledStart(row.visitDate, row.visitTime),
+              description: row.description || undefined,
+            }));
+          await this.ordersFacade.createOrders(client.id, client.businessName, rows);
         }
         this.close();
       } finally {

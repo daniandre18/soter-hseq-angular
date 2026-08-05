@@ -22,9 +22,9 @@
           </option>
         }
       </select>
-      <button type="button" class="manage-categories-link" (click)="openCategoriesManager()">
+      <a class="manage-categories-link" routerLink="/servicios/categorias">
         Administrar categorías
-      </button>
+      </a>
     </div>
     <app-button (click)="openCreate()">+ Nuevo Servicio</app-button>
   </div>
@@ -98,6 +98,57 @@
           </tbody>
         </table>
       </div>
+      <div class="services-mobile-list">
+        @for (service of visibleServices(); track service.id) {
+          <article class="mobile-service-row">
+            <div class="mobile-service-header">
+              <div class="mobile-service-main">
+                <strong>{{ service.name }}</strong>
+                @if (categoriesFacade.byId(service.category); as category) {
+                  <span>{{ category.icon ? category.icon + ' ' : '' }}{{ category.label }}</span>
+                } @else {
+                  <span>Sin categoría</span>
+                }
+              </div>
+              <div class="mobile-service-actions">
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--primary"
+                  (click)="openEdit(service)"
+                  aria-label="Editar servicio"
+                  title="Editar"
+                >
+                  <app-icon name="square-pen" />
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--danger"
+                  (click)="confirmDelete(service, $event)"
+                  aria-label="Eliminar servicio"
+                  title="Eliminar"
+                >
+                  <app-icon name="trash-2" />
+                </button>
+              </div>
+            </div>
+
+            @if (service.description) {
+              <p class="mobile-service-description">{{ service.description }}</p>
+            }
+
+            <div class="mobile-service-footer">
+              <div class="mobile-service-price">
+                <strong>{{ formatCurrency(service.price) }}</strong>
+                <span>por {{ service.unit }}</span>
+              </div>
+              <app-status-badge
+                [label]="service.active ? 'Activo' : 'Inactivo'"
+                [color]="service.active ? 'green' : 'gray'"
+              />
+            </div>
+          </article>
+        }
+      </div>
       @if (hasMore() || hasCollapsed()) {
         <div class="load-more-bar">
           @if (hasCollapsed()) {
@@ -122,19 +173,24 @@
   }
 </section>
 
-<app-service-form-modal [open]="formOpen()" [editingService]="editingService()" (closeRequested)="closeForm()" />
+<app-service-form-modal
+  [open]="formOpen()"
+  [editingService]="editingService()"
+  (closeRequested)="closeForm()"
+/>
 
-<app-modal [open]="!!deletingId()" title="¿Eliminar este servicio?" size="sm" (closeRequested)="cancelDelete()">
+<app-modal
+  [open]="!!deletingId()"
+  title="¿Eliminar este servicio?"
+  size="sm"
+  (closeRequested)="cancelDelete()"
+>
   <p class="confirm-text">
-    Esta acción no se puede deshacer. Las cotizaciones ya creadas con este servicio no se ven afectadas.
+    Esta acción no se puede deshacer. Las cotizaciones ya creadas con este servicio no se ven
+    afectadas.
   </p>
   <div modalFooter>
     <app-button variant="outline" (click)="cancelDelete()">Cancelar</app-button>
     <app-button variant="danger" (click)="deleteConfirmed()">Eliminar</app-button>
   </div>
 </app-modal>
-
-<app-service-categories-manager-modal
-  [open]="categoriesManagerOpen()"
-  (closeRequested)="closeCategoriesManager()"
-/>

@@ -28,6 +28,10 @@ export class ServiceCategoriesFacade {
     return this.service.addCategory(data, userId);
   }
 
+  async updateCategory(id: string, data: NewServiceCategory): Promise<void> {
+    await this.service.updateCategory(id, data);
+  }
+
   async deleteCategory(id: string): Promise<void> {
     await this.service.deleteCategory(id);
   }

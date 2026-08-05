@@ -5,6 +5,7 @@ import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { Card } from '../../../../shared/components/card/card';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
+import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { ClientFormModal } from '../../components/client-form-modal/client-form-modal';
@@ -12,6 +13,7 @@ import { ClientDetailModal } from '../../components/client-detail-modal/client-d
 import { ClientTagsManagerModal } from '../../components/client-tags-manager-modal/client-tags-manager-modal';
 import { CLIENT_TAG_COLOR_PALETTE } from '../../models/client-tag.model';
 import type { Client } from '../../models/client.model';
+import { normalizeUniqueName } from '../../../../shared/utils/normalize-unique-value';
 
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 
@@ -23,6 +25,7 @@ const PAGE_SIZE = 10;
     Card,
     Button,
     StatusBadge,
+    StatCard,
     Icon,
     Modal,
     ClientFormModal,
@@ -39,6 +42,8 @@ export class ClientsList {
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilter>('all');
+  protected readonly cityFilter = signal('all');
+  protected readonly tagFilter = signal('all');
   protected readonly visibleCount = signal(PAGE_SIZE);
 
   protected readonly formOpen = signal(false);
@@ -54,6 +59,49 @@ export class ClientsList {
 
   protected readonly canDelete = computed(() => this.authFacade.currentRole() === 'ADMIN');
 
+  /** Indicadores globales del directorio. Se calculan sobre todos los
+   *  clientes, no sobre la búsqueda o filtro temporal de la tabla. */
+  protected readonly totalClients = computed(() => this.clientsFacade.clients().length);
+  protected readonly activeClients = computed(
+    () => this.clientsFacade.clients().filter((client) => client.status === 'ACTIVE').length,
+  );
+  protected readonly activeClientRate = computed(() => {
+    const total = this.clientsFacade.clients().length;
+    return total === 0 ? '0%' : `${Math.round((this.activeClients() / total) * 100)}%`;
+  });
+  protected readonly coveredCities = computed(
+    () =>
+      new Set(
+        this.clientsFacade
+          .clients()
+          .map((client) => normalizeUniqueName(client.city ?? ''))
+          .filter(Boolean),
+      ).size,
+  );
+
+  protected readonly cityOptions = computed(() => {
+    const cities = new Map<string, string>();
+    for (const client of this.clientsFacade.clients()) {
+      const label = client.city?.trim();
+      const value = normalizeUniqueName(label ?? '');
+      if (label && value && !cities.has(value)) {
+        cities.set(value, label);
+      }
+    }
+    return Array.from(cities, ([value, label]) => ({ value, label })).sort((a, b) =>
+      a.label.localeCompare(b.label, 'es'),
+    );
+  });
+
+  protected readonly activeFilterCount = computed(
+    () =>
+      Number(this.search().trim().length > 0) +
+      Number(this.statusFilter() !== 'all') +
+      Number(this.cityFilter() !== 'all') +
+      Number(this.tagFilter() !== 'all'),
+  );
+  protected readonly hasActiveFilters = computed(() => this.activeFilterCount() > 0);
+
   /** Etiquetas del catálogo que coinciden con el texto de búsqueda del
    *  picker abierto — vacío el texto, muestra todas. */
   protected readonly filteredTags = computed(() => {
@@ -68,20 +116,30 @@ export class ClientsList {
     if (!term) {
       return false;
     }
-    return !this.tagsFacade.tags().some((tag) => tag.label.toLowerCase() === term.toLowerCase());
+    const normalizedTerm = normalizeUniqueName(term);
+    return !this.tagsFacade.tags().some((tag) => normalizeUniqueName(tag.label) === normalizedTerm);
   });
 
   protected readonly filtered = computed(() => {
-    const term = this.search().trim().toLowerCase();
+    const term = normalizeUniqueName(this.search());
     const status = this.statusFilter();
+    const city = this.cityFilter();
+    const tag = this.tagFilter();
     return this.clientsFacade.clients().filter((client) => {
       const matchesSearch =
         !term ||
-        client.businessName.toLowerCase().includes(term) ||
-        client.taxId.includes(term) ||
-        (client.city ?? '').toLowerCase().includes(term);
+        [
+          client.businessName,
+          client.legalName,
+          client.taxId,
+          client.email,
+          client.phone,
+          client.city,
+        ].some((value) => normalizeUniqueName(value ?? '').includes(term));
       const matchesStatus = status === 'all' || client.status === status;
-      return matchesSearch && matchesStatus;
+      const matchesCity = city === 'all' || normalizeUniqueName(client.city ?? '') === city;
+      const matchesTag = tag === 'all' || client.tags.includes(tag);
+      return matchesSearch && matchesStatus && matchesCity && matchesTag;
     });
   });
 
@@ -114,12 +172,35 @@ export class ClientsList {
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
-    this.visibleCount.set(PAGE_SIZE);
+    this.resetFilteredView();
   }
 
   protected onStatusChange(event: Event): void {
     this.statusFilter.set((event.target as HTMLSelectElement).value as StatusFilter);
+    this.resetFilteredView();
+  }
+
+  protected onCityChange(event: Event): void {
+    this.cityFilter.set((event.target as HTMLSelectElement).value);
+    this.resetFilteredView();
+  }
+
+  protected onTagFilterChange(event: Event): void {
+    this.tagFilter.set((event.target as HTMLSelectElement).value);
+    this.resetFilteredView();
+  }
+
+  protected clearFilters(): void {
+    this.search.set('');
+    this.statusFilter.set('all');
+    this.cityFilter.set('all');
+    this.tagFilter.set('all');
+    this.resetFilteredView();
+  }
+
+  private resetFilteredView(): void {
     this.visibleCount.set(PAGE_SIZE);
+    this.selectedIds.set(new Set());
   }
 
   protected showMore(): void {
@@ -151,6 +232,13 @@ export class ClientsList {
   }
 
   protected openDetail(client: Client): void {
+    this.detailClient.set(client);
+  }
+
+  protected openSites(client: Client, event?: Event): void {
+    event?.stopPropagation();
+    this.formOpen.set(false);
+    this.editingClient.set(null);
     this.detailClient.set(client);
   }
 
@@ -191,7 +279,8 @@ export class ClientsList {
     if (!label || !this.canCreateTagFromSearch()) {
       return;
     }
-    const color = CLIENT_TAG_COLOR_PALETTE[this.tagsFacade.tags().length % CLIENT_TAG_COLOR_PALETTE.length];
+    const color =
+      CLIENT_TAG_COLOR_PALETTE[this.tagsFacade.tags().length % CLIENT_TAG_COLOR_PALETTE.length];
     const newTagId = await this.tagsFacade.addTag({ label, color });
     await this.clientsFacade.setTag(client.id, newTagId, true);
     this.tagSearch.set('');
@@ -226,7 +315,9 @@ export class ClientsList {
 
   protected toggleSelectAll(): void {
     const visible = this.visibleClients();
-    this.selectedIds.set(this.allVisibleSelected() ? new Set() : new Set(visible.map((client) => client.id)));
+    this.selectedIds.set(
+      this.allVisibleSelected() ? new Set() : new Set(visible.map((client) => client.id)),
+    );
   }
 
   protected clearSelection(): void {

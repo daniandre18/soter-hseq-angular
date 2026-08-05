@@ -1,3 +1,5 @@
+@use 'quill/dist/quill.snow.css';
+
 /*
  * Tokens de diseño calcados del proyecto Next.js (soter-hseq/tailwind.config.ts)
  * para que ambas demos compartan la misma identidad visual.
@@ -90,11 +92,7 @@
   --color-indigo-600: #4f46e5;
   --color-indigo-700: #4338ca;
 
-  --font-sans:
-    'Poppins',
-    system-ui,
-    -apple-system,
-    sans-serif;
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
 
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -117,6 +115,64 @@ body {
   color: var(--color-gray-900);
 }
 
+// Quill vive en un componente standalone con encapsulación propia. Estos
+// ajustes deben ser globales para alcanzar el DOM que genera el editor.
+.evidence-rich-editor {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.evidence-rich-editor .ql-toolbar.ql-snow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+  border-color: var(--color-gray-300);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-gray-50);
+}
+
+.evidence-rich-editor .ql-container.ql-snow {
+  min-height: 8rem;
+  border-color: var(--color-gray-300);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-family: var(--font-sans);
+}
+
+.evidence-rich-editor .ql-editor {
+  min-height: 8rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--color-gray-900);
+}
+
+.evidence-rich-editor.ng-invalid.ng-touched .ql-toolbar.ql-snow,
+.evidence-rich-editor.ng-invalid.ng-touched .ql-container.ql-snow {
+  border-color: var(--color-red-500);
+}
+
+.evidence-description .ql-container {
+  border: 0;
+  font-family: inherit;
+}
+
+.evidence-description .ql-editor {
+  max-height: 7rem;
+  overflow: auto;
+  padding: 0;
+  font-size: inherit;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.evidence-description .ql-editor > :first-child {
+  margin-top: 0;
+}
+
+.evidence-description .ql-editor > :last-child {
+  margin-bottom: 0;
+}
+
 // Todo `<app-modal>` proyecta su footer via `<div modalFooter>` (definido en
 // cada template consumidor, no en el del modal) — el `gap` de `.modal-footer`
 // en modal.scss solo separa a ese wrapper de OTROS hijos directos, nunca
@@ -126,5 +182,25 @@ body {
 [modalFooter] {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  [modalFooter] {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+}
+
+@media (max-width: 359px) {
+  [modalFooter] {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
 }

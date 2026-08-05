@@ -7,7 +7,7 @@ import { AuthFacade } from '../../auth/facades/auth.facade';
 import { UsersRepository } from '../../../core/repositories/users.repository';
 import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
 import type {
-  NewOrderData,
+  NewOrderServiceRow,
   OrderDetailsUpdate,
   OrderStatus,
   ServiceOrder,
@@ -15,6 +15,7 @@ import type {
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory } from '../models/evidence.model';
 import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
+import type { OrderEvent } from '../models/order-event.model';
 import type { PieSlice } from '../../../shared/components/pie-chart/pie-chart';
 import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
@@ -33,12 +34,6 @@ function isSameLocalDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
-}
-
-function startOfToday(): Date {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return now;
 }
 
 /**
@@ -61,6 +56,9 @@ export class OrdersFacade {
   readonly technicians = toSignal(this.usersRepository.watchByRole('TECHNICIAN'), {
     initialValue: [],
   });
+
+  /** Para resolver el autor de cualquier nota/evidencia/evento en el feed de Actividad. */
+  private readonly allUsers = toSignal(this.usersRepository.watchAll(), { initialValue: [] });
 
   readonly assignedCount = computed(
     () => this.orders().filter((order) => order.status === 'ASSIGNED').length,
@@ -122,15 +120,19 @@ export class OrdersFacade {
   });
 
   readonly recentOrders = computed(() =>
-    [...this.orders()]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, 5),
+    [...this.orders()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 5),
   );
 
   readonly upcomingVisits = computed(() => {
-    const today = startOfToday();
+    const now = new Date();
     return this.orders()
-      .filter((order) => order.scheduledStart !== undefined && order.scheduledStart >= today)
+      .filter(
+        (order) =>
+          order.scheduledStart !== undefined &&
+          (order.scheduledEnd ?? order.scheduledStart) >= now &&
+          order.status !== 'CANCELLED' &&
+          order.status !== 'CLOSED',
+      )
       .sort((a, b) => a.scheduledStart!.getTime() - b.scheduledStart!.getTime())
       .slice(0, 5);
   });
@@ -182,7 +184,12 @@ export class OrdersFacade {
     return this.technicians().find((technician) => technician.id === id)?.displayName ?? 'Técnico';
   }
 
-  async schedule(orderId: string, scheduledStart: Date, scheduledEnd: Date): Promise<void> {
+  /** Resuelve el autor de cualquier nota/evidencia/evento del feed de Actividad, sin importar el rol. */
+  displayNameFor(id: string): string {
+    return this.allUsers().find((user) => user.id === id)?.displayName ?? 'Usuario';
+  }
+
+  async schedule(orderId: string, scheduledStart: Date, scheduledEnd?: Date): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.schedule(orderId, scheduledStart, scheduledEnd, userId);
   }
@@ -202,9 +209,13 @@ export class OrdersFacade {
     await this.service.requestCorrection(orderId, reason, userId);
   }
 
-  async createOrder(data: NewOrderData): Promise<string> {
+  async createOrders(
+    clientId: string,
+    clientBusinessName: string,
+    rows: NewOrderServiceRow[],
+  ): Promise<string[]> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
-    return this.service.createOrder(data, userId);
+    return this.service.createOrders(clientId, clientBusinessName, rows, userId);
   }
 
   async updateOrderDetails(orderId: string, changes: OrderDetailsUpdate): Promise<void> {
@@ -226,9 +237,14 @@ export class OrdersFacade {
     return this.service.watchNotes(orderId);
   }
 
-  async addNote(orderId: string, noteType: NoteType, content: string): Promise<void> {
+  async addNote(
+    orderId: string,
+    noteType: NoteType,
+    content: string,
+    attachmentIds?: string[],
+  ): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
-    await this.service.addNote(orderId, noteType, content, userId);
+    await this.service.addNote(orderId, noteType, content, userId, attachmentIds);
   }
 
   watchEvidence(orderId: string): Observable<Evidence[]> {
@@ -241,9 +257,13 @@ export class OrdersFacade {
     category: EvidenceCategory | undefined,
     description: string | undefined,
     onProgress?: (percent: number) => void,
-  ): Promise<void> {
+  ): Promise<string> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
-    await this.service.uploadEvidence(orderId, file, category, description, userId, onProgress);
+    return this.service.uploadEvidence(orderId, file, category, description, userId, onProgress);
+  }
+
+  watchOrderEvents(orderId: string): Observable<OrderEvent[]> {
+    return this.service.watchOrderEvents(orderId);
   }
 
   async generateClosingActDraft(orderId: string, notes: string): Promise<void> {

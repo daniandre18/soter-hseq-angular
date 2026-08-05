@@ -1,4 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { map } from 'rxjs';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
@@ -13,16 +16,27 @@ import { OrderDetailModal } from '../../components/order-detail-modal/order-deta
 import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
-import { formatDateNumeric } from '../../../../shared/utils/format-date';
+import { formatDateNumeric, formatDateTime } from '../../../../shared/utils/format-date';
 import type { OrderPriority, OrderStatus, ServiceOrder } from '../../models/order.model';
 
-type StatusFilterOption = 'all' | OrderStatus;
+type StatusFilterOption = 'all' | 'active' | 'closed' | OrderStatus;
 
 const PAGE_SIZE = 10;
+const CLOSED_ORDER_STATUSES = new Set<OrderStatus>(['CLOSED', 'CANCELLED']);
 
 @Component({
   selector: 'app-orders-list',
-  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, Modal, Icon, OrderDetailModal, OrderFormModal],
+  imports: [
+    Card,
+    Button,
+    StatusBadge,
+    ProgressBar,
+    Avatar,
+    Modal,
+    Icon,
+    OrderDetailModal,
+    OrderFormModal,
+  ],
   templateUrl: './orders-list.html',
   styleUrl: './orders-list.scss',
 })
@@ -30,6 +44,15 @@ export class OrdersList {
   protected readonly ordersFacade = inject(OrdersFacade);
   private readonly authFacade = inject(AuthFacade);
   private readonly clientsFacade = inject(ClientsFacade);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** `?open=<id>` — usado por la campanita de notificaciones para abrir
+   *  directo el detalle en vez de solo aterrizar en el listado. */
+  private readonly openQueryParamId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('open'))),
+    { initialValue: null },
+  );
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilterOption>('all');
@@ -54,7 +77,18 @@ export class OrdersList {
     { label: string; color: string },
   ][];
 
+  protected readonly totalOrdersCount = computed(() => this.ordersFacade.orders().length);
+  protected readonly activeOrdersCount = computed(
+    () =>
+      this.ordersFacade.orders().filter((order) => !CLOSED_ORDER_STATUSES.has(order.status)).length,
+  );
+  protected readonly closedOrdersCount = computed(
+    () =>
+      this.ordersFacade.orders().filter((order) => CLOSED_ORDER_STATUSES.has(order.status)).length,
+  );
+
   protected readonly formatDateNumeric = formatDateNumeric;
+  protected readonly formatDateTime = formatDateTime;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -66,7 +100,12 @@ export class OrdersList {
           !term ||
           order.orderNumber.toLowerCase().includes(term) ||
           order.clientBusinessName.toLowerCase().includes(term);
-        const matchesStatus = status === 'all' || order.status === status;
+        const isClosed = CLOSED_ORDER_STATUSES.has(order.status);
+        const matchesStatus =
+          status === 'all' ||
+          (status === 'active' && !isClosed) ||
+          (status === 'closed' && isClosed) ||
+          order.status === status;
         return matchesSearch && matchesStatus;
       })
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -89,6 +128,21 @@ export class OrdersList {
   constructor() {
     this.ordersFacade.init();
     this.clientsFacade.init();
+
+    // Espera a que `orders()` traiga la orden pedida (puede llegar vacío
+    // mientras el listener de Firestore aún carga) y limpia el query param
+    // al abrir, para no reabrir el modal si el usuario navega de vuelta.
+    effect(() => {
+      const id = this.openQueryParamId();
+      if (!id) {
+        return;
+      }
+      const order = this.ordersFacade.orders().find((candidate) => candidate.id === id);
+      if (order) {
+        this.detailOrderId.set(order.id);
+        void this.router.navigate([], { queryParams: { open: null }, queryParamsHandling: 'merge' });
+      }
+    });
   }
 
   protected statusLabel(status: OrderStatus): string {
@@ -117,7 +171,11 @@ export class OrdersList {
   }
 
   protected onStatusChange(event: Event): void {
-    this.statusFilter.set((event.target as HTMLSelectElement).value as StatusFilterOption);
+    this.selectStatusFilter((event.target as HTMLSelectElement).value as StatusFilterOption);
+  }
+
+  protected selectStatusFilter(status: StatusFilterOption): void {
+    this.statusFilter.set(status);
     this.visibleCount.set(PAGE_SIZE);
   }
 

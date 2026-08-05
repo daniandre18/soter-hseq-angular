@@ -3,10 +3,27 @@ import { signal } from '@angular/core';
 
 import { TechniciansList } from './technicians-list';
 import { TechniciansFacade } from '../../facades/technicians.facade';
+import type { AppUser } from '../../../../core/models/app-user.model';
 
 describe('TechniciansList', () => {
   let component: TechniciansList;
   let fixture: ComponentFixture<TechniciansList>;
+  const technicians = signal<AppUser[]>([
+    {
+      id: 'technician-1',
+      uid: 'technician-1',
+      displayName: 'Andrés Morales',
+      email: 'andres@soterhseq.com',
+      phone: '315 444 2210',
+      specialty: 'Seguridad Industrial',
+      role: 'TECHNICIAN',
+      status: 'ACTIVE',
+      createdAt: new Date('2026-08-01'),
+      createdBy: 'admin',
+      updatedAt: new Date('2026-08-01'),
+      updatedBy: 'admin',
+    },
+  ]);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -15,9 +32,10 @@ describe('TechniciansList', () => {
         {
           provide: TechniciansFacade,
           useValue: {
-            technicians: signal([]),
+            technicians,
             loading: signal(false),
             setStatus: async () => undefined,
+            deleteTechnician: async () => undefined,
             init: () => undefined,
           },
         },
@@ -31,5 +49,15 @@ describe('TechniciansList', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should render the mobile technician card with its contact details', () => {
+    fixture.detectChanges();
+
+    const mobileCard = fixture.nativeElement.querySelector('.mobile-technician-row');
+
+    expect(mobileCard?.textContent).toContain('Andrés Morales');
+    expect(mobileCard?.textContent).toContain('andres@soterhseq.com');
+    expect(mobileCard?.textContent).toContain('315 444 2210');
   });
 });

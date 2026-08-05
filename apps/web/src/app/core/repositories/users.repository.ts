@@ -62,6 +62,19 @@ export class UsersRepository {
     });
   }
 
+  /** Para resolver nombres de autor en feeds de actividad, sin importar el rol. */
+  watchAll(): Observable<AppUser[]> {
+    return new Observable<AppUser[]>((subscriber) => {
+      return onSnapshot(
+        collection(this.firestore, 'users'),
+        (snapshot) => {
+          subscriber.next(snapshot.docs.map((docSnapshot) => toAppUser(docSnapshot.id, docSnapshot.data())));
+        },
+        (error) => subscriber.error(error),
+      );
+    });
+  }
+
   /** Para selectores de asignación (p. ej. técnicos disponibles en Órdenes). */
   watchByRole(role: UserRole): Observable<AppUser[]> {
     return new Observable<AppUser[]>((subscriber) => {

@@ -6,56 +6,125 @@ import { Icon, type IconName } from '../../shared/components/icon/icon';
 import { USER_ROLE_LABELS, type UserRole } from '../../core/models/user-role.model';
 
 interface NavItem {
+  kind: 'link';
   path: string;
   label: string;
   icon: IconName;
   roles: UserRole[];
 }
 
-// Se irá completando a medida que existan las rutas de cada fase
-// (CLAUDE.md §14): clientes, cotizaciones, órdenes, mis órdenes, etc.
-const NAV_ITEMS: NavItem[] = [
+interface NavGroup {
+  kind: 'group';
+  id: 'services';
+  label: string;
+  icon: IconName;
+  roles: UserRole[];
+  children: NavItem[];
+}
+
+type NavEntry = NavItem | NavGroup;
+
+interface NavSection {
+  id: 'primary' | 'commercial' | 'operations';
+  label: string;
+  entries: NavEntry[];
+}
+
+const SERVICES_GROUP: NavGroup = {
+  kind: 'group',
+  id: 'services',
+  label: 'Servicios',
+  icon: 'wrench',
+  roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+  children: [
+    {
+      kind: 'link',
+      path: '/servicios',
+      label: 'Catálogo de servicios',
+      icon: 'wrench',
+      roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+    },
+    {
+      kind: 'link',
+      path: '/servicios/categorias',
+      label: 'Categorías',
+      icon: 'tag',
+      roles: ['ADMIN', 'COMMERCIAL'],
+    },
+  ],
+};
+
+// Las secciones reflejan el flujo mental del usuario: primero la operación
+// diaria, luego las tareas comerciales y finalmente la administración del
+// equipo. Las entradas sin permiso se eliminan junto con su sección vacía.
+const NAV_SECTIONS: NavSection[] = [
   {
-    path: '/dashboard',
-    label: 'Panel',
-    icon: 'layout-dashboard',
-    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+    id: 'primary',
+    label: 'Principal',
+    entries: [
+      {
+        kind: 'link',
+        path: '/dashboard',
+        label: 'Panel',
+        icon: 'layout-dashboard',
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+      },
+      {
+        kind: 'link',
+        path: '/ordenes',
+        label: 'Órdenes de trabajo',
+        icon: 'clipboard-list',
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+      },
+      {
+        kind: 'link',
+        path: '/mis-ordenes',
+        label: 'Mis órdenes',
+        icon: 'hard-hat',
+        roles: ['TECHNICIAN'],
+      },
+      {
+        kind: 'link',
+        path: '/agenda',
+        label: 'Agenda de visitas',
+        icon: 'calendar-days',
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN'],
+      },
+    ],
   },
   {
-    path: '/clientes',
-    label: 'Clientes',
-    icon: 'building-2',
-    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+    id: 'commercial',
+    label: 'Gestión comercial',
+    entries: [
+      {
+        kind: 'link',
+        path: '/clientes',
+        label: 'Clientes',
+        icon: 'building-2',
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+      },
+      {
+        kind: 'link',
+        path: '/cotizaciones',
+        label: 'Cotizaciones',
+        icon: 'file-text',
+        roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
+      },
+      SERVICES_GROUP,
+    ],
   },
   {
-    path: '/cotizaciones',
-    label: 'Cotizaciones',
-    icon: 'file-text',
-    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
-  },
-  {
-    path: '/servicios',
-    label: 'Servicios',
-    icon: 'wrench',
-    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
-  },
-  {
-    path: '/ordenes',
-    label: 'Órdenes',
-    icon: 'clipboard-list',
-    roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
-  },
-  {
-    path: '/tecnicos',
-    label: 'Técnicos',
-    icon: 'hard-hat',
-    roles: ['ADMIN'],
-  },
-  {
-    path: '/mis-ordenes',
-    label: 'Mis Órdenes',
-    icon: 'hard-hat',
-    roles: ['TECHNICIAN'],
+    id: 'operations',
+    label: 'Gestión operativa',
+    entries: [
+      {
+        kind: 'link',
+        path: '/tecnicos',
+        label: 'Técnicos',
+        icon: 'hard-hat',
+        roles: ['ADMIN'],
+      },
+    ],
   },
 ];
 
@@ -73,11 +142,42 @@ export class Sidebar {
   readonly closeRequested = output<void>();
 
   protected readonly collapsed = signal(false);
+  protected readonly servicesExpanded = signal(this.router.url.startsWith('/servicios'));
   protected readonly currentUser = this.authFacade.currentUser;
+  protected readonly isCollapsed = computed(() => this.collapsed() && !this.mobileOpen());
 
-  protected readonly navItems = computed(() => {
+  protected readonly navSections = computed(() => {
     const role = this.authFacade.currentRole();
-    return role ? NAV_ITEMS.filter((item) => item.roles.includes(role)) : [];
+    if (!role) {
+      return [];
+    }
+
+    const visibleSections: NavSection[] = [];
+
+    for (const section of NAV_SECTIONS) {
+      const entries: NavEntry[] = [];
+
+      for (const entry of section.entries) {
+        if (!entry.roles.includes(role)) {
+          continue;
+        }
+
+        if (entry.kind === 'group') {
+          const children = entry.children.filter((child) => child.roles.includes(role));
+          if (children.length > 0) {
+            entries.push({ ...entry, children });
+          }
+        } else {
+          entries.push(entry);
+        }
+      }
+
+      if (entries.length > 0) {
+        visibleSections.push({ ...section, entries });
+      }
+    }
+
+    return visibleSections;
   });
 
   protected readonly roleLabel = computed(() => {
@@ -87,6 +187,15 @@ export class Sidebar {
 
   protected toggleCollapsed(): void {
     this.collapsed.update((collapsed) => !collapsed);
+  }
+
+  protected toggleServices(): void {
+    if (this.isCollapsed()) {
+      this.collapsed.set(false);
+      this.servicesExpanded.set(true);
+      return;
+    }
+    this.servicesExpanded.update((expanded) => !expanded);
   }
 
   protected close(): void {

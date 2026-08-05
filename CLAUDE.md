@@ -508,6 +508,32 @@ interface ClientContact {
 }
 ```
 
+Cada cliente puede registrar sus sedes y el responsable principal de cada una:
+
+```text
+clients/{clientId}/sites/{siteId}
+```
+
+```ts
+interface ClientSite {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  responsible: {
+    name: string;
+    position?: string;
+    email?: string;
+    phone: string;
+  };
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: Timestamp;
+  createdBy: string;
+  updatedAt: Timestamp;
+  updatedBy: string;
+}
+```
+
 ---
 
 ### 9.4 Colección `quotes`

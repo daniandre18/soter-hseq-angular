@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-soter-hseq"
+    "default": "soter-hseq",
+    "emulator": "demo-soter-hseq"
   }
 }

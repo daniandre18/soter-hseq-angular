@@ -6,6 +6,8 @@ export interface TechnicalNote {
   orderId: string;
   content: string;
   noteType: NoteType;
+  /** Ids de `orders/{orderId}/evidence` adjuntados al crear la nota (inmutable tras creación). */
+  attachmentIds?: string[];
   createdAt: Date;
   createdBy: string;
 }

@@ -33,9 +33,36 @@ export interface ClientContact {
   status: ClientStatus;
 }
 
+/** Responsable principal asociado a una sede del cliente. */
+export interface ClientSiteResponsible {
+  name: string;
+  position?: string;
+  email?: string;
+  phone: string;
+}
+
+/** Subcolección `clients/{clientId}/sites`. */
+export interface ClientSite {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  responsible: ClientSiteResponsible;
+  status: ClientStatus;
+  createdAt: Date;
+  createdBy: string;
+  updatedAt: Date;
+  updatedBy: string;
+}
+
 export type NewClient = Pick<
   Client,
   'businessName' | 'legalName' | 'taxId' | 'email' | 'phone' | 'address' | 'city' | 'notes' | 'status'
 >;
 
 export type NewClientContact = Omit<ClientContact, 'id'>;
+
+export type NewClientSite = Pick<
+  ClientSite,
+  'name' | 'address' | 'city' | 'responsible' | 'status'
+>;

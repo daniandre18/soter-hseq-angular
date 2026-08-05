@@ -47,6 +47,14 @@
             </div>
             <p class="order-summary">{{ order.serviceSummary }}</p>
             <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
+            @if (order.scheduledStart) {
+              <div class="order-card-footer">
+                <span>{{ formatDateTime(order.scheduledStart) }}</span>
+                @if (order.city) {
+                  <span>{{ order.city }}</span>
+                }
+              </div>
+            }
           </app-card>
         }
       </div>

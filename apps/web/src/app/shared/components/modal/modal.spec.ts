@@ -20,4 +20,12 @@ describe('Modal', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should render the responsive dialog structure when opened', async () => {
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.modal-dialog')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.modal-body')).toBeTruthy();
+  });
 });

@@ -14,4 +14,5 @@ export class StatCard {
   readonly value = input.required<number | string>();
   readonly icon = input.required<IconName>();
   readonly color = input<StatCardColor>('brand');
+  readonly compact = input(false);
 }

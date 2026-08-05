@@ -5,48 +5,56 @@
       [value]="ordersFacade.openCount()"
       icon="clipboard-list"
       color="brand"
+      [compact]="true"
     />
     <app-stat-card
       label="Órdenes Cerradas"
       [value]="ordersFacade.closedCount()"
       icon="circle-check-big"
       color="green"
+      [compact]="true"
     />
     <app-stat-card
       label="Vencidas"
       [value]="ordersFacade.overdueCount()"
       icon="triangle-alert"
       color="red"
+      [compact]="true"
     />
     <app-stat-card
       label="En Proceso"
       [value]="ordersFacade.inProgressCount()"
       icon="clock"
       color="orange"
+      [compact]="true"
     />
     <app-stat-card
       label="Clientes Activos"
       [value]="clientsFacade.activeCount()"
       icon="building-2"
       color="blue"
+      [compact]="true"
     />
     <app-stat-card
       label="Visitas Hoy"
       [value]="ordersFacade.todayVisitsCount()"
       icon="calendar-days"
       color="purple"
+      [compact]="true"
     />
     <app-stat-card
       label="Técnicos en Campo"
       [value]="ordersFacade.techniciansInFieldCount()"
       icon="hard-hat"
       color="orange"
+      [compact]="true"
     />
     <app-stat-card
       label="Órdenes Pendientes"
       [value]="ordersFacade.pendingCount()"
       icon="file-text"
       color="brand"
+      [compact]="true"
     />
   </div>
 
@@ -54,7 +62,9 @@
     <p class="dashboard-error">{{ ordersFacade.error() }}</p>
   }
 
-  @if (ordersFacade.overdueOrders().length > 0 || ordersFacade.correctionRequiredOrders().length > 0) {
+  @if (
+    ordersFacade.overdueOrders().length > 0 || ordersFacade.correctionRequiredOrders().length > 0
+  ) {
     <div class="dashboard-card dashboard-card--flush alerts-card">
       <div class="dashboard-card-header">
         <h2>Alertas Operativas</h2>
@@ -118,11 +128,18 @@
           @for (order of ordersFacade.recentOrders(); track order.id) {
             <a class="list-row" [routerLink]="['/ordenes']">
               <div class="list-row-main">
-                <p class="list-row-title">{{ order.title || order.serviceSummary || order.orderNumber }}</p>
-                <p class="list-row-subtitle">{{ order.clientBusinessName }} · {{ order.orderNumber }}</p>
+                <p class="list-row-title">
+                  {{ order.title || order.serviceSummary || order.orderNumber }}
+                </p>
+                <p class="list-row-subtitle">
+                  {{ order.clientBusinessName }} · {{ order.orderNumber }}
+                </p>
               </div>
               <div class="list-row-side">
-                <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
+                <app-status-badge
+                  [label]="statusLabel(order.status)"
+                  [color]="statusColor(order.status)"
+                />
                 <app-progress-bar [value]="statusProgress(order)" class="list-row-progress" />
               </div>
             </a>
@@ -132,8 +149,9 @@
     </div>
 
     <div class="dashboard-card dashboard-card--flush">
-      <div class="dashboard-card-header">
+      <div class="dashboard-card-header dashboard-card-header--actions">
         <h2>Próximas Visitas</h2>
+        <a routerLink="/agenda">Ver agenda</a>
       </div>
       @if (ordersFacade.upcomingVisits().length === 0) {
         <p class="dashboard-empty">Sin visitas próximas</p>
@@ -147,7 +165,10 @@
               </div>
               <div class="list-row-main">
                 <p class="list-row-title">{{ order.serviceSummary || order.orderNumber }}</p>
-                <p class="list-row-subtitle">{{ order.clientBusinessName }}</p>
+                <p class="list-row-subtitle">
+                  {{ formatVisitTime(order.scheduledStart!) }} · {{ order.clientBusinessName }} ·
+                  {{ ordersFacade.technicianName(order.assignedTechnicianIds[0] ?? '') }}
+                </p>
               </div>
             </div>
           }

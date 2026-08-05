@@ -1,0 +1,67 @@
+<div class="notification-bell">
+  <button
+    type="button"
+    class="bell-button"
+    aria-haspopup="true"
+    [attr.aria-expanded]="open()"
+    aria-label="Notificaciones"
+    (click)="toggle()"
+  >
+    <app-icon name="bell" />
+    @if (unreadCount() > 0) {
+      <span class="bell-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+    }
+  </button>
+
+  @if (open()) {
+    <div class="notification-panel" role="menu">
+      <div class="notification-panel-header">
+        <h3>Notificaciones</h3>
+        @if (unreadCount() > 0) {
+          <button type="button" class="mark-all-read-btn" (click)="markAllAsRead()">
+            Marcar todo leído
+          </button>
+        }
+      </div>
+
+      @if (notifications().length === 0) {
+        <p class="notification-empty">Sin notificaciones.</p>
+      } @else {
+        <ul class="notification-list">
+          @for (notification of notifications(); track notification.id) {
+            <li
+              class="notification-item"
+              [class.notification-item--unread]="isUnread(notification)"
+            >
+              <span class="notification-icon">
+                <app-icon [name]="typeIcon[notification.type]" />
+              </span>
+              <div class="notification-content">
+                <p class="notification-title">{{ translateDomainCodes(notification.title) }}</p>
+                <p class="notification-description">
+                  {{ translateDomainCodes(notification.description) }}
+                </p>
+                <div class="notification-meta">
+                  <span class="notification-time">
+                    {{ formatRelativeTime(notification.createdAt) }}
+                  </span>
+                  <a
+                    class="notification-cta"
+                    [routerLink]="entityRoute[notification.entityType]"
+                    [queryParams]="{ open: notification.entityId }"
+                    (click)="onNotificationClick(notification)"
+                  >
+                    Ver {{ notification.entityType === 'ORDER' ? 'orden' : 'cotización' }} →
+                  </a>
+                </div>
+              </div>
+              @if (isUnread(notification)) {
+                <span class="notification-dot" aria-hidden="true"></span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</div>

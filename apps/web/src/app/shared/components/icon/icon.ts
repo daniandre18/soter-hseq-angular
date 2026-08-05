@@ -10,6 +10,7 @@ export type IconName =
   | 'triangle-alert'
   | 'clock'
   | 'building-2'
+  | 'map-pin'
   | 'calendar-days'
   | 'hard-hat'
   | 'file-text'
@@ -29,7 +30,8 @@ export type IconName =
   | 'trash-2'
   | 'chevron-up'
   | 'chevron-down'
-  | 'chevrons-down';
+  | 'chevrons-down'
+  | 'search';
 
 @Component({
   selector: 'app-icon',
