@@ -266,13 +266,6 @@
                     [value]="newNoteContent()"
                     (input)="newNoteContent.set($any($event.target).value)"
                   ></textarea>
-                  <input
-                    type="file"
-                    aria-label="Adjuntar archivo a la nota"
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                    [disabled]="!evidenceUploadsEnabled"
-                    (change)="onNoteAttachmentSelected($event)"
-                  />
                   <app-button
                     size="sm"
                     (click)="addNoteSubmit()"
@@ -281,17 +274,6 @@
                     {{ addingNote() ? 'Guardando…' : 'Agregar' }}
                   </app-button>
                 </div>
-                @if (noteAttachment()) {
-                  <p class="field-help">Adjunto: {{ noteAttachment()?.name }}</p>
-                }
-                @if (noteAttachmentError()) {
-                  <p class="field-error">{{ noteAttachmentError() }}</p>
-                }
-                @if (!evidenceUploadsEnabled) {
-                  <p class="field-help">
-                    Modo demo gratuito: puedes registrar notas, pero no adjuntar archivos nuevos.
-                  </p>
-                }
               </div>
             }
 

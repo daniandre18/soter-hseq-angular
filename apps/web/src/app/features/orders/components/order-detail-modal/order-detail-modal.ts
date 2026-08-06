@@ -538,8 +538,6 @@ export class OrderDetailModal {
   protected readonly newNoteType = signal<NoteType>('GENERAL');
   protected readonly newNoteContent = signal('');
   protected readonly addingNote = signal(false);
-  protected readonly noteAttachment = signal<File | null>(null);
-  protected readonly noteAttachmentError = signal<string | null>(null);
 
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly evidenceUploadsEnabled = environment.evidenceUploadsEnabled;
@@ -790,28 +788,6 @@ export class OrderDetailModal {
     return null;
   }
 
-  protected onNoteAttachmentSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
-    this.noteAttachmentError.set(null);
-    if (!file) {
-      this.noteAttachment.set(null);
-      return;
-    }
-    const error = this.validateAttachmentFile(file);
-    if (error) {
-      this.noteAttachmentError.set(error);
-      this.noteAttachment.set(null);
-      return;
-    }
-    this.noteAttachment.set(file);
-  }
-
-  /**
-   * Si hay un archivo adjunto, se sube primero como evidencia real (Storage
-   * + `orders/{orderId}/evidence`) y luego la nota se crea referenciando su
-   * id — la nota es inmutable tras crearse (CLAUDE.md §9.7/`firestore.rules`),
-   * así que el vínculo debe fijarse en esta misma operación.
-   */
   protected async addNoteSubmit(): Promise<void> {
     const order = this.order();
     const content = this.newNoteContent().trim();
@@ -820,14 +796,8 @@ export class OrderDetailModal {
     }
     this.addingNote.set(true);
     try {
-      const attachment = this.noteAttachment();
-      const attachmentIds = attachment
-        ? [await this.ordersFacade.uploadEvidence(order.id, attachment, undefined, undefined)]
-        : undefined;
-      await this.ordersFacade.addNote(order.id, this.newNoteType(), content, attachmentIds);
+      await this.ordersFacade.addNote(order.id, this.newNoteType(), content);
       this.newNoteContent.set('');
-      this.noteAttachment.set(null);
-      this.noteAttachmentError.set(null);
     } finally {
       this.addingNote.set(false);
     }
