@@ -152,16 +152,22 @@ service cloud.firestore {
       // TECHNICIAN además queda limitado a los campos que su propio flujo de
       // campo necesita tocar (CLAUDE.md §11.4/§3.4): `status` (iniciar/enviar
       // a revisión, `OrdersService.updateStatus`), `progress`
-      // (`updateProgress`), y `actualStart`/`actualEnd`, que `updateStatus`
-      // fija junto con el cambio de estado. Reasignar técnicos o reprogramar
-      // fechas sigue siendo exclusivo de COORDINATOR/ADMIN.
+      // (`updateProgress`), `actualStart`/`actualEnd`, que `updateStatus`
+      // fija junto con el cambio de estado, y `evidenceCount` (el batch de
+      // `OrdersService.uploadEvidence` lo incrementa junto con el documento
+      // de evidencia; sin este campo en la lista, ese batch entero fallaba
+      // y el técnico nunca podía subir evidencias). Reasignar técnicos o
+      // reprogramar fechas sigue siendo exclusivo de COORDINATOR/ADMIN.
       allow update: if isAdmin()
                      || (hasRole(['COORDINATOR']) && resource.data.status != 'CLOSED')
                      || (hasRole(['TECHNICIAN'])
                          && request.auth.uid in resource.data.assignedTechnicianIds
                          && resource.data.status != 'CLOSED'
                          && request.resource.data.diff(resource.data).affectedKeys()
-                              .hasOnly(['status', 'progress', 'actualStart', 'actualEnd', 'updatedAt', 'updatedBy']));
+                              .hasOnly([
+                                'status', 'progress', 'actualStart', 'actualEnd',
+                                'evidenceCount', 'updatedAt', 'updatedBy'
+                              ]));
       // Solo se puede eliminar en `DRAFT` (nada de campo/evidencia/actas
       // asociadas todavía) y solo admin: si la orden viene de una
       // cotización convertida, borrarla también revierte `quotes/{id}` a
