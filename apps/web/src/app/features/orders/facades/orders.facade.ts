@@ -17,7 +17,6 @@ import type { Evidence, EvidenceCategory } from '../models/evidence.model';
 import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
 import type { OrderEvent } from '../models/order-event.model';
 import type { PieSlice } from '../../../shared/components/pie-chart/pie-chart';
-import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
 const OPEN_STATUSES = new Set<ServiceOrder['status']>([
   'SCHEDULED',
@@ -161,26 +160,6 @@ export class OrdersFacade {
       value,
       color: ORDER_STATUS_CONFIG[status].hex,
     }));
-  });
-
-  /**
-   * Para el BarList "Servicios más solicitados". Se agrupa por el texto
-   * libre `serviceSummary` (CLAUDE.md no define un catálogo de servicios
-   * normalizado con id propio todavía).
-   */
-  readonly topServices = computed<BarListItem[]>(() => {
-    const counts = new Map<string, number>();
-    for (const order of this.orders()) {
-      const label = order.serviceSummary?.trim();
-      if (!label) {
-        continue;
-      }
-      counts.set(label, (counts.get(label) ?? 0) + 1);
-    }
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([label, value]) => ({ key: label, label, value }));
   });
 
   init(): void {

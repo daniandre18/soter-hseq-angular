@@ -7,7 +7,8 @@
     "activeClients": "Active clients",
     "visitsToday": "Visits today",
     "techniciansInField": "Technicians in the field",
-    "pendingOrders": "Pending orders"
+    "pendingOrders": "Pending orders",
+    "underReview": "Under review"
   },
   "operationalAlerts": "Operational alerts",
   "overdueOrder": "{{orderNumber}} is overdue",
@@ -17,8 +18,11 @@
   "ordersTotalOther": "{{count}} orders total",
   "ordersUnit": "orders",
   "noOrders": "No orders registered",
-  "topServices": "Most requested services",
-  "noServices": "No services with orders",
+  "quotesByStatus": "Quotes by status",
+  "quotesTotalOne": "1 quote total",
+  "quotesTotalOther": "{{count}} quotes total",
+  "quotesUnit": "quotes",
+  "noQuotes": "No quotes registered",
   "recentOrders": "Recent orders",
   "noRecentOrders": "No recent orders",
   "viewAllOrders": "View all",

@@ -7,7 +7,8 @@
     "activeClients": "Clientes activos",
     "visitsToday": "Visitas hoy",
     "techniciansInField": "Técnicos en campo",
-    "pendingOrders": "Órdenes pendientes"
+    "pendingOrders": "Órdenes pendientes",
+    "underReview": "En revisión"
   },
   "operationalAlerts": "Alertas operativas",
   "overdueOrder": "{{orderNumber}} vencida",
@@ -17,8 +18,11 @@
   "ordersTotalOther": "{{count}} órdenes en total",
   "ordersUnit": "órdenes",
   "noOrders": "Sin órdenes registradas",
-  "topServices": "Servicios más solicitados",
-  "noServices": "Sin servicios con órdenes",
+  "quotesByStatus": "Cotizaciones por estado",
+  "quotesTotalOne": "1 cotización en total",
+  "quotesTotalOther": "{{count}} cotizaciones en total",
+  "quotesUnit": "cotizaciones",
+  "noQuotes": "Sin cotizaciones registradas",
   "recentOrders": "Órdenes recientes",
   "noRecentOrders": "Sin órdenes recientes",
   "viewAllOrders": "Ver todas",

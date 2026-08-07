@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrdersFacade } from '../orders/facades/orders.facade';
 import { ClientsFacade } from '../clients/facades/clients.facade';
+import { QuotesFacade } from '../quotes/facades/quotes.facade';
 import { ORDER_STATUS_CONFIG } from '../orders/models/order-status-config';
 import type { ServiceOrder } from '../orders/models/order.model';
 import { StatCard } from '../../shared/components/stat-card/stat-card';
@@ -15,13 +16,14 @@ import { LanguageService } from '../../core/i18n/language.service';
 @Component({
   selector: 'app-dashboard',
   imports: [StatCard, BarList, StatusBadge, ProgressBar, Icon, RouterLink, TranslocoPipe],
-  providers: [...provideTranslocoScope('dashboard', 'orders')],
+  providers: [...provideTranslocoScope('dashboard', 'orders', 'quotes')],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
   protected readonly ordersFacade = inject(OrdersFacade);
   protected readonly clientsFacade = inject(ClientsFacade);
+  protected readonly quotesFacade = inject(QuotesFacade);
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
 
@@ -29,6 +31,15 @@ export class Dashboard {
     this.language.currentLanguage();
     this.language.translationsLoaded();
     return this.ordersFacade.statusBreakdown().map((slice) => ({
+      ...slice,
+      label: this.transloco.translate(slice.label),
+    }));
+  });
+
+  protected readonly translatedQuoteBreakdown = computed(() => {
+    this.language.currentLanguage();
+    this.language.translationsLoaded();
+    return this.quotesFacade.statusBreakdown().map((slice) => ({
       ...slice,
       label: this.transloco.translate(slice.label),
     }));
@@ -42,6 +53,7 @@ export class Dashboard {
     // loguearse).
     this.ordersFacade.init();
     this.clientsFacade.init();
+    this.quotesFacade.init();
   }
 
   protected statusLabel(status: ServiceOrder['status']): string {

@@ -29,6 +29,13 @@
       [compact]="true"
     />
     <app-stat-card
+      [label]="'dashboard.kpi.underReview' | transloco"
+      [value]="ordersFacade.underReviewCount()"
+      icon="eye"
+      [color]="ordersFacade.underReviewCount() > 0 ? 'purple' : 'neutral'"
+      [compact]="true"
+    />
+    <app-stat-card
       [label]="'dashboard.kpi.closedOrders' | transloco"
       [value]="ordersFacade.closedCount()"
       icon="circle-check-big"
@@ -115,14 +122,15 @@
     </div>
 
     <div class="dashboard-card">
-      <div class="dashboard-card-header dashboard-card-header--divided">
-        <app-icon name="chart-pie" class="dashboard-card-icon" />
-        <h2>{{ 'dashboard.topServices' | transloco }}</h2>
+      <div class="dashboard-card-header">
+        <h2>{{ 'dashboard.quotesByStatus' | transloco }}</h2>
+        <p>{{ (quotesFacade.quotes().length === 1 ? 'dashboard.quotesTotalOne' : 'dashboard.quotesTotalOther') | transloco: { count: quotesFacade.quotes().length } }}</p>
       </div>
       <app-bar-list
-        [items]="ordersFacade.topServices()"
-        [unit]="'dashboard.ordersUnit' | transloco"
-        [emptyMessage]="'dashboard.noServices' | transloco"
+        [items]="translatedQuoteBreakdown()"
+        [unit]="'dashboard.quotesUnit' | transloco"
+        [emptyMessage]="'dashboard.noQuotes' | transloco"
+        [showValue]="true"
       />
     </div>
 

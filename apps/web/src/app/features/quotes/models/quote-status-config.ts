@@ -2,16 +2,19 @@ import type { QuoteStatus } from './quote.model';
 
 export interface QuoteStatusConfig {
   translationKey: `quotes.status.${string}`;
+  /** Nombre de color usado por `StatusBadge` (clases `.status-badge--<color>`). */
   color: string;
+  /** Mismo color en hex, para contextos que no pueden usar CSS (charts). */
+  hex: string;
 }
 
 export const QUOTE_STATUS_CONFIG: Record<QuoteStatus, QuoteStatusConfig> = {
-  DRAFT: { translationKey: 'quotes.status.draft', color: 'gray' },
-  SENT: { translationKey: 'quotes.status.sent', color: 'blue' },
-  APPROVED: { translationKey: 'quotes.status.approved', color: 'green' },
-  REJECTED: { translationKey: 'quotes.status.rejected', color: 'red' },
-  EXPIRED: { translationKey: 'quotes.status.expired', color: 'orange' },
-  CONVERTED: { translationKey: 'quotes.status.converted', color: 'purple' },
+  DRAFT: { translationKey: 'quotes.status.draft', color: 'gray', hex: '#6b7280' },
+  SENT: { translationKey: 'quotes.status.sent', color: 'blue', hex: '#2563eb' },
+  APPROVED: { translationKey: 'quotes.status.approved', color: 'green', hex: '#16a34a' },
+  REJECTED: { translationKey: 'quotes.status.rejected', color: 'red', hex: '#dc2626' },
+  EXPIRED: { translationKey: 'quotes.status.expired', color: 'orange', hex: '#ea580c' },
+  CONVERTED: { translationKey: 'quotes.status.converted', color: 'purple', hex: '#9333ea' },
 };
 
 // Solo transiciones manuales (CLAUDE.md §10.1); EXPIRED se asume automática
