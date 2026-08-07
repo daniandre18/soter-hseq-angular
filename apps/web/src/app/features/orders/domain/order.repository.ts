@@ -46,6 +46,14 @@ export interface OrderRepository {
    *  mismo lugar que el resto de las notas. */
   requestCorrection(orderId: string, reason: string, updatedBy: string): Promise<void>;
 
+  /** El técnico solicita el cierre desde la ejecución en campo (CLAUDE.md
+   *  §3.4/§11.4 "enviar la orden a revisión"): pasa a `UNDER_REVIEW`, igual
+   *  que `updateOrder(id, {status:'UNDER_REVIEW'})`, pero además deja las
+   *  observaciones finales como una nota más en la bitácora — mismo patrón
+   *  que `requestCorrection`. La aprobación real sigue pasando por el Acta
+   *  (`approveClosingAct`), esto solo abre la revisión del coordinador. */
+  requestClosure(orderId: string, observations: string | undefined, updatedBy: string): Promise<void>;
+
   /** Crea una orden por cada fila (servicio) del formulario manual, sin
    *  pasar por una cotización. Devuelve los ids creados. */
   createOrders(

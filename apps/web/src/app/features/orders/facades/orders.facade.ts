@@ -207,6 +207,14 @@ export class OrdersFacade {
     await this.service.requestCorrection(orderId, reason, userId);
   }
 
+  /** El técnico solicita el cierre ("Solicitar Cierre" en el detalle de
+   *  orden): igual que `updateStatus(id,'UNDER_REVIEW')` pero dejando las
+   *  observaciones finales como nota, en un solo batch. */
+  async requestClosure(orderId: string, observations?: string): Promise<void> {
+    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
+    await this.service.requestClosure(orderId, observations, userId);
+  }
+
   async createOrders(
     clientId: string,
     clientBusinessName: string,

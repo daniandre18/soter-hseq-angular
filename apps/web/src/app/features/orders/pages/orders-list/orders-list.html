@@ -318,11 +318,6 @@
   }
 </section>
 
-<app-order-detail-modal
-  [order]="liveDetailOrder()"
-  (closeRequested)="closeDetail()"
-  (editRequested)="openEdit($event)"
-/>
 <app-order-form-modal
   [open]="formOpen()"
   [editingOrder]="editingOrder()"

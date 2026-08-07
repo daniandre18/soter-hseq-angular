@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { OrdersList } from './orders-list';
@@ -109,46 +109,5 @@ describe('OrdersList', () => {
     expect(fixture.nativeElement.querySelector('.mobile-orders-count')?.textContent).toContain(
       '1 orden',
     );
-  });
-
-  it('opens the detail modal for the order named in ?open= once it loads', async () => {
-    await TestBed.resetTestingModule()
-      .configureTestingModule({
-        imports: [OrdersList],
-        providers: [
-          provideRouter([]),
-          {
-            provide: ActivatedRoute,
-            useValue: { queryParamMap: of(convertToParamMap({ open: 'order-1' })) },
-          },
-          {
-            provide: OrdersFacade,
-            useValue: {
-              orders,
-              loading: signal(false),
-              technicians: signal([]),
-              technicianName: () => 'Andrés Morales',
-              init: () => undefined,
-              watchNotes: () => of([]),
-              watchEvidence: () => of([]),
-              watchOrderEvents: () => of([]),
-              watchClosingAct: () => of(null),
-              displayNameFor: () => '',
-            },
-          },
-          { provide: AuthFacade, useValue: { currentUser: signal(null), currentRole: signal('ADMIN') } },
-          { provide: ClientsFacade, useValue: { clients: signal([]), init: () => undefined } },
-          {
-            provide: ServicesFacade,
-            useValue: { activeServices: signal([]), byId: () => undefined, init: () => undefined },
-          },
-        ],
-      })
-      .compileComponents();
-
-    const deepLinkFixture = TestBed.createComponent(OrdersList);
-    await deepLinkFixture.whenStable();
-
-    expect(deepLinkFixture.componentInstance['detailOrderId']()).toBe('order-1');
   });
 });

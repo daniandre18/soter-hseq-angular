@@ -33,10 +33,3 @@ export const NOTIFICATION_TYPE_ICON: Record<NotificationType, IconName> = {
   EVIDENCE_UPLOADED: 'clipboard-list',
   QUOTE_STATUS_CHANGED: 'circle-check-big',
 };
-
-/** Ruta de listado a la que navega el CTA "Ver..." — no hay deep-link por id
- *  todavía (ni órdenes ni cotizaciones tienen ruta `/:id`, CLAUDE.md pendiente). */
-export const NOTIFICATION_ENTITY_ROUTE: Record<NotificationEntityType, string> = {
-  ORDER: '/ordenes',
-  QUOTE: '/cotizaciones',
-};

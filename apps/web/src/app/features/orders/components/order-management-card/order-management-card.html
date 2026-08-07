@@ -1,0 +1,68 @@
+<section class="management-card">
+  <h2>{{ 'orders.page.management.title' | transloco }}</h2>
+
+  @if (canChangeStatusFreely()) {
+    <div class="management-section">
+      <h3>{{ 'orders.statusChangeModal.title' | transloco }}</h3>
+      <div class="management-row">
+        <select
+          [attr.aria-label]="'orders.statusChangeModal.newStatus' | transloco"
+          [value]="statusChangeTarget()"
+          (change)="statusChangeTarget.set($any($event.target).value)"
+        >
+          @for (status of freelySettableStatuses; track status) {
+            <option [value]="status">{{ statusOptionLabel(status) | transloco }}</option>
+          }
+        </select>
+        <app-button size="sm" (click)="confirmStatusChange()" [disabled]="changingStatus()">
+          {{ 'orders.statusChangeModal.confirm' | transloco }}
+        </app-button>
+      </div>
+    </div>
+  }
+
+  @if (canSchedule()) {
+    <div class="management-section">
+      <h3>{{ 'orders.detail.schedule.title' | transloco }}</h3>
+      <div class="schedule-fields">
+        <label class="field">
+          {{ 'orders.detail.schedule.start' | transloco }}
+          <input type="datetime-local" [value]="scheduledStartValue()" (input)="onScheduledStartInput($event)" />
+        </label>
+        <label class="field">
+          {{ 'orders.detail.schedule.end' | transloco }}
+          <input type="datetime-local" [value]="scheduledEndValue()" (input)="onScheduledEndInput($event)" />
+        </label>
+        <app-button size="sm" (click)="saveSchedule()" [disabled]="!canConfirmSchedule()">
+          {{ (saving() ? 'orders.detail.progress.saving' : 'orders.detail.schedule.schedule') | transloco }}
+        </app-button>
+      </div>
+    </div>
+  }
+
+  @if (canAssign()) {
+    <div class="management-section">
+      <h3>{{ 'orders.detail.assign.title' | transloco }}</h3>
+      @if (technicians().length === 0) {
+        <p class="muted-text">{{ 'orders.detail.assign.noTechnicians' | transloco }}</p>
+      } @else {
+        <div class="technician-options">
+          @for (technician of technicians(); track technician.id) {
+            <label class="technician-option">
+              <input
+                type="checkbox"
+                [checked]="selectedTechnicianIds().includes(technician.id)"
+                (change)="toggleTechnician(technician.id, $any($event.target).checked)"
+              />
+              <app-avatar [name]="technician.displayName" size="sm" />
+              {{ technician.displayName }}
+            </label>
+          }
+        </div>
+        <app-button size="sm" (click)="saveAssignment()" [disabled]="assigning()">
+          {{ (assigning() ? 'orders.detail.progress.saving' : 'orders.detail.assign.assign') | transloco }}
+        </app-button>
+      }
+    </div>
+  }
+</section>

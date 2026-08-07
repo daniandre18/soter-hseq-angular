@@ -736,13 +736,17 @@ interface TechnicalNote {
   id: string;
   orderId: string;
   content: string;
-  noteType: 'GENERAL' | 'FINDING' | 'ACTIVITY' | 'RECOMMENDATION';
+  noteType: 'GENERAL' | 'FINDING' | 'ACTIVITY' | 'RECOMMENDATION' | 'INCIDENT';
   createdAt: Timestamp;
   createdBy: string;
   updatedAt?: Timestamp;
   updatedBy?: string;
 }
 ```
+
+`INCIDENT` ("Novedad") se usa desde el "Registro de Avance" de la página de
+detalle de orden (`/ordenes/:id`) cuando el técnico marca el avance
+registrado como una novedad/hallazgo en vez de progreso normal.
 
 ---
 

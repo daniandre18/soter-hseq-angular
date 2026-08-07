@@ -58,8 +58,8 @@
                   </span>
                   <a
                     class="notification-cta"
-                    [routerLink]="entityRoute[notification.entityType]"
-                    [queryParams]="{ open: notification.entityId }"
+                    [routerLink]="entityLink(notification)"
+                    [queryParams]="entityQueryParams(notification)"
                     (click)="onNotificationClick(notification)"
                   >
                     {{ (notification.entityType === 'ORDER' ? 'notifications.viewOrder' : 'notifications.viewQuote') | transloco }}

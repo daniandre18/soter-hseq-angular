@@ -1,0 +1,43 @@
+@if (canLog()) {
+  <section class="advance-card">
+    <h2>{{ 'orders.page.advance.title' | transloco }}</h2>
+
+    <label class="field field--full">
+      {{ 'orders.page.advance.activityLabel' | transloco }} *
+      <textarea
+        rows="3"
+        [placeholder]="'orders.page.advance.activityPlaceholder' | transloco"
+        [value]="activityText()"
+        (input)="onActivityInput($event)"
+      ></textarea>
+    </label>
+
+    <div class="advance-row">
+      <label class="field">
+        {{ 'orders.page.advance.progressLabel' | transloco }}
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          [value]="progressValue()"
+          (input)="onProgressInput($event)"
+        />
+      </label>
+
+      <label class="field">
+        {{ 'orders.page.advance.statusLabel' | transloco }}
+        <select [value]="status()" (change)="onStatusChange($event)">
+          <option value="NORMAL">{{ 'orders.page.advance.statusNormal' | transloco }}</option>
+          <option value="INCIDENT">{{ 'orders.page.advance.statusIncident' | transloco }}</option>
+        </select>
+      </label>
+    </div>
+
+    <app-progress-bar [value]="progressValue()" />
+
+    <app-button (click)="save()" [disabled]="saving()">
+      {{ (saving() ? 'orders.page.advance.saving' : 'orders.page.advance.save') | transloco }}
+    </app-button>
+  </section>
+}

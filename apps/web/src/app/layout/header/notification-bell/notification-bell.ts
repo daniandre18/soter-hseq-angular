@@ -6,7 +6,6 @@ import { translateDomainCodes } from '../../../shared/utils/domain-labels';
 import { AuthFacade } from '../../../features/auth/facades/auth.facade';
 import { NotificationsFacade } from '../../../features/notifications/facades/notifications.facade';
 import {
-  NOTIFICATION_ENTITY_ROUTE,
   NOTIFICATION_TYPE_ICON,
   type AppNotification,
 } from '../../../features/notifications/models/notification.model';
@@ -35,12 +34,24 @@ export class NotificationBell {
   protected readonly unreadCount = this.facade.unreadCount;
   protected readonly open = signal(false);
   protected readonly typeIcon = NOTIFICATION_TYPE_ICON;
-  protected readonly entityRoute = NOTIFICATION_ENTITY_ROUTE;
   protected readonly translateDomainCodes = translateDomainCodes;
 
   protected isUnread(notification: AppNotification): boolean {
     const userId = this.authFacade.currentUser()?.id;
     return !!userId && !notification.readBy.includes(userId);
+  }
+
+  /** Las órdenes ya tienen ruta de detalle propia (`/ordenes/:id`); las
+   *  cotizaciones todavía se abren desde su listado vía `?open=<id>`
+   *  (fuera de alcance de este rediseño). */
+  protected entityLink(notification: AppNotification): readonly (string | undefined)[] {
+    return notification.entityType === 'ORDER'
+      ? ['/ordenes', notification.entityId]
+      : ['/cotizaciones'];
+  }
+
+  protected entityQueryParams(notification: AppNotification): Record<string, string> | null {
+    return notification.entityType === 'ORDER' ? null : { open: notification.entityId };
   }
 
   protected toggle(): void {

@@ -1,7 +1,5 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
-import { map } from 'rxjs';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
@@ -12,7 +10,6 @@ import { ProgressBar } from '../../../../shared/components/progress-bar/progress
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Icon } from '../../../../shared/components/icon/icon';
-import { OrderDetailModal } from '../../components/order-detail-modal/order-detail-modal';
 import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
@@ -28,19 +25,7 @@ const CLOSED_ORDER_STATUSES = new Set<OrderStatus>(['CLOSED', 'CANCELLED']);
 
 @Component({
   selector: 'app-orders-list',
-  imports: [
-    Card,
-    Button,
-    StatusBadge,
-    ProgressBar,
-    Avatar,
-    Modal,
-    Icon,
-    OrderDetailModal,
-    OrderFormModal,
-    TranslocoPipe,
-    LocalizedDatePipe,
-  ],
+  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, Modal, Icon, OrderFormModal, TranslocoPipe, LocalizedDatePipe],
   providers: [...provideTranslocoScope('orders')],
   templateUrl: './orders-list.html',
   styleUrl: './orders-list.scss',
@@ -49,22 +34,13 @@ export class OrdersList {
   protected readonly ordersFacade = inject(OrdersFacade);
   private readonly authFacade = inject(AuthFacade);
   private readonly clientsFacade = inject(ClientsFacade);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
 
-  /** `?open=<id>` — usado por la campanita de notificaciones para abrir
-   *  directo el detalle en vez de solo aterrizar en el listado. */
-  private readonly openQueryParamId = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get('open'))),
-    { initialValue: null },
-  );
-
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilterOption>('all');
   protected readonly visibleCount = signal(PAGE_SIZE);
-  protected readonly detailOrderId = signal<string | null>(null);
   protected readonly formOpen = signal(false);
   protected readonly editingOrder = signal<ServiceOrder | null>(null);
   protected readonly deletingOrder = signal<ServiceOrder | null>(null);
@@ -123,36 +99,11 @@ export class OrdersList {
     Math.min(PAGE_SIZE, this.filtered().length - this.visibleCount()),
   );
 
-  /** Referencia "viva": si la orden cambia mientras el modal sigue abierto,
-   *  refleja el dato actualizado en vez de una foto vieja. */
-  protected readonly liveDetailOrder = computed<ServiceOrder | null>(() => {
-    const id = this.detailOrderId();
-    return id ? (this.ordersFacade.orders().find((order) => order.id === id) ?? null) : null;
-  });
-
   constructor() {
     this.ordersFacade.init();
     if (this.canManage()) {
       this.clientsFacade.init();
     }
-
-    // Espera a que `orders()` traiga la orden pedida (puede llegar vacío
-    // mientras el listener de Firestore aún carga) y limpia el query param
-    // al abrir, para no reabrir el modal si el usuario navega de vuelta.
-    effect(() => {
-      const id = this.openQueryParamId();
-      if (!id) {
-        return;
-      }
-      const order = this.ordersFacade.orders().find((candidate) => candidate.id === id);
-      if (order) {
-        this.detailOrderId.set(order.id);
-        void this.router.navigate([], {
-          queryParams: { open: null },
-          queryParamsHandling: 'merge',
-        });
-      }
-    });
   }
 
   protected statusLabel(status: OrderStatus): string {
@@ -204,23 +155,11 @@ export class OrdersList {
   }
 
   protected openDetail(order: ServiceOrder): void {
-    this.detailOrderId.set(order.id);
-  }
-
-  protected closeDetail(): void {
-    this.detailOrderId.set(null);
+    void this.router.navigate(['/ordenes', order.id]);
   }
 
   protected openCreate(): void {
     this.editingOrder.set(null);
-    this.formOpen.set(true);
-  }
-
-  /** Disparado desde `OrderDetailModal` ("Editar"): cierra el detalle y
-   *  abre el mismo formulario de creación en modo edición. */
-  protected openEdit(order: ServiceOrder): void {
-    this.detailOrderId.set(null);
-    this.editingOrder.set(order);
     this.formOpen.set(true);
   }
 

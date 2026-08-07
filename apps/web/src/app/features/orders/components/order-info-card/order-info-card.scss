@@ -1,0 +1,90 @@
+.info-card {
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: white;
+  border: 1px solid var(--color-gray-200);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  > div {
+    min-width: 0;
+    padding: 0.75rem;
+    border: 1px solid var(--color-gray-100);
+    border-radius: var(--radius-md);
+  }
+}
+
+.info-label {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+}
+
+.info-value {
+  margin: 0.125rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-900);
+  overflow-wrap: anywhere;
+
+  &--muted {
+    font-weight: 400;
+    font-style: italic;
+    color: var(--color-gray-400);
+  }
+
+  &--link {
+    display: inline-block;
+    color: var(--color-brand-600);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.technician-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+}
+
+.technician-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-800);
+}
+
+.info-description {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-gray-100);
+}
+
+@media (max-width: 640px) {
+  .info-card {
+    padding: 1rem;
+  }
+
+  .info-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+}

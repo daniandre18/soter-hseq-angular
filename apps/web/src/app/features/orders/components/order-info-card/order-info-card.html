@@ -1,0 +1,107 @@
+<section class="info-card">
+  <h2>{{ 'orders.detail.tabs.information' | transloco }}</h2>
+
+  <div class="info-grid">
+    <div>
+      <p class="info-label">{{ 'orders.columns.code' | transloco }}</p>
+      <p class="info-value">{{ order().orderNumber }}</p>
+    </div>
+
+    <div>
+      <p class="info-label">{{ 'orders.detail.info.service' | transloco }}</p>
+      <p class="info-value">{{ order().serviceSummary }}</p>
+    </div>
+
+    <div>
+      <p class="info-label">{{ 'orders.columns.client' | transloco }}</p>
+      <p class="info-value">{{ order().clientBusinessName }}</p>
+    </div>
+
+    @if (order().serviceAddress) {
+      <div>
+        <p class="info-label">{{ 'orders.detail.info.site' | transloco }}</p>
+        <p class="info-value">{{ order().serviceAddress }}</p>
+      </div>
+    }
+
+    @if (order().quoteId) {
+      <div>
+        <p class="info-label">{{ 'orders.detail.info.sourceQuote' | transloco }}</p>
+        <a
+          class="info-value info-value--link"
+          [routerLink]="['/cotizaciones']"
+          [queryParams]="{ open: order().quoteId }"
+        >
+          {{ order().quoteNumber ?? order().quoteId }}
+        </a>
+      </div>
+    }
+
+    @if (order().dueDate) {
+      <div>
+        <p class="info-label">{{ 'orders.detail.info.dueDate' | transloco }}</p>
+        <p class="info-value">
+          {{ order().dueDate | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
+        </p>
+      </div>
+    }
+
+    <div>
+      <p class="info-label">{{ 'orders.detail.info.assignedTechnicians' | transloco }}</p>
+      @if (assignedTechnicianNames().length > 0) {
+        <div class="technician-chips">
+          @for (name of assignedTechnicianNames(); track name) {
+            <span class="technician-chip">
+              <app-avatar [name]="name" size="sm" />
+              {{ name }}
+            </span>
+          }
+        </div>
+      } @else {
+        <p class="info-value info-value--muted">{{ 'orders.unassigned' | transloco }}</p>
+      }
+    </div>
+
+    @if (order().scheduledStart) {
+      <div>
+        <p class="info-label">{{ 'orders.detail.info.scheduledVisit' | transloco }}</p>
+        <p class="info-value">
+          {{ order().scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
+          @if (order().scheduledEnd) {
+            — {{ order().scheduledEnd | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
+          }
+        </p>
+      </div>
+    }
+
+    @if (order().actualStart) {
+      <div>
+        <p class="info-label">{{ 'orders.detail.info.actualStart' | transloco }}</p>
+        <p class="info-value">
+          {{ order().actualStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
+        </p>
+      </div>
+    }
+
+    @if (order().actualEnd) {
+      <div>
+        <p class="info-label">{{ 'orders.detail.info.actualEnd' | transloco }}</p>
+        <p class="info-value">
+          {{ order().actualEnd | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
+        </p>
+      </div>
+    }
+
+    <div>
+      <p class="info-label">{{ 'orders.columns.priority' | transloco }}</p>
+      <app-status-badge [label]="priorityLabel()" [color]="priorityColor()" />
+    </div>
+  </div>
+
+  @if (order().description) {
+    <div class="info-description">
+      <p class="info-label">{{ 'orders.detail.info.description' | transloco }}</p>
+      <p class="info-value">{{ order().description }}</p>
+    </div>
+  }
+</section>

@@ -197,6 +197,30 @@ export class FirebaseOrderRepository implements OrderRepository {
     await batch.commit();
   }
 
+  async requestClosure(
+    orderId: string,
+    observations: string | undefined,
+    updatedBy: string,
+  ): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    if (observations) {
+      const noteRef = doc(collection(this.firestore, 'orders', orderId, 'notes'));
+      batch.set(noteRef, {
+        content: `Cierre solicitado: ${observations}`,
+        noteType: 'GENERAL',
+        createdAt: serverTimestamp(),
+        createdBy: updatedBy,
+      });
+    }
+    batch.update(doc(this.firestore, 'orders', orderId), {
+      status: 'UNDER_REVIEW',
+      actualEnd: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    });
+    await batch.commit();
+  }
+
   async createOrders(
     clientId: string,
     clientBusinessName: string,

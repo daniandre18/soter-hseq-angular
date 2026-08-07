@@ -80,8 +80,7 @@
         @for (order of ordersFacade.overdueOrders(); track order.id) {
           <a
             class="list-row alert-row"
-            [routerLink]="['/ordenes']"
-            [queryParams]="{ open: order.id }"
+            [routerLink]="['/ordenes', order.id]"
           >
             <app-icon name="triangle-alert" class="alert-icon alert-icon--red" />
             <div class="list-row-main">
@@ -93,8 +92,7 @@
         @for (order of ordersFacade.correctionRequiredOrders(); track order.id) {
           <a
             class="list-row alert-row"
-            [routerLink]="['/ordenes']"
-            [queryParams]="{ open: order.id }"
+            [routerLink]="['/ordenes', order.id]"
           >
             <app-icon name="triangle-alert" class="alert-icon alert-icon--orange" />
             <div class="list-row-main">
@@ -144,7 +142,7 @@
       } @else {
         <div class="list">
           @for (order of ordersFacade.recentOrders(); track order.id) {
-            <a class="list-row" [routerLink]="['/ordenes']" [queryParams]="{ open: order.id }">
+            <a class="list-row" [routerLink]="['/ordenes', order.id]">
               <div class="list-row-main">
                 <p class="list-row-title">
                   {{ order.title || order.serviceSummary || order.orderNumber }}
@@ -180,7 +178,7 @@
       } @else {
         <div class="list">
           @for (order of ordersFacade.upcomingVisits(); track order.id) {
-            <a class="list-row" [routerLink]="['/ordenes']" [queryParams]="{ open: order.id }">
+            <a class="list-row" [routerLink]="['/ordenes', order.id]">
               <div class="visit-date">
                 <span class="visit-day">{{ formatVisitDay(order.scheduledStart!) }}</span>
                 <span class="visit-month">{{ formatVisitMonth(order.scheduledStart!) }}</span>

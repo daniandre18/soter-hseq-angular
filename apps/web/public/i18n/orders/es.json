@@ -57,7 +57,8 @@
     "general": "General",
     "finding": "Hallazgo",
     "activity": "Actividad",
-    "recommendation": "Recomendación"
+    "recommendation": "Recomendación",
+    "incident": "Novedad"
   },
   "evidenceCategory": {
     "before": "Antes",
@@ -65,6 +66,13 @@
     "after": "Después",
     "finding": "Hallazgo",
     "supportingDocument": "Documento de soporte"
+  },
+  "milestones": {
+    "assigned": "Orden asignada",
+    "executionStarted": "Ejecución iniciada",
+    "inProgress": "En progreso",
+    "underReview": "Enviada a revisión",
+    "closed": "Cierre y firma de acta"
   },
   "eventAction": {
     "noteAdded": "Nota agregada",
@@ -111,6 +119,7 @@
     },
     "info": {
       "service": "Servicio",
+      "site": "Sede",
       "sourceQuote": "Cotización de origen",
       "dueDate": "Fecha límite",
       "assignedTechnicians": "Técnicos asignados",
@@ -189,6 +198,58 @@
     "closeAndGeneratePdf": "Cerrar Orden y Generar PDF",
     "generatingPdf": "Generando PDF…",
     "downloadPdf": "Descargar PDF"
+  },
+  "page": {
+    "breadcrumbAriaLabel": "Ruta de navegación",
+    "breadcrumbOrders": "Órdenes",
+    "breadcrumbMyOrders": "Mis Órdenes",
+    "title": "Detalle de Orden de Trabajo",
+    "searchPlaceholder": "Buscar orden por número o cliente…",
+    "searchAriaLabel": "Buscar orden",
+    "notFoundTitle": "Orden no encontrada",
+    "notFoundText": "No existe o no tienes acceso a esta orden.",
+    "backToList": "Volver al listado",
+    "closure": {
+      "title": "Solicitud de Cierre",
+      "observations": "Observaciones finales",
+      "observationsPlaceholder": "Observaciones para el coordinador...",
+      "approvalNotice": "El cierre requiere aprobación del coordinador.",
+      "submit": "Solicitar Cierre",
+      "submitting": "Enviando…",
+      "blockedNoNotes": "Registra al menos una nota antes de solicitar el cierre.",
+      "blockedNoEvidence": "Sube al menos una evidencia antes de solicitar el cierre.",
+      "success": "Cierre solicitado. Queda pendiente de revisión del coordinador."
+    },
+    "actions": {
+      "title": "Acciones",
+      "edit": "Editar",
+      "cancelOrder": "Cancelar Orden",
+      "startExecution": "Iniciar Ejecución",
+      "starting": "Iniciando…"
+    },
+    "advance": {
+      "title": "Registro de Avance",
+      "activityLabel": "Actividad realizada",
+      "activityPlaceholder": "Describe la actividad realizada...",
+      "progressLabel": "% de Avance",
+      "statusLabel": "Estado",
+      "statusNormal": "En curso",
+      "statusIncident": "Novedad",
+      "save": "Guardar Avance",
+      "saving": "Guardando…"
+    },
+    "evidence": {
+      "title": "Evidencias Cargadas",
+      "dropzoneText": "Arrastra o hacer clic para subir evidencia",
+      "fileTypeError": "Formato no permitido. Usa JPEG, PNG, WEBP o PDF.",
+      "fileSizeError": "El archivo supera el tamaño máximo ({{max}} MB)."
+    },
+    "milestones": {
+      "title": "Estado de Actividades"
+    },
+    "management": {
+      "title": "Gestión de la Orden"
+    }
   },
   "statusChangeModal": {
     "title": "Cambiar Estado",

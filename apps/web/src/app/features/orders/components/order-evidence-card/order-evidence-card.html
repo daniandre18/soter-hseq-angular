@@ -1,0 +1,107 @@
+<section class="evidence-card">
+  <h2>{{ 'orders.page.evidence.title' | transloco }}</h2>
+
+  @if (evidenceList().length > 0) {
+    <div class="evidence-grid">
+      @for (item of evidenceList(); track item.id) {
+        <a class="evidence-thumb-link" [href]="item.downloadUrl" target="_blank" rel="noopener">
+          @if (item.type === 'PHOTO') {
+            <img class="evidence-thumb" [src]="item.downloadUrl" [alt]="item.fileName" />
+          } @else {
+            <div class="evidence-thumb evidence-thumb--file">
+              {{ item.type === 'PDF' ? 'PDF' : 'DOC' }}
+            </div>
+          }
+          <span class="evidence-thumb-name">{{ item.fileName }}</span>
+        </a>
+      }
+    </div>
+  }
+
+  @if (canLog()) {
+    @if (!evidenceUploadsEnabled) {
+      <p class="field-help">{{ 'orders.activity.demoModeHelp' | transloco }}</p>
+    } @else {
+      @if (!selectedFile()) {
+        <div
+          class="dropzone"
+          [class.dropzone--active]="dropzoneActive()"
+          (dragover)="onDropzoneDragOver($event)"
+          (dragleave)="onDropzoneDragLeave()"
+          (drop)="onDropzoneDrop($event)"
+        >
+          <app-icon name="upload-cloud" />
+          <p class="dropzone-text">
+            {{ 'orders.page.evidence.dropzoneText' | transloco }}
+            <label class="dropzone-browse">
+              {{ 'orders.activity.dropzoneBrowse' | transloco }}
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                (change)="onFileSelected($event)"
+              />
+            </label>
+          </p>
+          <p class="dropzone-help">{{ acceptedFilesHelp }}</p>
+        </div>
+      } @else {
+        <div class="attachment-card">
+          @if (selectedFilePreviewUrl(); as previewUrl) {
+            <img [src]="previewUrl" class="attachment-card__thumb" alt="" />
+          } @else {
+            <div class="attachment-card__icon">
+              <app-icon name="file-text" />
+            </div>
+          }
+          <div class="attachment-card__info">
+            <p class="attachment-card__name">{{ selectedFile()!.name }}</p>
+            <p class="attachment-card__meta">{{ selectedFileSizeLabel() }}</p>
+            @if (uploading()) {
+              <app-progress-bar [value]="uploadProgress() ?? 0" />
+            }
+          </div>
+          @if (!uploading()) {
+            <button
+              type="button"
+              class="attachment-card__remove"
+              [attr.aria-label]="'orders.activity.removeFile' | transloco"
+              (click)="clearSelectedFile()"
+            >
+              <app-icon name="x" />
+            </button>
+          }
+        </div>
+      }
+      @if (fileError()) {
+        <p class="field-error">{{ fileError() }}</p>
+      }
+
+      <div class="evidence-form-row">
+        <label class="field">
+          {{ 'orders.activity.category' | transloco }}
+          <select [value]="category()" (change)="category.set($any($event.target).value)">
+            <option value="">{{ 'orders.activity.noCategory' | transloco }}</option>
+            @for (entry of evidenceCategoryLabels | keyvalue; track entry.key) {
+              <option [value]="entry.key">{{ entry.value | transloco }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field field--full">
+          {{ 'orders.activity.descriptionLabel' | transloco }}
+          <textarea
+            rows="2"
+            [placeholder]="'orders.activity.descriptionPlaceholder' | transloco"
+            [value]="description()"
+            (input)="description.set($any($event.target).value)"
+          ></textarea>
+        </label>
+      </div>
+
+      <app-button size="sm" (click)="upload()" [disabled]="uploading() || !selectedFile()">
+        {{ (uploading() ? 'orders.activity.uploading' : 'orders.activity.uploadEvidence') | transloco }}
+      </app-button>
+    }
+  }
+</section>

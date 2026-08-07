@@ -57,6 +57,7 @@
                 class="chip"
                 [class.chip--finding]="item.note.noteType === 'FINDING'"
                 [class.chip--recommendation]="item.note.noteType === 'RECOMMENDATION'"
+                [class.chip--incident]="item.note.noteType === 'INCIDENT'"
               >
                 {{ noteTypeLabels[item.note.noteType] | transloco }}
               </span>

@@ -191,8 +191,7 @@
               @for (visit of day.visits.slice(0, visibleVisitsPerDay); track visit.id) {
                 <a
                   class="calendar-visit"
-                  [routerLink]="orderDetailRoute()"
-                  [queryParams]="{ open: visit.id }"
+                  [routerLink]="['/ordenes', visit.id]"
                   [title]="visit.title + ' · ' + technicianNames(visit)"
                 >
                   <span>{{ formatTime(visit.scheduledStart!) }}</span>
@@ -274,7 +273,7 @@
         <div class="upcoming-list">
           @for (visit of displayedVisits(); track visit.id) {
             <article class="visit-block">
-              <a class="visit-summary" [routerLink]="orderDetailRoute()" [queryParams]="{ open: visit.id }">
+              <a class="visit-summary" [routerLink]="['/ordenes', visit.id]">
                 <div class="upcoming-date">
                   <strong>{{ visit.scheduledStart!.getDate() }}</strong>
                   <span>{{ formatShortMonth(visit.scheduledStart!) }}</span>
@@ -290,7 +289,7 @@
                 </div>
               </a>
 
-              <a class="visit-detail" [routerLink]="orderDetailRoute()" [queryParams]="{ open: visit.id }">
+              <a class="visit-detail" [routerLink]="['/ordenes', visit.id]">
                 <div class="upcoming-title-row">
                   <h3>{{ visit.title || visit.serviceSummary }}</h3>
                   <app-status-badge [label]="statusLabel(visit)" [color]="statusColor(visit)" />
