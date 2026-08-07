@@ -247,8 +247,21 @@
     "milestones": {
       "title": "Estado de Actividades"
     },
+    "team": {
+      "title": "Equipo Asignado",
+      "notes": "Notas",
+      "evidence": "Evidencias",
+      "created": "Creada"
+    },
     "management": {
       "title": "Gestión de la Orden"
+    },
+    "info": {
+      "assignNow": "Asignar ahora"
+    },
+    "clientContact": {
+      "title": "Contacto en Sitio / Cliente",
+      "empty": "Sin datos de contacto registrados."
     }
   },
   "statusChangeModal": {

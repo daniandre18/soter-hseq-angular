@@ -10,7 +10,7 @@
       <div class="acta-generate">
         <h3>{{ 'orders.report.generateTitle' | transloco }}</h3>
         <p class="muted-text">{{ 'orders.report.generateHelp' | transloco }}</p>
-        <app-button size="sm" (click)="generateActa()" [disabled]="generatingActa()">
+        <app-button variant="accent" size="sm" (click)="generateActa()" [disabled]="generatingActa()">
           {{ (generatingActa() ? 'orders.report.generating' : 'orders.report.generate') | transloco }}
         </app-button>
       </div>
@@ -85,17 +85,17 @@
 
     <div class="acta-actions">
       @if (canEditActa()) {
-        <app-button variant="outline" size="sm" (click)="saveActaContent()" [disabled]="savingActa()">
+        <app-button variant="accent" size="sm" (click)="saveActaContent()" [disabled]="savingActa()">
           {{ (savingActa() ? 'orders.detail.progress.saving' : 'orders.report.saveChanges') | transloco }}
         </app-button>
       }
       @if (canApproveActa()) {
-        <app-button size="sm" (click)="approveActa()" [disabled]="approvingActa()">
+        <app-button variant="accent" size="sm" (click)="approveActa()" [disabled]="approvingActa()">
           {{ (approvingActa() ? 'orders.report.approving' : 'orders.report.approve') | transloco }}
         </app-button>
       }
       @if (canCloseOrder()) {
-        <app-button size="sm" (click)="closeOrderAndGeneratePdf()" [disabled]="closingOrder()">
+        <app-button variant="accent" size="sm" (click)="closeOrderAndGeneratePdf()" [disabled]="closingOrder()">
           {{ (closingOrder() ? 'orders.report.generatingPdf' : 'orders.report.closeAndGeneratePdf') | transloco }}
         </app-button>
       }

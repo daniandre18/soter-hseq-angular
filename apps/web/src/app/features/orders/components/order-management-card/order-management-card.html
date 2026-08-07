@@ -14,7 +14,7 @@
             <option [value]="status">{{ statusOptionLabel(status) | transloco }}</option>
           }
         </select>
-        <app-button size="sm" (click)="confirmStatusChange()" [disabled]="changingStatus()">
+        <app-button variant="outline" size="sm" (click)="confirmStatusChange()" [disabled]="changingStatus()">
           {{ 'orders.statusChangeModal.confirm' | transloco }}
         </app-button>
       </div>
@@ -33,7 +33,7 @@
           {{ 'orders.detail.schedule.end' | transloco }}
           <input type="datetime-local" [value]="scheduledEndValue()" (input)="onScheduledEndInput($event)" />
         </label>
-        <app-button size="sm" (click)="saveSchedule()" [disabled]="!canConfirmSchedule()">
+        <app-button variant="outline" size="sm" (click)="saveSchedule()" [disabled]="!canConfirmSchedule()">
           {{ (saving() ? 'orders.detail.progress.saving' : 'orders.detail.schedule.schedule') | transloco }}
         </app-button>
       </div>
@@ -41,7 +41,7 @@
   }
 
   @if (canAssign()) {
-    <div class="management-section">
+    <div class="management-section" id="order-assign-section">
       <h3>{{ 'orders.detail.assign.title' | transloco }}</h3>
       @if (technicians().length === 0) {
         <p class="muted-text">{{ 'orders.detail.assign.noTechnicians' | transloco }}</p>
@@ -59,7 +59,7 @@
             </label>
           }
         </div>
-        <app-button size="sm" (click)="saveAssignment()" [disabled]="assigning()">
+        <app-button variant="outline" size="sm" (click)="saveAssignment()" [disabled]="assigning()">
           {{ (assigning() ? 'orders.detail.progress.saving' : 'orders.detail.assign.assign') | transloco }}
         </app-button>
       }

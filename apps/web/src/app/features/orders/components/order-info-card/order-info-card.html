@@ -28,11 +28,12 @@
       <div>
         <p class="info-label">{{ 'orders.detail.info.sourceQuote' | transloco }}</p>
         <a
-          class="info-value info-value--link"
+          class="quote-badge"
           [routerLink]="['/cotizaciones']"
           [queryParams]="{ open: order().quoteId }"
         >
           {{ order().quoteNumber ?? order().quoteId }}
+          <app-icon name="external-link" />
         </a>
       </div>
     }
@@ -58,7 +59,14 @@
           }
         </div>
       } @else {
-        <p class="info-value info-value--muted">{{ 'orders.unassigned' | transloco }}</p>
+        <div class="unassigned-row">
+          <span class="unassigned-badge">{{ 'orders.unassigned' | transloco }}</span>
+          @if (canAssign()) {
+            <button type="button" class="quick-assign-link" (click)="assignRequested.emit()">
+              {{ 'orders.page.info.assignNow' | transloco }}
+            </button>
+          }
+        </div>
       }
     </div>
 

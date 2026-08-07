@@ -1,7 +1,8 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
 import { LanguageService } from '../../../../core/i18n/language.service';
@@ -13,7 +14,7 @@ import type { ServiceOrder } from '../../models/order.model';
  *  puro: no inyecta la fachada ni Firestore. */
 @Component({
   selector: 'app-order-info-card',
-  imports: [RouterLink, Avatar, StatusBadge, TranslocoPipe, LocalizedDatePipe],
+  imports: [RouterLink, Avatar, Icon, StatusBadge, TranslocoPipe, LocalizedDatePipe],
   providers: [...provideTranslocoScope('orders')],
   templateUrl: './order-info-card.html',
   styleUrl: './order-info-card.scss',
@@ -24,6 +25,8 @@ export class OrderInfoCard {
 
   readonly order = input.required<ServiceOrder>();
   readonly assignedTechnicianNames = input<string[]>([]);
+  readonly canAssign = input(false);
+  readonly assignRequested = output<void>();
 
   protected readonly priorityLabel = computed(() => {
     this.language.currentLanguage();

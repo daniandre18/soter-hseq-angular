@@ -5,6 +5,7 @@ import { map, of, switchMap } from 'rxjs';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
+import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Combobox, type ComboboxOption } from '../../../../shared/components/combobox/combobox';
@@ -17,6 +18,8 @@ import { OrderActivityFeed } from '../../components/order-activity-feed/order-ac
 import { OrderClosingActCard } from '../../components/order-closing-act-card/order-closing-act-card';
 import { OrderMilestoneTimeline } from '../../components/order-milestone-timeline/order-milestone-timeline';
 import { OrderClosureActionsCard } from '../../components/order-closure-actions-card/order-closure-actions-card';
+import { OrderTeamCard } from '../../components/order-team-card/order-team-card';
+import { OrderClientContactCard } from '../../components/order-client-contact-card/order-client-contact-card';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
 import type { ServiceOrder } from '../../models/order.model';
@@ -51,6 +54,8 @@ const MIN_EVIDENCE_COUNT_FOR_REVIEW = 1;
     OrderClosingActCard,
     OrderMilestoneTimeline,
     OrderClosureActionsCard,
+    OrderTeamCard,
+    OrderClientContactCard,
     TranslocoPipe,
   ],
   providers: [...provideTranslocoScope('orders')],
@@ -62,6 +67,7 @@ export class OrderDetail {
   private readonly router = inject(Router);
   protected readonly ordersFacade = inject(OrdersFacade);
   private readonly authFacade = inject(AuthFacade);
+  private readonly clientsFacade = inject(ClientsFacade);
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
 
@@ -131,6 +137,13 @@ export class OrderDetail {
   protected readonly assignedTechnicianNames = computed(
     () => this.order()?.assignedTechnicianIds.map((id) => this.ordersFacade.technicianName(id)) ?? [],
   );
+  /** Objetos completos (no solo el nombre) para la tarjeta de equipo de la
+   *  columna derecha — mismo `technicians()` que ya carga `OrdersFacade`
+   *  para la asignación, sin ninguna consulta nueva. */
+  protected readonly assignedTechnicians = computed(() => {
+    const ids = new Set(this.order()?.assignedTechnicianIds ?? []);
+    return this.ordersFacade.technicians().filter((technician) => ids.has(technician.id));
+  });
 
   // --- Permisos (idénticos a los del antiguo OrderDetailModal) ---
   protected readonly canManage = computed(() => {
@@ -217,6 +230,23 @@ export class OrderDetail {
     return this.canManage() && !!act && act.status === 'APPROVED';
   });
 
+  constructor() {
+    // Igual guardia que `orders-list.ts`: `firestore.rules` no deja leer
+    // `clients/{id}` a TECHNICIAN/VIEWER, así que solo se pide si el rol
+    // puede — nunca se intenta y se descarta el error.
+    if (this.canManage()) {
+      this.clientsFacade.init();
+    }
+  }
+
+  /** Contacto del cliente para la columna derecha — solo ADMIN/COORDINATOR
+   *  (ver constructor). Para el resto de roles queda `undefined` y la
+   *  tarjeta simplemente no se renderiza. */
+  protected readonly client = computed(() => {
+    const order = this.order();
+    return this.canManage() && order ? this.clientsFacade.byId(order.clientId) : undefined;
+  });
+
   // --- Buscador rápido de órdenes (barra superior) ---
   protected readonly searchOptions = computed<ComboboxOption[]>(() =>
     this.ordersFacade
@@ -241,5 +271,12 @@ export class OrderDetail {
 
   protected closeForm(): void {
     this.formOpen.set(false);
+  }
+
+  /** Acción rápida desde "Técnicos asignados" (sin asignar) en la tarjeta
+   *  de Información — lleva la vista al bloque de asignación ya existente
+   *  en `OrderManagementCard`, sin duplicar ese formulario aquí. */
+  protected scrollToAssign(): void {
+    document.getElementById('order-assign-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }

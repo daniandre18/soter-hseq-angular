@@ -14,12 +14,16 @@
 
     <div class="advance-row">
       <label class="field">
-        {{ 'orders.page.advance.progressLabel' | transloco }}
+        <span class="field-label-row">
+          {{ 'orders.page.advance.progressLabel' | transloco }}
+          <span class="progress-value">{{ progressValue() }}%</span>
+        </span>
         <input
           type="range"
           min="0"
           max="100"
           step="5"
+          [attr.aria-valuetext]="progressValue() + '%'"
           [value]="progressValue()"
           (input)="onProgressInput($event)"
         />
@@ -36,7 +40,7 @@
 
     <app-progress-bar [value]="progressValue()" />
 
-    <app-button (click)="save()" [disabled]="saving()">
+    <app-button variant="accent" (click)="save()" [disabled]="saving()">
       {{ (saving() ? 'orders.page.advance.saving' : 'orders.page.advance.save') | transloco }}
     </app-button>
   </section>

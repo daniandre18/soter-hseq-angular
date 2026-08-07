@@ -1,0 +1,30 @@
+<section class="client-contact-card">
+  <h2>{{ 'orders.page.clientContact.title' | transloco }}</h2>
+
+  <p class="client-name">{{ client().businessName }}</p>
+
+  @if (!client().phone && !client().email && !client().address) {
+    <p class="muted-text">{{ 'orders.page.clientContact.empty' | transloco }}</p>
+  } @else {
+    <div class="contact-list">
+      @if (client().phone) {
+        <a class="contact-row" [href]="'tel:' + client().phone">
+          <app-icon name="phone" />
+          {{ client().phone }}
+        </a>
+      }
+      @if (client().email) {
+        <a class="contact-row" [href]="'mailto:' + client().email">
+          <app-icon name="mail" />
+          {{ client().email }}
+        </a>
+      }
+      @if (client().address) {
+        <div class="contact-row">
+          <app-icon name="map-pin" />
+          <span>{{ client().address }}@if (client().city) {, {{ client().city }}}</span>
+        </div>
+      }
+    </div>
+  }
+</section>
