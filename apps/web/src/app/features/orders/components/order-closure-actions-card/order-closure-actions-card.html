@@ -1,0 +1,54 @@
+@if (role() === 'TECHNICIAN') {
+  @if (canExecute()) {
+    <section class="actions-card">
+      <app-button (click)="startExecution()" [disabled]="starting()">
+        {{ (starting() ? 'orders.page.actions.starting' : 'orders.page.actions.startExecution') | transloco }}
+      </app-button>
+    </section>
+  }
+
+  @if (canRequestClosure()) {
+    <section class="actions-card">
+      <h2>{{ 'orders.page.closure.title' | transloco }}</h2>
+
+      <label class="field">
+        {{ 'orders.page.closure.observations' | transloco }}
+        <textarea
+          rows="3"
+          [placeholder]="'orders.page.closure.observationsPlaceholder' | transloco"
+          [value]="observations()"
+          (input)="observations.set($any($event.target).value)"
+        ></textarea>
+      </label>
+
+      @if (closureBlockedReason(); as reason) {
+        <p class="closure-alert closure-alert--blocked" role="alert">{{ reason }}</p>
+      } @else {
+        <p class="closure-alert">{{ 'orders.page.closure.approvalNotice' | transloco }}</p>
+      }
+
+      <app-button
+        (click)="requestClosure()"
+        [disabled]="submittingClosure() || !!closureBlockedReason()"
+      >
+        {{ (submittingClosure() ? 'orders.page.closure.submitting' : 'orders.page.closure.submit') | transloco }}
+      </app-button>
+    </section>
+  }
+} @else if (role() === 'ADMIN' || role() === 'COORDINATOR') {
+  <section class="actions-card">
+    <h2>{{ 'orders.page.actions.title' | transloco }}</h2>
+    <div class="actions-buttons">
+      @if (canEditOrder()) {
+        <app-button variant="outline" size="sm" (click)="editRequested.emit()">
+          {{ 'orders.page.actions.edit' | transloco }}
+        </app-button>
+      }
+      @if (canCancel()) {
+        <app-button variant="danger" size="sm" (click)="cancelOrder()" [disabled]="cancelling()">
+          {{ 'orders.page.actions.cancelOrder' | transloco }}
+        </app-button>
+      }
+    </div>
+  </section>
+}

@@ -85,14 +85,6 @@ export class VisitsAgenda {
     return role === 'ADMIN' || role === 'COMMERCIAL' || role === 'COORDINATOR';
   });
 
-  /** El Técnico solo tiene acceso a `/mis-ordenes` (route guard), no a
-   *  `/ordenes`; el resto de roles con acceso a la agenda sí ven el
-   *  listado general. Ambas páginas soportan `?open=<id>` para abrir el
-   *  detalle directo en vez de aterrizar en el listado. */
-  protected readonly orderDetailRoute = computed(() =>
-    this.authFacade.currentRole() === 'TECHNICIAN' ? '/mis-ordenes' : '/ordenes',
-  );
-
   protected readonly selectedTechnicianId = signal('all');
   protected readonly visibleMonth = signal(startOfDay(new Date()));
 

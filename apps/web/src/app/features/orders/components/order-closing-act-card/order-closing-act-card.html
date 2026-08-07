@@ -1,0 +1,109 @@
+<section class="acta-card">
+  <h2>{{ 'orders.detail.tabs.report' | transloco }}</h2>
+
+  @if (actaError()) {
+    <p class="field-error">{{ actaError() }}</p>
+  }
+
+  @if (!closingAct()) {
+    @if (canRequestActa()) {
+      <div class="acta-generate">
+        <h3>{{ 'orders.report.generateTitle' | transloco }}</h3>
+        <p class="muted-text">{{ 'orders.report.generateHelp' | transloco }}</p>
+        <app-button size="sm" (click)="generateActa()" [disabled]="generatingActa()">
+          {{ (generatingActa() ? 'orders.report.generating' : 'orders.report.generate') | transloco }}
+        </app-button>
+      </div>
+    } @else {
+      <p class="muted-text">{{ 'orders.report.notReady' | transloco }}</p>
+    }
+  } @else {
+    <div class="acta-header">
+      <p class="acta-title">{{ closingAct()!.title }}</p>
+      <app-status-badge [label]="closingAct()!.status" color="purple" />
+    </div>
+
+    <label class="field field--full">
+      {{ 'orders.report.executiveSummary' | transloco }}
+      <textarea
+        rows="3"
+        [disabled]="!canEditActa()"
+        [value]="actExecutiveSummary()"
+        (input)="actExecutiveSummary.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <label class="field field--full">
+      {{ 'orders.report.activitiesPerformed' | transloco }}
+      <textarea
+        rows="3"
+        [disabled]="!canEditActa()"
+        [value]="actActivitiesText()"
+        (input)="actActivitiesText.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <label class="field field--full">
+      {{ 'orders.report.findings' | transloco }}
+      <textarea
+        rows="3"
+        [disabled]="!canEditActa()"
+        [value]="actFindingsText()"
+        (input)="actFindingsText.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <label class="field field--full">
+      {{ 'orders.report.recommendations' | transloco }}
+      <textarea
+        rows="3"
+        [disabled]="!canEditActa()"
+        [value]="actRecommendationsText()"
+        (input)="actRecommendationsText.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <label class="field field--full">
+      {{ 'orders.report.conclusions' | transloco }}
+      <textarea
+        rows="2"
+        [disabled]="!canEditActa()"
+        [value]="actConclusions()"
+        (input)="actConclusions.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <label class="field field--full">
+      {{ 'orders.report.limitations' | transloco }}
+      <textarea
+        rows="2"
+        [disabled]="!canEditActa()"
+        [value]="actLimitations()"
+        (input)="actLimitations.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <div class="acta-actions">
+      @if (canEditActa()) {
+        <app-button variant="outline" size="sm" (click)="saveActaContent()" [disabled]="savingActa()">
+          {{ (savingActa() ? 'orders.detail.progress.saving' : 'orders.report.saveChanges') | transloco }}
+        </app-button>
+      }
+      @if (canApproveActa()) {
+        <app-button size="sm" (click)="approveActa()" [disabled]="approvingActa()">
+          {{ (approvingActa() ? 'orders.report.approving' : 'orders.report.approve') | transloco }}
+        </app-button>
+      }
+      @if (canCloseOrder()) {
+        <app-button size="sm" (click)="closeOrderAndGeneratePdf()" [disabled]="closingOrder()">
+          {{ (closingOrder() ? 'orders.report.generatingPdf' : 'orders.report.closeAndGeneratePdf') | transloco }}
+        </app-button>
+      }
+      @if (pdfUrl() ?? closingAct()!.pdfUrl; as href) {
+        <a class="pdf-link" [href]="href" target="_blank" rel="noopener">{{
+          'orders.report.downloadPdf' | transloco
+        }}</a>
+      }
+    </div>
+  }
+</section>

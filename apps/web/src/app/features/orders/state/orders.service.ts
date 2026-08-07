@@ -132,6 +132,14 @@ export class OrdersService {
     await this.repository.requestCorrection(orderId, reason, updatedBy);
   }
 
+  async requestClosure(
+    orderId: string,
+    observations: string | undefined,
+    updatedBy: string,
+  ): Promise<void> {
+    await this.repository.requestClosure(orderId, observations, updatedBy);
+  }
+
   /**
    * Crea una orden por cada fila (servicio) del formulario manual, sin pasar
    * por una cotización (a diferencia de `QuotesService.convertToOrder`, que

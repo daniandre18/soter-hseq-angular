@@ -1,0 +1,24 @@
+<section class="milestone-card">
+  <h2>{{ 'orders.page.milestones.title' | transloco }}</h2>
+
+  <ol class="milestone-list">
+    @for (milestone of milestones(); track milestone.key) {
+      <li class="milestone-item" [class.milestone-item--done]="milestone.state === 'done'"
+        [class.milestone-item--current]="milestone.state === 'current'">
+        <span class="milestone-marker" aria-hidden="true"></span>
+        <div class="milestone-content">
+          <p class="milestone-label">{{ milestone.translationKey | transloco }}</p>
+          @if (milestone.at) {
+            <p class="milestone-date">
+              {{ milestone.at | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
+            </p>
+          } @else if (milestone.state === 'current') {
+            <p class="milestone-date milestone-date--current">
+              {{ 'orders.status.inProgress' | transloco }}
+            </p>
+          }
+        </div>
+      </li>
+    }
+  </ol>
+</section>

@@ -12,6 +12,7 @@ import { Dashboard } from './features/dashboard/dashboard';
 import { ClientsList } from './features/clients/pages/clients-list/clients-list';
 import { QuotesList } from './features/quotes/pages/quotes-list/quotes-list';
 import { OrdersList } from './features/orders/pages/orders-list/orders-list';
+import { OrderDetail } from './features/orders/pages/order-detail/order-detail';
 import { MyOrders } from './features/orders/pages/my-orders/my-orders';
 import { VisitsAgenda } from './features/orders/pages/visits-agenda/visits-agenda';
 import { ServicesList } from './features/services/pages/services-list/services-list';
@@ -62,6 +63,15 @@ export const routes: Routes = [
         title: 'routes.orders',
         data: { titleKey: 'layout.pageTitles.orders' },
         canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER'])],
+      },
+      {
+        path: 'ordenes/:id',
+        component: OrderDetail,
+        title: 'routes.orders',
+        data: { titleKey: 'layout.pageTitles.orders' },
+        canActivate: [
+          roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN', 'VIEWER']),
+        ],
       },
       {
         path: 'agenda',

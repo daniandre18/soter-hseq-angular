@@ -1,0 +1,98 @@
+@if (order(); as o) {
+  <div class="order-detail-topbar">
+    <nav class="order-breadcrumb" [attr.aria-label]="'orders.page.breadcrumbAriaLabel' | transloco">
+      <a [routerLink]="backRoute()">
+        {{
+          (backRoute() === '/mis-ordenes' ? 'orders.page.breadcrumbMyOrders' : 'orders.page.breadcrumbOrders')
+            | transloco
+        }}
+      </a>
+      <span aria-hidden="true">/</span>
+      <span class="order-breadcrumb-current">{{ o.orderNumber }}</span>
+    </nav>
+
+    <div class="order-detail-heading">
+      <h1>{{ 'orders.page.title' | transloco }}</h1>
+      <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+    </div>
+
+    <div class="order-detail-search">
+      <app-combobox
+        [options]="searchOptions()"
+        [value]="searchValue()"
+        (valueChange)="onSearchSelect($event)"
+        [placeholder]="'orders.page.searchPlaceholder' | transloco"
+        [ariaLabel]="'orders.page.searchAriaLabel' | transloco"
+      />
+    </div>
+  </div>
+
+  <div class="order-detail-grid">
+    <div class="order-detail-main">
+      <app-order-info-card [order]="o" [assignedTechnicianNames]="assignedTechnicianNames()" />
+
+      @if (canSchedule() || canAssign() || canChangeStatusFreely()) {
+        <app-order-management-card
+          [order]="o"
+          [canSchedule]="canSchedule()"
+          [canAssign]="canAssign()"
+          [canChangeStatusFreely]="canChangeStatusFreely()"
+        />
+      }
+
+      @if (canLog()) {
+        <app-order-advance-form [order]="o" [canLog]="canLog()" />
+        <app-order-evidence-card [order]="o" [evidenceList]="evidenceList()" [canLog]="canLog()" />
+      }
+
+      <section class="order-detail-card">
+        <h2>{{ 'orders.activity.filterAll' | transloco }}</h2>
+        <app-order-activity-feed
+          [notes]="notes()"
+          [evidence]="evidenceList()"
+          [events]="events()"
+          [resolveAuthorName]="resolveAuthorName"
+        />
+      </section>
+
+      <app-order-closing-act-card
+        [order]="o"
+        [notes]="notes()"
+        [closingAct]="closingAct()"
+        [canRequestActa]="canRequestActa()"
+        [canEditActa]="canEditActa()"
+        [canApproveActa]="canApproveActa()"
+        [canCloseOrder]="canCloseOrder()"
+      />
+    </div>
+
+    <div class="order-detail-side">
+      <app-order-milestone-timeline [order]="o" [events]="events()" />
+
+      <app-order-closure-actions-card
+        [order]="o"
+        [role]="role()"
+        [canExecute]="canExecute()"
+        [canRequestClosure]="canRequestClosure()"
+        [closureBlockedReason]="closureBlockedReason()"
+        [canEditOrder]="canEditOrder()"
+        [canCancel]="canCancel()"
+        (editRequested)="openEdit()"
+      />
+    </div>
+  </div>
+
+  <app-order-form-modal [open]="formOpen()" [editingOrder]="o" (closeRequested)="closeForm()" />
+} @else if (notFound()) {
+  <div class="order-detail-not-found">
+    <h1>{{ 'orders.page.notFoundTitle' | transloco }}</h1>
+    <p>{{ 'orders.page.notFoundText' | transloco }}</p>
+    <a [routerLink]="backRoute()">{{ 'orders.page.backToList' | transloco }}</a>
+  </div>
+} @else {
+  <div class="order-detail-loading" aria-hidden="true">
+    <div class="order-detail-skeleton"></div>
+    <div class="order-detail-skeleton"></div>
+    <div class="order-detail-skeleton"></div>
+  </div>
+}

@@ -41,7 +41,7 @@ describe('NotificationBell', () => {
       imports: [NotificationBell],
       providers: [
         provideRouter([
-          { path: 'ordenes', component: BlankComponent },
+          { path: 'ordenes/:id', component: BlankComponent },
           { path: 'cotizaciones', component: BlankComponent },
         ]),
         {

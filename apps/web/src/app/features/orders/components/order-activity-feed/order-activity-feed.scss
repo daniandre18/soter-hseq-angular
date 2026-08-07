@@ -50,6 +50,11 @@
     color: var(--color-blue-700);
     background: var(--color-blue-100);
   }
+
+  &--incident {
+    color: var(--color-amber-700);
+    background: var(--color-amber-100);
+  }
 }
 
 .timeline {

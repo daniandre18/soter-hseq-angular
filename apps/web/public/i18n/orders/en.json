@@ -57,7 +57,8 @@
     "general": "General",
     "finding": "Finding",
     "activity": "Activity",
-    "recommendation": "Recommendation"
+    "recommendation": "Recommendation",
+    "incident": "Incident"
   },
   "evidenceCategory": {
     "before": "Before",
@@ -65,6 +66,13 @@
     "after": "After",
     "finding": "Finding",
     "supportingDocument": "Supporting document"
+  },
+  "milestones": {
+    "assigned": "Order assigned",
+    "executionStarted": "Execution started",
+    "inProgress": "In progress",
+    "underReview": "Sent for review",
+    "closed": "Closed and record signed"
   },
   "eventAction": {
     "noteAdded": "Note added",
@@ -111,6 +119,7 @@
     },
     "info": {
       "service": "Service",
+      "site": "Site",
       "sourceQuote": "Source quote",
       "dueDate": "Due date",
       "assignedTechnicians": "Assigned technicians",
@@ -189,6 +198,58 @@
     "closeAndGeneratePdf": "Close order and generate PDF",
     "generatingPdf": "Generating PDF…",
     "downloadPdf": "Download PDF"
+  },
+  "page": {
+    "breadcrumbAriaLabel": "Breadcrumb",
+    "breadcrumbOrders": "Orders",
+    "breadcrumbMyOrders": "My Orders",
+    "title": "Work Order Detail",
+    "searchPlaceholder": "Search order by number or client…",
+    "searchAriaLabel": "Search order",
+    "notFoundTitle": "Order not found",
+    "notFoundText": "This order doesn't exist or you don't have access to it.",
+    "backToList": "Back to list",
+    "closure": {
+      "title": "Closure Request",
+      "observations": "Final observations",
+      "observationsPlaceholder": "Observations for the coordinator...",
+      "approvalNotice": "Closure requires coordinator approval.",
+      "submit": "Request Closure",
+      "submitting": "Sending…",
+      "blockedNoNotes": "Add at least one note before requesting closure.",
+      "blockedNoEvidence": "Upload at least one piece of evidence before requesting closure.",
+      "success": "Closure requested. Pending coordinator review."
+    },
+    "actions": {
+      "title": "Actions",
+      "edit": "Edit",
+      "cancelOrder": "Cancel Order",
+      "startExecution": "Start Execution",
+      "starting": "Starting…"
+    },
+    "advance": {
+      "title": "Progress Log",
+      "activityLabel": "Activity performed",
+      "activityPlaceholder": "Describe the activity performed...",
+      "progressLabel": "Progress %",
+      "statusLabel": "Status",
+      "statusNormal": "In progress",
+      "statusIncident": "Incident",
+      "save": "Save Progress",
+      "saving": "Saving…"
+    },
+    "evidence": {
+      "title": "Uploaded Evidence",
+      "dropzoneText": "Drag or click to upload evidence",
+      "fileTypeError": "Format not allowed. Use JPEG, PNG, WEBP, or PDF.",
+      "fileSizeError": "The file exceeds the maximum size ({{max}} MB)."
+    },
+    "milestones": {
+      "title": "Activity Status"
+    },
+    "management": {
+      "title": "Order Management"
+    }
   },
   "statusChangeModal": {
     "title": "Change status",

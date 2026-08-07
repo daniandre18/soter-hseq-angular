@@ -1,0 +1,246 @@
+.evidence-card {
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: white;
+  border: 1px solid var(--color-gray-200);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+  }
+}
+
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+  gap: 0.75rem;
+}
+
+.evidence-thumb-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.evidence-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-gray-200);
+  object-fit: cover;
+
+  &--file {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-gray-100);
+    color: var(--color-gray-500);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+}
+
+.evidence-thumb-name {
+  font-size: 0.6875rem;
+  color: var(--color-gray-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1.5rem 1rem;
+  border: 1.5px dashed var(--color-gray-300);
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-50);
+  color: var(--color-gray-400);
+  text-align: center;
+  transition:
+    border-color 150ms,
+    background 150ms;
+
+  --icon-size: 1.5rem;
+
+  &--active {
+    border-color: var(--color-brand-500);
+    background: var(--color-brand-50);
+  }
+}
+
+.dropzone-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-gray-600);
+}
+
+.dropzone-browse {
+  color: var(--color-brand-700);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.dropzone-help {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--color-gray-400);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.attachment-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-50);
+}
+
+.attachment-card__thumb {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.attachment-card__icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-200);
+  color: var(--color-gray-500);
+
+  --icon-size: 1.25rem;
+}
+
+.attachment-card__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.attachment-card__name {
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-card__meta {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--color-gray-500);
+}
+
+.attachment-card__remove {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-gray-400);
+  cursor: pointer;
+
+  --icon-size: 1rem;
+
+  &:hover {
+    background: var(--color-red-50);
+    color: var(--color-red-600);
+  }
+}
+
+.field-help {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+}
+
+.field-error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-red-500);
+}
+
+.evidence-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: var(--color-gray-900);
+    resize: vertical;
+  }
+}
+
+@media (max-width: 640px) {
+  .evidence-card {
+    padding: 1rem;
+  }
+
+  .evidence-form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
