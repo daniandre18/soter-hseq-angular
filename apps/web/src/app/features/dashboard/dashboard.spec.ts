@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { Dashboard } from './dashboard';
 import { OrdersFacade } from '../orders/facades/orders.facade';
 import { ClientsFacade } from '../clients/facades/clients.facade';
+import { QuotesFacade } from '../quotes/facades/quotes.facade';
 import type { ServiceOrder } from '../orders/models/order.model';
 
 describe('Dashboard', () => {
@@ -37,7 +38,6 @@ describe('Dashboard', () => {
             recentOrders: signal([]),
             upcomingVisits,
             statusBreakdown: signal([]),
-            topServices: signal([]),
             init: () => undefined,
             technicianName: () => 'Andrés Morales',
           },
@@ -48,6 +48,16 @@ describe('Dashboard', () => {
             clients: signal([]),
             loading: signal(false),
             activeCount: signal(0),
+            init: () => undefined,
+          },
+        },
+        {
+          provide: QuotesFacade,
+          useValue: {
+            quotes: signal([]),
+            loading: signal(false),
+            error: signal(null),
+            statusBreakdown: signal([]),
             init: () => undefined,
           },
         },
@@ -66,7 +76,7 @@ describe('Dashboard', () => {
   it('should render all dashboard metrics using the compact card variant', () => {
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelectorAll('.stat-card--compact')).toHaveLength(8);
+    expect(fixture.nativeElement.querySelectorAll('.stat-card--compact')).toHaveLength(9);
   });
 
   it('shows the scheduled visit time in upcoming visits', async () => {

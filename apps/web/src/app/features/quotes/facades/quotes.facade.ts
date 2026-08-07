@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { QuotesQuery } from '../state/quotes.query';
 import { QuotesService } from '../state/quotes.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
+import { QUOTE_STATUS_CONFIG } from '../models/quote-status-config';
 import type { NewQuote, NewQuoteItem, QuoteItem, QuoteStatus } from '../models/quote.model';
+import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
 @Injectable({ providedIn: 'root' })
 export class QuotesFacade {
@@ -22,6 +24,20 @@ export class QuotesFacade {
   readonly canEditDraftQuotes = computed(() => {
     const role = this.authFacade.currentRole();
     return role === 'ADMIN' || role === 'COMMERCIAL';
+  });
+
+  /** Para el widget "Cotizaciones por estado" del dashboard. */
+  readonly statusBreakdown = computed<BarListItem[]>(() => {
+    const counts = new Map<QuoteStatus, number>();
+    for (const quote of this.quotes()) {
+      counts.set(quote.status, (counts.get(quote.status) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).map(([status, value]) => ({
+      key: status,
+      label: QUOTE_STATUS_CONFIG[status].translationKey,
+      value,
+      color: QUOTE_STATUS_CONFIG[status].hex,
+    }));
   });
 
   init(): void {
