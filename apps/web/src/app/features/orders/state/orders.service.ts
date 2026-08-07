@@ -9,7 +9,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  increment,
   onSnapshot,
   orderBy,
   query,
@@ -18,18 +17,8 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import {
-  getDownloadURL,
-  ref,
-  uploadBytesResumable,
-  type UploadTaskSnapshot,
-} from 'firebase/storage';
 import { httpsCallable } from 'firebase/functions';
-import {
-  FIREBASE_FIRESTORE,
-  FIREBASE_FUNCTIONS,
-  FIREBASE_STORAGE,
-} from '../../../core/firebase/firebase.tokens';
+import { FIREBASE_FIRESTORE, FIREBASE_FUNCTIONS } from '../../../core/firebase/firebase.tokens';
 import { OrdersStore } from './orders.store';
 import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
 import type {
@@ -39,10 +28,25 @@ import type {
   ServiceOrder,
 } from '../models/order.model';
 import type { NoteType, TechnicalNote } from '../models/note.model';
-import type { Evidence, EvidenceCategory, EvidenceType } from '../models/evidence.model';
+import type { Evidence, EvidenceCategory } from '../models/evidence.model';
 import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
 import type { OrderEvent, OrderEventAction } from '../models/order-event.model';
 import { environment } from '../../../../environments/environment';
+
+/** Lee un `File` como base64 puro (sin el prefijo `data:...;base64,`) para
+ *  enviarlo en el payload de la Callable Function `uploadEvidence`. */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const commaIndex = result.indexOf(',');
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('No se pudo leer el archivo.'));
+    reader.readAsDataURL(file);
+  });
+}
 
 interface GenerateClosingActResponse {
   closingActId: string;
@@ -50,6 +54,7 @@ interface GenerateClosingActResponse {
 
 interface CloseOrderResponse {
   pdfPath: string;
+  pdfUrl: string;
 }
 
 type OrderUpdate = Partial<
@@ -142,13 +147,6 @@ function toClosingAct(id: string, data: DocumentData): ClosingAct {
   };
 }
 
-function evidenceTypeFor(contentType: string): EvidenceType {
-  if (contentType === 'application/pdf') {
-    return 'PDF';
-  }
-  return contentType.startsWith('image/') ? 'PHOTO' : 'OTHER';
-}
-
 function toDate(value: Timestamp | undefined): Date | undefined {
   return value ? value.toDate() : undefined;
 }
@@ -204,7 +202,6 @@ export class OrdersService {
   private readonly store = inject(OrdersStore);
   private readonly firestore = inject(FIREBASE_FIRESTORE);
   private readonly functions = inject(FIREBASE_FUNCTIONS);
-  private readonly storage = inject(FIREBASE_STORAGE);
 
   private unsubscribeFromOrders: Unsubscribe | null = null;
   private ordersRetriedAfterError = false;
@@ -591,57 +588,51 @@ export class OrdersService {
    * reporta el progreso, y solo al terminar crea el documento de evidencia
    * e incrementa `evidenceCount` en la orden. Retorna el id del documento de
    * evidencia creado (p. ej. para vincularlo desde una nota vía `addNote`).
+   *
+   * Corre en el backend (Cloud Function con Admin SDK), no con el SDK de
+   * cliente contra Storage directo: `storage.rules` necesitaría
+   * `firestore.get()` para validar rol/asignación/estado de la orden antes
+   * de aceptar el archivo, y esa lectura cruzada Storage→Firestore no es
+   * confiable en este proyecto (verificado a mano, falla incluso con un
+   * `firestore.exists()` mínimo) — así que la función hace esa validación
+   * ella misma, leyendo Firestore directo con el Admin SDK.
    */
   async uploadEvidence(
     orderId: string,
     file: File,
     category: EvidenceCategory | undefined,
     description: string | undefined,
-    uploadedBy: string,
     onProgress?: (percent: number) => void,
   ): Promise<string> {
     if (!environment.evidenceUploadsEnabled) {
       throw new Error('La carga de evidencias está deshabilitada en el demo gratuito.');
     }
-    const evidenceRef = doc(collection(this.firestore, 'orders', orderId, 'evidence'));
-    const safeFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-    const storagePath = `orders/${orderId}/evidence/${evidenceRef.id}/${safeFileName}`;
-    const storageRef = ref(this.storage, storagePath);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    onProgress?.(10);
+    const fileBase64 = await fileToBase64(file);
+    onProgress?.(60);
 
-    const finalSnapshot = await new Promise<UploadTaskSnapshot>((resolve, reject) => {
-      uploadTask.on(
-        'state_changed',
-        (snapshot) =>
-          onProgress?.(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
-        reject,
-        () => resolve(uploadTask.snapshot),
-      );
-    });
-    const downloadUrl = await getDownloadURL(finalSnapshot.ref);
+    const uploadEvidenceFn = httpsCallable<
+      {
+        orderId: string;
+        fileName: string;
+        contentType: string;
+        fileBase64: string;
+        category?: EvidenceCategory;
+        description?: string;
+      },
+      { evidenceId: string; downloadUrl: string }
+    >(this.functions, 'uploadEvidence');
 
-    const batch = writeBatch(this.firestore);
-    batch.set(evidenceRef, {
+    const { data } = await uploadEvidenceFn({
       orderId,
-      type: evidenceTypeFor(file.type),
-      category: category ?? null,
       fileName: file.name,
-      storagePath,
-      downloadUrl,
       contentType: file.type,
-      size: file.size,
-      description: description || null,
-      uploadedAt: serverTimestamp(),
-      uploadedBy,
-      status: 'ACTIVE',
+      fileBase64,
+      category,
+      description,
     });
-    batch.update(doc(this.firestore, 'orders', orderId), {
-      evidenceCount: increment(1),
-      updatedAt: serverTimestamp(),
-      updatedBy: uploadedBy,
-    });
-    await batch.commit();
-    return evidenceRef.id;
+    onProgress?.(100);
+    return data.evidenceId;
   }
 
   /**
@@ -748,13 +739,6 @@ export class OrdersService {
       'closeOrder',
     );
     const { data } = await closeOrder({ orderId, actId });
-    return this.resolvePdfUrl(data.pdfPath);
-  }
-
-  /** Resuelve la URL de descarga vía el SDK del cliente (respeta Storage
-   *  Rules y funciona igual contra el emulador que contra producción, a
-   *  diferencia de construir la URL a mano). */
-  resolvePdfUrl(pdfPath: string): Promise<string> {
-    return getDownloadURL(ref(this.storage, pdfPath));
+    return data.pdfUrl;
   }
 }

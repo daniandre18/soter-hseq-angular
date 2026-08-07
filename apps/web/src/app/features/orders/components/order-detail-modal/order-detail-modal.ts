@@ -920,13 +920,4 @@ export class OrderDetailModal {
     }
   }
 
-  protected async viewExistingPdf(): Promise<void> {
-    const path = this.closingAct()?.pdfPath;
-    if (!path) {
-      return;
-    }
-    const url = this.pdfUrl() ?? (await this.ordersFacade.resolvePdfUrl(path));
-    this.pdfUrl.set(url);
-    window.open(url, '_blank', 'noopener');
-  }
 }

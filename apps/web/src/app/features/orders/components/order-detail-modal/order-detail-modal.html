@@ -501,14 +501,10 @@
                     {{ closingOrder() ? 'Generando PDF…' : 'Cerrar Orden y Generar PDF' }}
                   </app-button>
                 }
-                @if (pdfUrl()) {
-                  <a class="pdf-link" [href]="pdfUrl()" target="_blank" rel="noopener"
+                @if (pdfUrl() ?? closingAct()!.pdfUrl; as href) {
+                  <a class="pdf-link" [href]="href" target="_blank" rel="noopener"
                     >Descargar PDF</a
                   >
-                } @else if (closingAct()!.pdfPath) {
-                  <button type="button" class="pdf-link" (click)="viewExistingPdf()">
-                    Ver PDF
-                  </button>
                 }
               </div>
             }
