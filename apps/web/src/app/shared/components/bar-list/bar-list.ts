@@ -4,6 +4,10 @@ export interface BarListItem {
   key: string;
   label: string;
   value: number;
+  /** Color fijo (hex) para la barra; si no se da, se asigna por ciclo. Útil
+   *  cuando el dato ya tiene un color semántico propio (p. ej. el color de
+   *  un estado), para no perder ese significado al mostrarlo como barra. */
+  color?: string;
 }
 
 interface RenderedBarItem extends BarListItem {
@@ -24,6 +28,8 @@ export class BarList {
   readonly items = input<BarListItem[]>([]);
   readonly unit = input('');
   readonly emptyMessage = input('Sin datos');
+  /** Muestra el valor absoluto (p. ej. "8") junto al porcentaje. */
+  readonly showValue = input(false);
 
   protected readonly renderedItems = computed<RenderedBarItem[]>(() => {
     const items = this.items();
@@ -34,7 +40,7 @@ export class BarList {
     return items.map((item, index) => ({
       ...item,
       percentage: Math.round((item.value / total) * 100),
-      color: COLOR_CYCLE[index % COLOR_CYCLE.length],
+      color: item.color ?? COLOR_CYCLE[index % COLOR_CYCLE.length],
     }));
   });
 }

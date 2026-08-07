@@ -23,6 +23,17 @@
   color: var(--color-gray-500);
 }
 
+.bar-row-numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.bar-row-value {
+  color: var(--color-gray-400);
+}
+
 .bar-row-percentage {
   font-weight: 700;
   color: var(--color-gray-900);

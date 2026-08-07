@@ -1,24 +1,17 @@
 <section class="dashboard">
   <div class="kpi-row">
     <app-stat-card
-      [label]="'dashboard.kpi.openOrders' | transloco"
-      [value]="ordersFacade.openCount()"
-      icon="clipboard-list"
-      color="brand"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.closedOrders' | transloco"
-      [value]="ordersFacade.closedCount()"
-      icon="circle-check-big"
-      color="green"
-      [compact]="true"
-    />
-    <app-stat-card
       [label]="'dashboard.kpi.overdue' | transloco"
       [value]="ordersFacade.overdueCount()"
       icon="triangle-alert"
-      color="red"
+      [color]="ordersFacade.overdueCount() > 0 ? 'red' : 'neutral'"
+      [compact]="true"
+    />
+    <app-stat-card
+      [label]="'dashboard.kpi.openOrders' | transloco"
+      [value]="ordersFacade.openCount()"
+      icon="clipboard-list"
+      color="neutral"
       [compact]="true"
     />
     <app-stat-card
@@ -26,6 +19,20 @@
       [value]="ordersFacade.inProgressCount()"
       icon="clock"
       color="orange"
+      [compact]="true"
+    />
+    <app-stat-card
+      [label]="'dashboard.kpi.pendingOrders' | transloco"
+      [value]="ordersFacade.pendingCount()"
+      icon="file-text"
+      color="neutral"
+      [compact]="true"
+    />
+    <app-stat-card
+      [label]="'dashboard.kpi.closedOrders' | transloco"
+      [value]="ordersFacade.closedCount()"
+      icon="circle-check-big"
+      color="green"
       [compact]="true"
     />
     <app-stat-card
@@ -47,13 +54,6 @@
       [value]="ordersFacade.techniciansInFieldCount()"
       icon="hard-hat"
       color="orange"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.pendingOrders' | transloco"
-      [value]="ordersFacade.pendingCount()"
-      icon="file-text"
-      color="brand"
       [compact]="true"
     />
   </div>
@@ -106,10 +106,11 @@
         <h2>{{ 'dashboard.ordersByStatus' | transloco }}</h2>
         <p>{{ (ordersFacade.orders().length === 1 ? 'dashboard.ordersTotalOne' : 'dashboard.ordersTotalOther') | transloco: { count: ordersFacade.orders().length } }}</p>
       </div>
-      <app-pie-chart
-        [slices]="translatedStatusBreakdown()"
+      <app-bar-list
+        [items]="translatedStatusBreakdown()"
         [unit]="'dashboard.ordersUnit' | transloco"
         [emptyMessage]="'dashboard.noOrders' | transloco"
+        [showValue]="true"
       />
     </div>
 
@@ -126,8 +127,9 @@
     </div>
 
     <div class="dashboard-card dashboard-card--flush">
-      <div class="dashboard-card-header">
+      <div class="dashboard-card-header dashboard-card-header--actions">
         <h2>{{ 'dashboard.recentOrders' | transloco }}</h2>
+        <a routerLink="/ordenes">{{ 'dashboard.viewAllOrders' | transloco }}</a>
       </div>
       @if (ordersFacade.recentOrders().length === 0) {
         <p class="dashboard-empty">{{ 'dashboard.noRecentOrders' | transloco }}</p>
@@ -148,7 +150,11 @@
                   [label]="statusLabel(order.status)"
                   [color]="statusColor(order.status)"
                 />
-                <app-progress-bar [value]="statusProgress(order)" class="list-row-progress" />
+                @if (statusProgress(order) > 0) {
+                  <app-progress-bar [value]="statusProgress(order)" class="list-row-progress" />
+                } @else {
+                  <span class="list-row-not-started">{{ 'dashboard.notStarted' | transloco }}</span>
+                }
               </div>
             </a>
           }
