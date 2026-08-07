@@ -1,0 +1,41 @@
+<div class="phone-input" [class.phone-input--disabled]="disabled()">
+  <div class="phone-input-row">
+    <app-combobox
+      class="phone-country"
+      [options]="countryOptions()"
+      [value]="country()"
+      (valueChange)="onCountryChange($event)"
+      [disabled]="disabled()"
+      [placeholder]="'common.phone.country' | transloco"
+      [ariaLabel]="'common.phone.countryAriaLabel' | transloco"
+    />
+
+    <div
+      class="phone-number-field"
+      [class.phone-number-field--valid]="validity() === 'valid'"
+      [class.phone-number-field--invalid]="touched() && validity() === 'invalid'"
+    >
+      <input
+        type="tel"
+        [attr.aria-label]="ariaLabel() || ('common.phone.label' | transloco)"
+        [attr.aria-invalid]="touched() && validity() === 'invalid'"
+        [placeholder]="selectedCountry().dialCode + ' ' + (selectedCountry().translationKey | transloco)"
+        [disabled]="disabled()"
+        [value]="nationalInput()"
+        (input)="onInput($event)"
+        (blur)="onBlur()"
+      />
+      @if (libraryLoading()) {
+        <span class="phone-status phone-status--loading" aria-hidden="true"></span>
+      } @else if (validity() === 'valid') {
+        <span class="phone-status phone-status--valid" aria-hidden="true">✓</span>
+      } @else if (touched() && validity() === 'invalid') {
+        <span class="phone-status phone-status--invalid" aria-hidden="true">!</span>
+      }
+    </div>
+  </div>
+
+  @if (touched() && validity() === 'invalid' && errorMessage()) {
+    <span class="phone-error" role="alert">{{ errorMessage() }}</span>
+  }
+</div>

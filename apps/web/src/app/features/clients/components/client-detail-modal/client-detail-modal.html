@@ -137,17 +137,17 @@
                 }
               </label>
 
-              <label class="site-simple-field">
-                Ciudad *
-                <input
-                  [formField]="siteForm.city"
-                  placeholder="Bogotá"
-                  autocomplete="address-level2"
+              <div class="site-simple-field site-simple-field--full">
+                <app-location-select
+                  [department]="siteForm.department().value()"
+                  (departmentChange)="siteForm.department().value.set($event)"
+                  [city]="siteForm.city().value()"
+                  (cityChange)="siteForm.city().value.set($event)"
                 />
                 @if (siteForm.city().touched() && siteForm.city().errors().length) {
                   <span class="field-error">{{ siteForm.city().errors()[0].message }}</span>
                 }
-              </label>
+              </div>
 
               <label class="site-simple-field">
                 Estado

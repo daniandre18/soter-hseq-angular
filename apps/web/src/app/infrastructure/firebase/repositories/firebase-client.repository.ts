@@ -37,6 +37,7 @@ function toClient(id: string, data: DocumentData): Client {
     email: data['email'],
     phone: data['phone'],
     address: data['address'],
+    department: data['department'],
     city: data['city'],
     notes: data['notes'],
     status: data['status'],
@@ -66,6 +67,7 @@ function toClientSite(id: string, data: DocumentData): ClientSite {
     id,
     name: data['name'],
     address: data['address'],
+    department: data['department'],
     city: data['city'],
     responsible: {
       name: responsible['name'] ?? '',

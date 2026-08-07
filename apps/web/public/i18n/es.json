@@ -24,6 +24,35 @@
     "deleting": "Eliminando…",
     "dismissMessage": "Cerrar mensaje",
     "backToDashboard": "Volver al panel",
+    "combobox": {
+      "searchPlaceholder": "Buscar...",
+      "clearSelection": "Limpiar selección",
+      "noResults": "Sin resultados"
+    },
+    "phone": {
+      "country": "País",
+      "countryAriaLabel": "País del teléfono",
+      "label": "Teléfono",
+      "tooShort": "El número para {{country}} parece incompleto.",
+      "tooLong": "El número para {{country}} tiene demasiados dígitos.",
+      "invalid": "El número no es válido para {{country}}."
+    },
+    "countries": {
+      "CO": "Colombia",
+      "US": "Estados Unidos",
+      "MX": "México",
+      "ES": "España",
+      "AR": "Argentina",
+      "CL": "Chile",
+      "PE": "Perú",
+      "EC": "Ecuador",
+      "PA": "Panamá",
+      "BR": "Brasil",
+      "CA": "Canadá",
+      "CR": "Costa Rica",
+      "DO": "República Dominicana",
+      "VE": "Venezuela"
+    },
     "accessDenied": {
       "title": "Acceso denegado",
       "message": "No tienes permisos para ver esta página."

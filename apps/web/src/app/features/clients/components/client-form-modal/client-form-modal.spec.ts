@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { ClientFormModal } from './client-form-modal';
 import { ClientsFacade } from '../../facades/clients.facade';
@@ -16,13 +17,21 @@ const CLIENT: Client = {
   updatedBy: 'admin-1',
 };
 
+const LOCATIONS = [
+  { code: '11', name: 'Bogotá D.C.', cities: [{ code: '11001', name: 'Bogotá' }] },
+];
+
 describe('ClientFormModal', () => {
   let component: ClientFormModal;
   let fixture: ComponentFixture<ClientFormModal>;
   let createdSites: NewClientSite[] | null;
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     createdSites = null;
+    fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => new Response(JSON.stringify(LOCATIONS), { status: 200 }));
     await TestBed.configureTestingModule({
       imports: [ClientFormModal],
       providers: [
@@ -43,6 +52,10 @@ describe('ClientFormModal', () => {
     fixture = TestBed.createComponent(ClientFormModal);
     component = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    fetchSpy.mockRestore();
   });
 
   it('should create', () => {
@@ -88,7 +101,13 @@ describe('ClientFormModal', () => {
       '.site-draft-form [placeholder="Calle 80 # 45-22"]',
       'Carrera 7 # 10-20',
     );
-    setInputValue(fixture, '.site-draft-form [placeholder="Bogotá"]', 'Bogotá');
+    // Deja resolver el fetch() (mockeado) del catálogo de ubicaciones.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    selectComboboxOption(fixture, '.site-draft-form .location-field:nth-of-type(1)', 'bogot');
+    fixture.detectChanges();
+    selectComboboxOption(fixture, '.site-draft-form .location-field:nth-of-type(2)', 'bogot');
     setInputValue(fixture, '.site-draft-form [placeholder="Nombre completo"]', 'Laura Gómez');
     setInputValue(fixture, '.site-draft-form [placeholder="+57 300 000 0000"]', '300 555 1234');
     await fixture.whenStable();
@@ -119,6 +138,8 @@ describe('ClientFormModal', () => {
 
     expect(createdSites).toHaveLength(1);
     expect(createdSites?.[0]?.name).toBe('Sede Principal');
+    expect(createdSites?.[0]?.department).toBe('Bogotá D.C.');
+    expect(createdSites?.[0]?.city).toBe('Bogotá');
   });
 });
 
@@ -130,4 +151,21 @@ function setInputValue(
   const input: HTMLInputElement = fixture.nativeElement.querySelector(selector);
   input.value = value;
   input.dispatchEvent(new Event('input'));
+}
+
+function selectComboboxOption(
+  fixture: ComponentFixture<ClientFormModal>,
+  containerSelector: string,
+  query: string,
+) {
+  const input: HTMLInputElement = fixture.nativeElement.querySelector(`${containerSelector} input`);
+  input.value = query;
+  input.dispatchEvent(new Event('input'));
+  fixture.detectChanges();
+  const option = Array.from(
+    fixture.nativeElement.querySelectorAll(
+      `${containerSelector} .combobox-option`,
+    ) as NodeListOf<HTMLElement>,
+  )[0];
+  option?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
 }

@@ -1,8 +1,11 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormField, email, form, required, submit } from '@angular/forms/signals';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { Icon } from '../../../../shared/components/icon/icon';
+import { LocationSelect } from '../location-select/location-select';
+import { PhoneInput } from '../../../../shared/components/phone-input/phone-input';
 import { ClientsFacade } from '../../facades/clients.facade';
 import type { Client, NewClientSite } from '../../models/client.model';
 import { normalizeUniqueName } from '../../../../shared/utils/normalize-unique-value';
@@ -12,6 +15,7 @@ interface ClientFormModel {
   taxId: string;
   email: string;
   phone: string;
+  department: string;
   city: string;
   address: string;
   status: 'ACTIVE' | 'INACTIVE';
@@ -22,6 +26,7 @@ const EMPTY_MODEL: ClientFormModel = {
   taxId: '',
   email: '',
   phone: '',
+  department: '',
   city: '',
   address: '',
   status: 'ACTIVE',
@@ -30,6 +35,7 @@ const EMPTY_MODEL: ClientFormModel = {
 interface SiteDraftFormModel {
   name: string;
   address: string;
+  department: string;
   city: string;
   responsibleName: string;
   responsiblePosition: string;
@@ -40,6 +46,7 @@ interface SiteDraftFormModel {
 const EMPTY_SITE_DRAFT: SiteDraftFormModel = {
   name: '',
   address: '',
+  department: '',
   city: '',
   responsibleName: '',
   responsiblePosition: '',
@@ -49,7 +56,8 @@ const EMPTY_SITE_DRAFT: SiteDraftFormModel = {
 
 @Component({
   selector: 'app-client-form-modal',
-  imports: [Modal, Button, Icon, FormField],
+  imports: [Modal, Button, Icon, FormField, LocationSelect, PhoneInput, TranslocoPipe],
+  providers: [...provideTranslocoScope('clients')],
   templateUrl: './client-form-modal.html',
   styleUrl: './client-form-modal.scss',
 })
@@ -110,6 +118,7 @@ export class ClientFormModal {
               taxId: client.taxId,
               email: client.email ?? '',
               phone: client.phone ?? '',
+              department: client.department ?? '',
               city: client.city ?? '',
               address: client.address ?? '',
               status: client.status,
@@ -139,6 +148,7 @@ export class ClientFormModal {
     this.siteDraftForm().reset({
       ...EMPTY_SITE_DRAFT,
       address: clientData.address.trim(),
+      department: clientData.department.trim(),
       city: clientData.city.trim(),
     });
     this.siteDraftEditorOpen.set(true);
@@ -154,6 +164,7 @@ export class ClientFormModal {
     this.siteDraftForm().reset({
       name: site.name,
       address: site.address,
+      department: site.department ?? '',
       city: site.city,
       responsibleName: site.responsible.name,
       responsiblePosition: site.responsible.position ?? '',
@@ -200,6 +211,7 @@ export class ClientFormModal {
       const site: NewClientSite = {
         name: model.name.trim(),
         address: model.address.trim(),
+        department: model.department.trim(),
         city: model.city.trim(),
         status: 'ACTIVE',
         responsible,

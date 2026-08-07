@@ -24,6 +24,35 @@
     "deleting": "Deleting…",
     "dismissMessage": "Dismiss message",
     "backToDashboard": "Back to dashboard",
+    "combobox": {
+      "searchPlaceholder": "Search...",
+      "clearSelection": "Clear selection",
+      "noResults": "No results"
+    },
+    "phone": {
+      "country": "Country",
+      "countryAriaLabel": "Phone country",
+      "label": "Phone",
+      "tooShort": "The number for {{country}} looks incomplete.",
+      "tooLong": "The number for {{country}} has too many digits.",
+      "invalid": "The number is not valid for {{country}}."
+    },
+    "countries": {
+      "CO": "Colombia",
+      "US": "United States",
+      "MX": "Mexico",
+      "ES": "Spain",
+      "AR": "Argentina",
+      "CL": "Chile",
+      "PE": "Peru",
+      "EC": "Ecuador",
+      "PA": "Panama",
+      "BR": "Brazil",
+      "CA": "Canada",
+      "CR": "Costa Rica",
+      "DO": "Dominican Republic",
+      "VE": "Venezuela"
+    },
     "accessDenied": {
       "title": "Access denied",
       "message": "You do not have permission to view this page."

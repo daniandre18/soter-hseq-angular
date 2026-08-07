@@ -1,0 +1,42 @@
+<div class="location-select">
+  <label class="location-field" [for]="departmentInputId">
+    {{ 'clients.form.location.department' | transloco }}
+    <app-combobox
+      [inputId]="departmentInputId"
+      [options]="departmentOptions()"
+      [value]="department()"
+      (valueChange)="department.set($event)"
+      [loading]="loading()"
+      [disabled]="disabled() || loadError()"
+      [placeholder]="'clients.form.location.searchDepartment' | transloco"
+      [ariaLabel]="'clients.form.location.department' | transloco"
+      [emptyMessage]="
+        (loadError() ? 'clients.form.location.loadError' : 'clients.form.location.noMatches')
+          | transloco
+      "
+    />
+  </label>
+
+  <label class="location-field" [for]="cityInputId">
+    {{ 'clients.form.location.city' | transloco }}
+    <app-combobox
+      [inputId]="cityInputId"
+      [options]="cityOptions()"
+      [value]="city()"
+      (valueChange)="city.set($event)"
+      [disabled]="cityDisabled()"
+      [placeholder]="
+        (department()
+          ? 'clients.form.location.searchCity'
+          : 'clients.form.location.selectDepartmentFirst'
+        ) | transloco
+      "
+      [ariaLabel]="'clients.form.location.city' | transloco"
+      [emptyMessage]="'clients.form.location.noMatches' | transloco"
+    />
+  </label>
+
+  @if (loadError()) {
+    <p class="location-error">{{ 'clients.form.location.loadError' | transloco }}</p>
+  }
+</div>

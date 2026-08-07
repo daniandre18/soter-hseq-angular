@@ -23,6 +23,7 @@
     "@jsverse/transloco": "^8.4.0",
     "chart.js": "^4.5.1",
     "firebase": "^12.16.0",
+    "libphonenumber-js": "^1.13.10",
     "ng2-charts": "^10.0.0",
     "ngx-quill": "^31.0.1",
     "quill": "^2.0.3",

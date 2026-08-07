@@ -25,5 +25,18 @@
   "showLess": "Mostrar menos", "showMore": "Mostrar {{count}} más", "showAll": "Mostrar todas ({{count}})",
   "deleteTitleOne": "¿Eliminar este cliente?", "deleteTitleOther": "¿Eliminar {{count}} clientes?",
   "deleteConfirmationOne": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con este cliente conservan su nombre, pero ya no vas a poder abrir su ficha.",
-  "deleteConfirmationOther": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con estos clientes conservan su nombre, pero ya no vas a poder abrir sus fichas."
+  "deleteConfirmationOther": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con estos clientes conservan su nombre, pero ya no vas a poder abrir sus fichas.",
+  "form": {
+    "phone": "Teléfono",
+    "phoneAriaLabel": "Teléfono del cliente",
+    "location": {
+      "department": "Departamento",
+      "city": "Ciudad",
+      "searchDepartment": "Buscar departamento...",
+      "searchCity": "Buscar ciudad...",
+      "selectDepartmentFirst": "Elige un departamento primero",
+      "noMatches": "Sin coincidencias",
+      "loadError": "No se pudo cargar el catálogo de departamentos y ciudades."
+    }
+  }
 }

@@ -6,6 +6,7 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
+import { LocationSelect } from '../location-select/location-select';
 import { ClientsFacade } from '../../facades/clients.facade';
 import { OrdersFacade } from '../../../orders/facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
@@ -14,6 +15,7 @@ import type { Client, ClientSite, NewClientSite } from '../../models/client.mode
 interface SiteFormModel {
   name: string;
   address: string;
+  department: string;
   city: string;
   status: 'ACTIVE' | 'INACTIVE';
   responsibleName: string;
@@ -25,6 +27,7 @@ interface SiteFormModel {
 const EMPTY_SITE_MODEL: SiteFormModel = {
   name: '',
   address: '',
+  department: '',
   city: '',
   status: 'ACTIVE',
   responsibleName: '',
@@ -35,7 +38,7 @@ const EMPTY_SITE_MODEL: SiteFormModel = {
 
 @Component({
   selector: 'app-client-detail-modal',
-  imports: [Modal, Button, Icon, StatusBadge, FormField],
+  imports: [Modal, Button, Icon, StatusBadge, FormField, LocationSelect],
   templateUrl: './client-detail-modal.html',
   styleUrl: './client-detail-modal.scss',
 })
@@ -110,6 +113,7 @@ export class ClientDetailModal {
     this.siteForm().reset({
       name: site.name,
       address: site.address,
+      department: site.department ?? '',
       city: site.city,
       status: site.status,
       responsibleName: site.responsible.name,
@@ -154,6 +158,7 @@ export class ClientDetailModal {
         const site: NewClientSite = {
           name: model.name.trim(),
           address: model.address.trim(),
+          department: model.department.trim(),
           city: model.city.trim(),
           status: model.status,
           responsible,
