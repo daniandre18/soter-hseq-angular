@@ -1,102 +1,231 @@
 @if (order(); as o) {
-  <div class="order-detail-topbar">
-    <nav class="order-breadcrumb" [attr.aria-label]="'orders.page.breadcrumbAriaLabel' | transloco">
-      <a [routerLink]="backRoute()">
-        {{
-          (backRoute() === '/mis-ordenes' ? 'orders.page.breadcrumbMyOrders' : 'orders.page.breadcrumbOrders')
-            | transloco
-        }}
-      </a>
-      <span aria-hidden="true">/</span>
-      <span class="order-breadcrumb-current">{{ o.orderNumber }}</span>
-    </nav>
+  <!-- Cada tarjeta se declara una sola vez y se reutiliza vía ngTemplateOutlet
+       tanto en el layout de escritorio (grid 2 columnas) como en las
+       pestañas móviles, para no duplicar instancias vivas (y su estado
+       local) de un mismo componente. -->
+  <ng-template #infoCardTpl>
+    <app-order-info-card
+      [order]="o"
+      [assignedTechnicianNames]="assignedTechnicianNames()"
+      [canAssign]="canAssign()"
+      (assignRequested)="scrollToAssign()"
+    />
+  </ng-template>
 
-    <div class="order-detail-heading">
-      <h1>{{ 'orders.page.title' | transloco }}</h1>
-      <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
-    </div>
-
-    <div class="order-detail-search">
-      <app-combobox
-        [options]="searchOptions()"
-        [value]="searchValue()"
-        (valueChange)="onSearchSelect($event)"
-        [placeholder]="'orders.page.searchPlaceholder' | transloco"
-        [ariaLabel]="'orders.page.searchAriaLabel' | transloco"
-      />
-    </div>
-  </div>
-
-  <div class="order-detail-grid">
-    <div class="order-detail-main">
-      <app-order-info-card
+  <ng-template #managementCardTpl>
+    @if (canSchedule() || canAssign() || canChangeStatusFreely()) {
+      <app-order-management-card
         [order]="o"
-        [assignedTechnicianNames]="assignedTechnicianNames()"
+        [canSchedule]="canSchedule()"
         [canAssign]="canAssign()"
-        (assignRequested)="scrollToAssign()"
+        [canChangeStatusFreely]="canChangeStatusFreely()"
       />
+    }
+  </ng-template>
 
-      @if (canSchedule() || canAssign() || canChangeStatusFreely()) {
-        <app-order-management-card
-          [order]="o"
-          [canSchedule]="canSchedule()"
-          [canAssign]="canAssign()"
-          [canChangeStatusFreely]="canChangeStatusFreely()"
-        />
-      }
+  <ng-template #advanceFormTpl>
+    @if (canLog()) {
+      <app-order-advance-form [order]="o" [canLog]="canLog()" />
+    }
+  </ng-template>
 
-      @if (canLog()) {
-        <app-order-advance-form [order]="o" [canLog]="canLog()" />
-        <app-order-evidence-card [order]="o" [evidenceList]="evidenceList()" [canLog]="canLog()" />
-      }
+  <ng-template #evidenceCardTpl>
+    @if (canLog()) {
+      <app-order-evidence-card [order]="o" [evidenceList]="evidenceList()" [canLog]="canLog()" />
+    }
+  </ng-template>
 
-      <section class="order-detail-card">
-        <h2>{{ 'orders.activity.filterAll' | transloco }}</h2>
-        <app-order-activity-feed
-          [notes]="notes()"
-          [evidence]="evidenceList()"
-          [events]="events()"
-          [resolveAuthorName]="resolveAuthorName"
-        />
-      </section>
-
-      <app-order-closing-act-card
-        [order]="o"
+  <ng-template #activityFeedTpl>
+    <section class="order-detail-card">
+      <h2>{{ 'orders.activity.filterAll' | transloco }}</h2>
+      <app-order-activity-feed
         [notes]="notes()"
-        [closingAct]="closingAct()"
-        [canRequestActa]="canRequestActa()"
-        [canEditActa]="canEditActa()"
-        [canApproveActa]="canApproveActa()"
-        [canCloseOrder]="canCloseOrder()"
+        [evidence]="evidenceList()"
+        [events]="events()"
+        [resolveAuthorName]="resolveAuthorName"
       />
+    </section>
+  </ng-template>
+
+  <ng-template #actaCardTpl>
+    <app-order-closing-act-card
+      [order]="o"
+      [notes]="notes()"
+      [closingAct]="closingAct()"
+      [canRequestActa]="canRequestActa()"
+      [canEditActa]="canEditActa()"
+      [canApproveActa]="canApproveActa()"
+      [canCloseOrder]="canCloseOrder()"
+    />
+  </ng-template>
+
+  <ng-template #milestoneTpl>
+    <app-order-milestone-timeline [order]="o" [events]="events()" />
+  </ng-template>
+
+  <ng-template #teamCardTpl>
+    <app-order-team-card
+      [technicians]="assignedTechnicians()"
+      [notesCount]="notes().length"
+      [evidenceCount]="evidenceList().length"
+      [createdAt]="o.createdAt"
+    />
+  </ng-template>
+
+  <ng-template #closureActionsTpl>
+    <app-order-closure-actions-card
+      [order]="o"
+      [role]="role()"
+      [canExecute]="canExecute()"
+      [canRequestClosure]="canRequestClosure()"
+      [closureBlockedReason]="closureBlockedReason()"
+      [canEditOrder]="canEditOrder()"
+      [canCancel]="canCancel()"
+      (editRequested)="openEdit()"
+    />
+  </ng-template>
+
+  <ng-template #clientContactTpl>
+    @if (client(); as c) {
+      <app-order-client-contact-card [client]="c" />
+    }
+  </ng-template>
+
+  @if (isMobile()) {
+    <div class="mobile-sticky-block">
+      <div class="mobile-summary-header">
+        <a class="mobile-back-link" [routerLink]="backRoute()" [attr.aria-label]="'orders.page.backToList' | transloco">
+          <app-icon name="chevron-left" />
+        </a>
+        <div class="mobile-summary-main">
+          <span class="mobile-order-number">{{ o.orderNumber }}</span>
+          <span class="mobile-order-client">{{ o.clientBusinessName }}</span>
+        </div>
+        <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+      </div>
+
+      <div class="mobile-tabs" role="tablist" [attr.aria-label]="'orders.page.tabs.ariaLabel' | transloco">
+        <button
+          type="button"
+          role="tab"
+          id="order-tab-detail"
+          class="mobile-tab"
+          [class.mobile-tab--active]="activeTab() === 'detail'"
+          [attr.aria-selected]="activeTab() === 'detail'"
+          [attr.aria-controls]="'order-tabpanel-detail'"
+          [tabindex]="activeTab() === 'detail' ? 0 : -1"
+          (click)="setTab('detail')"
+          (keydown)="onTabKeydown($event, 'detail')"
+        >
+          <app-icon name="file-text" />
+          {{ 'orders.page.tabs.detail' | transloco }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="order-tab-advance"
+          class="mobile-tab"
+          [class.mobile-tab--active]="activeTab() === 'advance'"
+          [attr.aria-selected]="activeTab() === 'advance'"
+          [attr.aria-controls]="'order-tabpanel-advance'"
+          [tabindex]="activeTab() === 'advance' ? 0 : -1"
+          (click)="setTab('advance')"
+          (keydown)="onTabKeydown($event, 'advance')"
+        >
+          <app-icon name="square-pen" />
+          {{ 'orders.page.tabs.advance' | transloco }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="order-tab-activity"
+          class="mobile-tab"
+          [class.mobile-tab--active]="activeTab() === 'activity'"
+          [attr.aria-selected]="activeTab() === 'activity'"
+          [attr.aria-controls]="'order-tabpanel-activity'"
+          [tabindex]="activeTab() === 'activity' ? 0 : -1"
+          (click)="setTab('activity')"
+          (keydown)="onTabKeydown($event, 'activity')"
+        >
+          <app-icon name="clock" />
+          {{ 'orders.page.tabs.activity' | transloco }}
+        </button>
+      </div>
     </div>
 
-    <div class="order-detail-side">
-      <app-order-milestone-timeline [order]="o" [events]="events()" />
-
-      <app-order-team-card
-        [technicians]="assignedTechnicians()"
-        [notesCount]="notes().length"
-        [evidenceCount]="evidenceList().length"
-        [createdAt]="o.createdAt"
-      />
-
-      <app-order-closure-actions-card
-        [order]="o"
-        [role]="role()"
-        [canExecute]="canExecute()"
-        [canRequestClosure]="canRequestClosure()"
-        [closureBlockedReason]="closureBlockedReason()"
-        [canEditOrder]="canEditOrder()"
-        [canCancel]="canCancel()"
-        (editRequested)="openEdit()"
-      />
-
-      @if (client(); as c) {
-        <app-order-client-contact-card [client]="c" />
+    <div class="mobile-tab-panels">
+      @switch (activeTab()) {
+        @case ('detail') {
+          <div class="mobile-tab-panel" id="order-tabpanel-detail" role="tabpanel" aria-labelledby="order-tab-detail">
+            <ng-container [ngTemplateOutlet]="infoCardTpl" />
+            <ng-container [ngTemplateOutlet]="clientContactTpl" />
+          </div>
+        }
+        @case ('advance') {
+          <div class="mobile-tab-panel" id="order-tabpanel-advance" role="tabpanel" aria-labelledby="order-tab-advance">
+            <ng-container [ngTemplateOutlet]="managementCardTpl" />
+            <ng-container [ngTemplateOutlet]="advanceFormTpl" />
+            <ng-container [ngTemplateOutlet]="evidenceCardTpl" />
+          </div>
+        }
+        @case ('activity') {
+          <div class="mobile-tab-panel" id="order-tabpanel-activity" role="tabpanel" aria-labelledby="order-tab-activity">
+            <ng-container [ngTemplateOutlet]="milestoneTpl" />
+            <ng-container [ngTemplateOutlet]="teamCardTpl" />
+            <ng-container [ngTemplateOutlet]="closureActionsTpl" />
+            <ng-container [ngTemplateOutlet]="activityFeedTpl" />
+            <ng-container [ngTemplateOutlet]="actaCardTpl" />
+          </div>
+        }
       }
     </div>
-  </div>
+  } @else {
+    <div class="order-detail-topbar">
+      <nav class="order-breadcrumb" [attr.aria-label]="'orders.page.breadcrumbAriaLabel' | transloco">
+        <a [routerLink]="backRoute()">
+          {{
+            (backRoute() === '/mis-ordenes' ? 'orders.page.breadcrumbMyOrders' : 'orders.page.breadcrumbOrders')
+              | transloco
+          }}
+        </a>
+        <span aria-hidden="true">/</span>
+        <span class="order-breadcrumb-current">{{ o.orderNumber }}</span>
+      </nav>
+
+      <div class="order-detail-heading">
+        <h1>{{ 'orders.page.title' | transloco }}</h1>
+        <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+      </div>
+
+      <div class="order-detail-search">
+        <app-combobox
+          [options]="searchOptions()"
+          [value]="searchValue()"
+          (valueChange)="onSearchSelect($event)"
+          [placeholder]="'orders.page.searchPlaceholder' | transloco"
+          [ariaLabel]="'orders.page.searchAriaLabel' | transloco"
+        />
+      </div>
+    </div>
+
+    <div class="order-detail-grid">
+      <div class="order-detail-main">
+        <ng-container [ngTemplateOutlet]="infoCardTpl" />
+        <ng-container [ngTemplateOutlet]="managementCardTpl" />
+        <ng-container [ngTemplateOutlet]="advanceFormTpl" />
+        <ng-container [ngTemplateOutlet]="evidenceCardTpl" />
+        <ng-container [ngTemplateOutlet]="activityFeedTpl" />
+        <ng-container [ngTemplateOutlet]="actaCardTpl" />
+      </div>
+
+      <div class="order-detail-side">
+        <ng-container [ngTemplateOutlet]="milestoneTpl" />
+        <ng-container [ngTemplateOutlet]="teamCardTpl" />
+        <ng-container [ngTemplateOutlet]="closureActionsTpl" />
+        <ng-container [ngTemplateOutlet]="clientContactTpl" />
+      </div>
+    </div>
+  }
 
   <app-order-form-modal [open]="formOpen()" [editingOrder]="o" (closeRequested)="closeForm()" />
 } @else if (notFound()) {
