@@ -1,19 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { FIREBASE_FIRESTORE, FIREBASE_FUNCTIONS } from '../../../core/firebase/firebase.tokens';
-import { UsersRepository } from '../../../core/repositories/users.repository';
+import { USERS_REPOSITORY } from '../../../core/repositories/users.repository';
+import { USER_MANAGEMENT_GATEWAY } from '../domain/user-management.gateway';
 import { TechniciansStore } from './technicians.store';
 import type { UserStatus } from '../../../core/models/app-user.model';
 import type { NewTechnicianData, TechnicianDetailsUpdate } from '../models/technician.model';
-
-interface CreateUserResponse {
-  uid: string;
-}
-
-interface DeleteUserResponse {
-  uid: string;
-}
 
 /** Mantiene el TechniciansStore de Akita sincronizado con los usuarios
  *  `role == 'TECHNICIAN'` de la colección `users` (vía `UsersRepository`,
@@ -21,9 +11,8 @@ interface DeleteUserResponse {
 @Injectable({ providedIn: 'root' })
 export class TechniciansService {
   private readonly store = inject(TechniciansStore);
-  private readonly firestore = inject(FIREBASE_FIRESTORE);
-  private readonly functions = inject(FIREBASE_FUNCTIONS);
-  private readonly usersRepository = inject(UsersRepository);
+  private readonly usersRepository = inject(USERS_REPOSITORY);
+  private readonly userManagementGateway = inject(USER_MANAGEMENT_GATEWAY);
 
   private watching = false;
 
@@ -46,43 +35,31 @@ export class TechniciansService {
   }
 
   /** No se puede crear un usuario de Firebase Auth para otra persona desde
-   *  el cliente — pasa por la Cloud Function `createUser` (Admin SDK), que
-   *  también valida el rol de quien llama (nunca confiar en el rol que
-   *  manda el cliente, CLAUDE.md §13.1). El Store se actualiza solo cuando
-   *  el listener de `watchTechnicians` reciba el nuevo doc, no aquí. */
+   *  el cliente — pasa por `UserManagementGateway` (Admin SDK), que también
+   *  valida el rol de quien llama (nunca confiar en el rol que manda el
+   *  cliente, CLAUDE.md §13.1). El Store se actualiza solo cuando el
+   *  listener de `watchTechnicians` reciba el nuevo doc, no aquí. */
   async createTechnician(data: NewTechnicianData): Promise<string> {
-    const createUser = httpsCallable<
-      NewTechnicianData & { role: 'TECHNICIAN' },
-      CreateUserResponse
-    >(this.functions, 'createUser');
-    const { data: response } = await createUser({ ...data, role: 'TECHNICIAN' });
-    return response.uid;
+    return this.userManagementGateway.createUser({ ...data, role: 'TECHNICIAN' });
   }
 
-  /** `displayName`/`phone` no están protegidos por `firestore.rules` (solo
-   *  `role`/`status` lo están) — un `updateDoc` normal alcanza. */
-  async updateTechnician(uid: string, changes: TechnicianDetailsUpdate, updatedBy: string): Promise<void> {
-    await updateDoc(doc(this.firestore, 'users', uid), {
-      ...changes,
-      updatedAt: serverTimestamp(),
-      updatedBy,
-    });
+  async updateTechnician(
+    uid: string,
+    changes: TechnicianDetailsUpdate,
+    updatedBy: string,
+  ): Promise<void> {
+    await this.usersRepository.updateProfile(uid, changes, updatedBy);
   }
 
   async setStatus(uid: string, status: UserStatus, updatedBy: string): Promise<void> {
-    await updateDoc(doc(this.firestore, 'users', uid), {
-      status,
-      updatedAt: serverTimestamp(),
-      updatedBy,
-    });
+    await this.usersRepository.setStatus(uid, status, updatedBy);
   }
 
   /** Borra la cuenta de Auth Y el documento de Firestore — no alcanza con
    *  `deleteDoc` (dejaría una cuenta de Auth "huérfana" que aún podría
-   *  iniciar sesión), así que pasa por la Cloud Function `deleteUser`
-   *  (Admin SDK), mismo motivo que `createTechnician`. */
+   *  iniciar sesión), así que pasa por `UserManagementGateway`, mismo
+   *  motivo que `createTechnician`. */
   async deleteTechnician(uid: string): Promise<void> {
-    const deleteUser = httpsCallable<{ uid: string }, DeleteUserResponse>(this.functions, 'deleteUser');
-    await deleteUser({ uid });
+    await this.userManagementGateway.deleteUser(uid);
   }
 }

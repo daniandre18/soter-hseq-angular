@@ -321,20 +321,52 @@ Contienen reglas como:
 
 #### Repositorios
 
-Encapsulan Firestore y Storage.
+Cada dominio expone un **puerto** (interfaz + `InjectionToken` de Angular)
+que describe las operaciones que el negocio necesita, sin conocer Firebase.
+Vive junto al resto de la feature:
+
+```text
+core/repositories/                → puertos compartidos (Auth, Users)
+features/<feature>/domain/        → puertos propios de cada feature
+```
 
 Ejemplos:
 
 ```text
-ClientsRepository
-QuotesRepository
-OrdersRepository
-UsersRepository
-AuditRepository
-EvidenceRepository
+ClientRepository   (features/clients/domain/client.repository.ts)
+QuoteRepository    (features/quotes/domain/quote.repository.ts)
+OrderRepository    (features/orders/domain/order.repository.ts)
+UsersRepository    (core/repositories/users.repository.ts)
+AuthRepository     (core/repositories/auth.repository.ts)
 ```
 
-No usar Firestore directamente desde componentes.
+Las operaciones que no son CRUD sobre un documento (subir evidencia,
+generar el acta con IA, crear/borrar un usuario) siguen el mismo patrón
+bajo el nombre `*Gateway` en vez de `*Repository` — el nombre debe
+reflejar la responsabilidad, no todo tiene que llamarse "Repository".
+
+La implementación concreta vive en `infrastructure/firebase/` — la única
+carpeta del proyecto que puede importar `firebase/*` o `@angular/fire`:
+
+```text
+infrastructure/firebase/
+├── firebase.tokens.ts / firebase.providers.ts  → instancias del SDK
+├── repository.providers.ts                     → une cada puerto con su adapter
+├── mappers/                                     → Timestamp → Date, etc.
+├── repositories/                                → Firebase*Repository (Firestore)
+├── auth/                                        → FirebaseAuthRepository
+└── functions/                                   → Firebase*Gateway (Cloud Functions)
+```
+
+**`infrastructure/firebase/repository.providers.ts` es el único archivo
+que sabe que el backend de hoy es Firebase.** Para reemplazarlo en el
+futuro (API REST, Supabase, otro backend), basta con implementar el
+puerto correspondiente (p. ej. `ApiClientRepository implements
+ClientRepository`) y cambiar su `useClass` ahí — sin tocar componentes,
+fachadas, servicios de dominio ni casos de uso.
+
+No usar Firestore directamente desde componentes, fachadas ni servicios
+de dominio — solo desde `infrastructure/firebase/`.
 
 #### Backend privilegiado
 
@@ -378,6 +410,13 @@ soter-hseq-angular/
 │       │   │   ├── core/
 │       │   │   ├── shared/
 │       │   │   ├── layout/
+│       │   │   ├── infrastructure/
+│       │   │   │   └── firebase/       # único lugar que importa `firebase/*`
+│       │   │   │       ├── repositories/
+│       │   │   │       ├── functions/
+│       │   │   │       ├── auth/
+│       │   │   │       ├── mappers/
+│       │   │   │       └── repository.providers.ts
 │       │   │   ├── features/
 │       │   │   │   ├── auth/
 │       │   │   │   ├── dashboard/

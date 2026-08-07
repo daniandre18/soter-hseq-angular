@@ -4,7 +4,7 @@ import { Observable, of, switchMap } from 'rxjs';
 import { OrdersQuery } from '../state/orders.query';
 import { OrdersService } from '../state/orders.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
-import { UsersRepository } from '../../../core/repositories/users.repository';
+import { USERS_REPOSITORY } from '../../../core/repositories/users.repository';
 import { ORDER_STATUS_CONFIG } from '../models/order-status-config';
 import type {
   NewOrderServiceRow,
@@ -46,7 +46,7 @@ export class OrdersFacade {
   private readonly query = inject(OrdersQuery);
   private readonly service = inject(OrdersService);
   private readonly authFacade = inject(AuthFacade);
-  private readonly usersRepository = inject(UsersRepository);
+  private readonly usersRepository = inject(USERS_REPOSITORY);
 
   readonly orders = toSignal(this.query.orders$, { initialValue: [] });
   readonly loading = toSignal(this.query.loading$, { initialValue: false });
