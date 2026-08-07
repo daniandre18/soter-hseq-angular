@@ -1,130 +1,54 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  DocumentData,
-  Timestamp,
-  Unsubscribe,
-  addDoc,
-  arrayRemove,
-  arrayUnion,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  onSnapshot,
-  serverTimestamp,
-  updateDoc,
-  writeBatch,
-} from 'firebase/firestore';
-import { Observable } from 'rxjs';
-import { FIREBASE_FIRESTORE } from '../../../core/firebase/firebase.tokens';
+import { Observable, Subscription } from 'rxjs';
+import { CLIENT_REPOSITORY } from '../domain/client.repository';
 import { ClientsStore } from './clients.store';
 import type {
-  Client,
   ClientContact,
   ClientSite,
   NewClient,
   NewClientContact,
   NewClientSite,
 } from '../models/client.model';
-import { normalizeTaxId, normalizeUniqueName } from '../../../shared/utils/normalize-unique-value';
 
-function toDate(value: Timestamp | undefined): Date {
-  return value ? value.toDate() : new Date(0);
-}
-
-function toClient(id: string, data: DocumentData): Client {
-  return {
-    id,
-    businessName: data['businessName'],
-    legalName: data['legalName'],
-    taxId: data['taxId'],
-    email: data['email'],
-    phone: data['phone'],
-    address: data['address'],
-    city: data['city'],
-    notes: data['notes'],
-    status: data['status'],
-    tags: data['tags'] ?? [],
-    createdAt: toDate(data['createdAt']),
-    createdBy: data['createdBy'],
-    updatedAt: toDate(data['updatedAt']),
-    updatedBy: data['updatedBy'],
-  };
-}
-
-function toClientContact(id: string, data: DocumentData): ClientContact {
-  return {
-    id,
-    name: data['name'],
-    position: data['position'],
-    email: data['email'],
-    phone: data['phone'],
-    isPrimary: data['isPrimary'] ?? false,
-    status: data['status'],
-  };
-}
-
-function toClientSite(id: string, data: DocumentData): ClientSite {
-  const responsible = (data['responsible'] ?? {}) as DocumentData;
-  return {
-    id,
-    name: data['name'],
-    address: data['address'],
-    city: data['city'],
-    responsible: {
-      name: responsible['name'] ?? '',
-      position: responsible['position'],
-      email: responsible['email'],
-      phone: responsible['phone'] ?? '',
-    },
-    status: data['status'] ?? 'ACTIVE',
-    createdAt: toDate(data['createdAt']),
-    createdBy: data['createdBy'] ?? '',
-    updatedAt: toDate(data['updatedAt']),
-    updatedBy: data['updatedBy'] ?? '',
-  };
-}
-
-/** Mantiene el ClientsStore de Akita sincronizado con la colección `clients`. */
+/** Mantiene el ClientsStore de Akita sincronizado con `ClientRepository`. */
 @Injectable({ providedIn: 'root' })
 export class ClientsService {
   private readonly store = inject(ClientsStore);
-  private readonly firestore = inject(FIREBASE_FIRESTORE);
+  private readonly repository = inject(CLIENT_REPOSITORY);
 
-  private unsubscribeFromClients: Unsubscribe | null = null;
+  private clientsSubscription: Subscription | null = null;
   private clientsRetriedAfterError = false;
 
   watchClients(): void {
-    if (this.unsubscribeFromClients) {
+    if (this.clientsSubscription) {
       return;
     }
 
     this.store.setLoading(true);
-    this.unsubscribeFromClients = onSnapshot(
-      collection(this.firestore, 'clients'),
-      (snapshot) => {
+    this.clientsSubscription = this.repository.watchAll().subscribe({
+      next: (clients) => {
         this.clientsRetriedAfterError = false;
         this.store.setError(null);
-        this.store.set(snapshot.docs.map((doc) => toClient(doc.id, doc.data())));
+        this.store.set(clients);
         this.store.setLoading(false);
       },
-      (error) => {
+      error: (error: Error & { code?: string }) => {
         this.store.setError(error.message);
         this.store.setLoading(false);
         // Ver el mismo comentario en OrdersService.watchOrders: sin limpiar
         // el guard, un permission-denied transitorio justo tras el login
         // deja el listener atascado hasta recargar la página.
-        this.unsubscribeFromClients = null;
+        this.clientsSubscription = null;
         if (error.code === 'permission-denied' && !this.clientsRetriedAfterError) {
           this.clientsRetriedAfterError = true;
           setTimeout(() => this.watchClients(), 1000);
         }
       },
-    );
+    });
   }
 
   async addClient(data: NewClient, createdBy: string): Promise<string> {
-    return this.addClientWithSites(data, [], createdBy);
+    return this.repository.addClient(data, createdBy);
   }
 
   async addClientWithSites(
@@ -132,128 +56,38 @@ export class ClientsService {
     sites: NewClientSite[],
     createdBy: string,
   ): Promise<string> {
-    await this.assertUniqueClient(data.businessName, data.taxId);
-    this.assertUniqueDraftSiteNames(sites);
-
-    const clientRef = doc(collection(this.firestore, 'clients'));
-    const batch = writeBatch(this.firestore);
-    batch.set(clientRef, {
-      ...data,
-      businessNameNormalized: normalizeUniqueName(data.businessName),
-      taxIdNormalized: normalizeTaxId(data.taxId),
-      createdAt: serverTimestamp(),
-      createdBy,
-      updatedAt: serverTimestamp(),
-      updatedBy: createdBy,
-    });
-
-    for (const site of sites) {
-      const siteRef = doc(collection(clientRef, 'sites'));
-      batch.set(siteRef, {
-        ...site,
-        nameNormalized: normalizeUniqueName(site.name),
-        createdAt: serverTimestamp(),
-        createdBy,
-        updatedAt: serverTimestamp(),
-        updatedBy: createdBy,
-      });
-    }
-
-    await batch.commit();
-    return clientRef.id;
+    return this.repository.addClientWithSites(data, sites, createdBy);
   }
 
   async updateClient(id: string, changes: Partial<NewClient>, updatedBy: string): Promise<void> {
-    if (changes.businessName !== undefined || changes.taxId !== undefined) {
-      const current = this.store.getValue().entities?.[id];
-      await this.assertUniqueClient(
-        changes.businessName ?? current?.businessName ?? '',
-        changes.taxId ?? current?.taxId ?? '',
-        id,
-      );
-    }
-    await updateDoc(doc(this.firestore, 'clients', id), {
-      ...changes,
-      ...(changes.businessName !== undefined && {
-        businessNameNormalized: normalizeUniqueName(changes.businessName),
-      }),
-      ...(changes.taxId !== undefined && { taxIdNormalized: normalizeTaxId(changes.taxId) }),
-      updatedAt: serverTimestamp(),
-      updatedBy,
-    });
+    await this.repository.updateClient(id, changes, updatedBy);
   }
 
   /** Solo ADMIN (ver `firestore.rules`). Las cotizaciones/órdenes ya
    *  creadas guardan `clientBusinessName` por su cuenta, así que no quedan
    *  rotas visualmente — solo se pierde la ficha viva del cliente. */
   async deleteClient(id: string): Promise<void> {
-    await deleteDoc(doc(this.firestore, 'clients', id));
+    await this.repository.deleteClient(id);
   }
 
-  /**
-   * `arrayUnion`/`arrayRemove` en vez de escribir el arreglo completo: dos
-   * toggles seguidos (p. ej. el usuario clickea dos etiquetas rápido) no
-   * deben pisarse entre sí si el primer `updateDoc` todavía no volvió por
-   * el listener — cada operación es atómica del lado de Firestore, no
-   * depende del estado `tags` que tenga el cliente en el momento del click.
-   */
   async setTag(id: string, tag: string, enabled: boolean, updatedBy: string): Promise<void> {
-    await updateDoc(doc(this.firestore, 'clients', id), {
-      tags: enabled ? arrayUnion(tag) : arrayRemove(tag),
-      updatedAt: serverTimestamp(),
-      updatedBy,
-    });
+    await this.repository.setTag(id, tag, enabled, updatedBy);
   }
 
   watchContacts(clientId: string): Observable<ClientContact[]> {
-    return new Observable<ClientContact[]>((subscriber) => {
-      return onSnapshot(
-        collection(this.firestore, 'clients', clientId, 'contacts'),
-        (snapshot) => {
-          subscriber.next(
-            snapshot.docs.map((docSnapshot) => toClientContact(docSnapshot.id, docSnapshot.data())),
-          );
-        },
-        (error) => subscriber.error(error),
-      );
-    });
+    return this.repository.watchContacts(clientId);
   }
 
   async addContact(clientId: string, contact: NewClientContact): Promise<void> {
-    await addDoc(collection(this.firestore, 'clients', clientId, 'contacts'), contact);
+    await this.repository.addContact(clientId, contact);
   }
 
   watchSites(clientId: string): Observable<ClientSite[]> {
-    return new Observable<ClientSite[]>((subscriber) => {
-      return onSnapshot(
-        collection(this.firestore, 'clients', clientId, 'sites'),
-        (snapshot) => {
-          const sites = snapshot.docs
-            .map((docSnapshot) => toClientSite(docSnapshot.id, docSnapshot.data()))
-            .sort((left, right) => {
-              if (left.status !== right.status) {
-                return left.status === 'ACTIVE' ? -1 : 1;
-              }
-              return left.name.localeCompare(right.name, 'es', { sensitivity: 'base' });
-            });
-          subscriber.next(sites);
-        },
-        (error) => subscriber.error(error),
-      );
-    });
+    return this.repository.watchSites(clientId);
   }
 
   async addSite(clientId: string, site: NewClientSite, createdBy: string): Promise<string> {
-    await this.assertUniqueSiteName(clientId, site.name);
-    const ref = await addDoc(collection(this.firestore, 'clients', clientId, 'sites'), {
-      ...site,
-      nameNormalized: normalizeUniqueName(site.name),
-      createdAt: serverTimestamp(),
-      createdBy,
-      updatedAt: serverTimestamp(),
-      updatedBy: createdBy,
-    });
-    return ref.id;
+    return this.repository.addSite(clientId, site, createdBy);
   }
 
   async updateSite(
@@ -262,64 +96,10 @@ export class ClientsService {
     changes: Partial<NewClientSite>,
     updatedBy: string,
   ): Promise<void> {
-    if (changes.name !== undefined) {
-      await this.assertUniqueSiteName(clientId, changes.name, siteId);
-    }
-    await updateDoc(doc(this.firestore, 'clients', clientId, 'sites', siteId), {
-      ...changes,
-      ...(changes.name !== undefined && { nameNormalized: normalizeUniqueName(changes.name) }),
-      updatedAt: serverTimestamp(),
-      updatedBy,
-    });
+    await this.repository.updateSite(clientId, siteId, changes, updatedBy);
   }
 
   async deleteSite(clientId: string, siteId: string): Promise<void> {
-    await deleteDoc(doc(this.firestore, 'clients', clientId, 'sites', siteId));
-  }
-
-  private async assertUniqueClient(
-    businessName: string,
-    taxId: string,
-    currentId?: string,
-  ): Promise<void> {
-    const normalizedName = normalizeUniqueName(businessName);
-    const normalizedTaxId = normalizeTaxId(taxId);
-    const snapshot = await getDocs(collection(this.firestore, 'clients'));
-    for (const client of snapshot.docs) {
-      if (client.id === currentId) continue;
-      const data = client.data();
-      if (normalizeTaxId(data['taxId'] ?? '') === normalizedTaxId) {
-        throw new Error('Ya existe un cliente con ese NIT.');
-      }
-      if (normalizeUniqueName(data['businessName'] ?? '') === normalizedName) {
-        throw new Error('Ya existe un cliente con esa razón social.');
-      }
-    }
-  }
-
-  private async assertUniqueSiteName(
-    clientId: string,
-    name: string,
-    currentSiteId?: string,
-  ): Promise<void> {
-    const normalizedName = normalizeUniqueName(name);
-    const snapshot = await getDocs(collection(this.firestore, 'clients', clientId, 'sites'));
-    for (const site of snapshot.docs) {
-      if (site.id === currentSiteId) continue;
-      if (normalizeUniqueName(site.data()['name'] ?? '') === normalizedName) {
-        throw new Error('Ya existe una sede con ese nombre para este cliente.');
-      }
-    }
-  }
-
-  private assertUniqueDraftSiteNames(sites: NewClientSite[]): void {
-    const names = new Set<string>();
-    for (const site of sites) {
-      const normalizedName = normalizeUniqueName(site.name);
-      if (names.has(normalizedName)) {
-        throw new Error('No puedes registrar dos sedes con el mismo nombre.');
-      }
-      names.add(normalizedName);
-    }
+    await this.repository.deleteSite(clientId, siteId);
   }
 }
