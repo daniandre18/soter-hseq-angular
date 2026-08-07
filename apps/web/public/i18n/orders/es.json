@@ -206,6 +206,12 @@
     "title": "Detalle de Orden de Trabajo",
     "searchPlaceholder": "Buscar orden por número o cliente…",
     "searchAriaLabel": "Buscar orden",
+    "tabs": {
+      "ariaLabel": "Secciones de la orden",
+      "detail": "Detalle",
+      "advance": "Avances",
+      "activity": "Actividades"
+    },
     "notFoundTitle": "Orden no encontrada",
     "notFoundText": "No existe o no tienes acceso a esta orden.",
     "backToList": "Volver al listado",

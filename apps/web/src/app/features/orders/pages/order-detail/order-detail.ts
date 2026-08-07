@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, of, switchMap } from 'rxjs';
@@ -7,6 +8,7 @@ import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { Icon } from '../../../../shared/components/icon/icon';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Combobox, type ComboboxOption } from '../../../../shared/components/combobox/combobox';
 import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
@@ -39,10 +41,15 @@ const MIN_EVIDENCE_COUNT_FOR_REVIEW = 1;
  * la tarjeta correspondiente, no aquí, para no volver a esta página una
  * fachada gigantesca (CLAUDE.md §29).
  */
+export type OrderDetailTab = 'detail' | 'advance' | 'activity';
+const MOBILE_TAB_ORDER: OrderDetailTab[] = ['detail', 'advance', 'activity'];
+
 @Component({
   selector: 'app-order-detail',
   imports: [
+    NgTemplateOutlet,
     RouterLink,
+    Icon,
     StatusBadge,
     Combobox,
     OrderFormModal,
@@ -70,6 +77,50 @@ export class OrderDetail {
   private readonly clientsFacade = inject(ClientsFacade);
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** <768px: header compacto + navegación por pestañas en vez del grid de
+   *  2 columnas — evita el scroll excesivo que generaba apilar todas las
+   *  tarjetas en una sola columna larga. Solo una de las dos estructuras
+   *  se instancia a la vez (`@if`/`@else` en el template), así que un
+   *  formulario con estado local (p. ej. el textarea de Registro de
+   *  Avance) nunca vive duplicado entre el layout de escritorio y el
+   *  móvil. */
+  private readonly mobileQuery = window.matchMedia('(max-width: 767px)');
+  protected readonly isMobile = signal(this.mobileQuery.matches);
+
+  protected readonly activeTab = signal<OrderDetailTab>('detail');
+
+  protected setTab(tab: OrderDetailTab): void {
+    this.activeTab.set(tab);
+  }
+
+  /** Mismo patrón WAI-ARIA tabs (roving tabindex + flechas) que ya se usaba
+   *  en el antiguo `OrderDetailModal`. */
+  protected onTabKeydown(event: KeyboardEvent, current: OrderDetailTab): void {
+    const currentIndex = MOBILE_TAB_ORDER.indexOf(current);
+    let nextIndex: number;
+    switch (event.key) {
+      case 'ArrowRight':
+        nextIndex = (currentIndex + 1) % MOBILE_TAB_ORDER.length;
+        break;
+      case 'ArrowLeft':
+        nextIndex = (currentIndex - 1 + MOBILE_TAB_ORDER.length) % MOBILE_TAB_ORDER.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = MOBILE_TAB_ORDER.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    const nextTab = MOBILE_TAB_ORDER[nextIndex];
+    this.activeTab.set(nextTab);
+    document.getElementById(`order-tab-${nextTab}`)?.focus();
+  }
 
   private readonly orderId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
@@ -237,6 +288,10 @@ export class OrderDetail {
     if (this.canManage()) {
       this.clientsFacade.init();
     }
+
+    const onMobileQueryChange = (event: MediaQueryListEvent): void => this.isMobile.set(event.matches);
+    this.mobileQuery.addEventListener('change', onMobileQueryChange);
+    this.destroyRef.onDestroy(() => this.mobileQuery.removeEventListener('change', onMobileQueryChange));
   }
 
   /** Contacto del cliente para la columna derecha — solo ADMIN/COORDINATOR

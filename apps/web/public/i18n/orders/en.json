@@ -206,6 +206,12 @@
     "title": "Work Order Detail",
     "searchPlaceholder": "Search order by number or client…",
     "searchAriaLabel": "Search order",
+    "tabs": {
+      "ariaLabel": "Order sections",
+      "detail": "Detail",
+      "advance": "Progress",
+      "activity": "Activity"
+    },
     "notFoundTitle": "Order not found",
     "notFoundText": "This order doesn't exist or you don't have access to it.",
     "backToList": "Back to list",

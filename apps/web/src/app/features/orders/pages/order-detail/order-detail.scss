@@ -149,3 +149,107 @@
     padding: 1rem;
   }
 }
+
+// --- Mobile (<768px): header compacto + navegación por pestañas ---
+// `.shell-content` (layout/shell/shell.scss) es el contenedor con scroll,
+// así que `position: sticky` se ancla correctamente a su viewport visible.
+.mobile-sticky-block {
+  position: sticky;
+  top: -1.5rem;
+  z-index: 5;
+  margin: -1.5rem -1.5rem 1rem;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.mobile-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.mobile-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--color-gray-500);
+
+  &:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-900);
+  }
+}
+
+.mobile-summary-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-order-number {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-gray-400);
+  letter-spacing: 0.02em;
+}
+
+.mobile-order-client {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-tabs {
+  display: flex;
+}
+
+.mobile-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex: 1;
+  min-height: 44px;
+  padding: 0.5rem 0.5rem 0.625rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-gray-500);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  --icon-size: 1.125rem;
+
+  &--active {
+    border-bottom-color: var(--color-indigo-600);
+    color: var(--color-indigo-700);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: -2px;
+  }
+}
+
+.mobile-tab-panels {
+  padding-bottom: 3rem;
+}
+
+.mobile-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
