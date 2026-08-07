@@ -1745,3 +1745,63 @@ El sistema debe quedar preparado para ampliar posteriormente:
 - Operación offline.
 
 Estas expansiones no forman parte de la primera versión.
+
+---
+
+## 36. Instrucciones para revisión de Pull Requests
+
+Al revisar pull requests (`/code-review` o equivalente), responder siempre en español.
+
+Prestar especial atención a:
+
+- Tipado estricto de TypeScript.
+- Uso innecesario de `any`.
+- Uso de Angular Signals (`signal`, `computed`, `effect`).
+- Efectos (`effect`) innecesarios; preferir `computed()` para valores derivados.
+- Subscripciones RxJS y posibles memory leaks; evitar subscripciones anidadas.
+- Preferir patrones async y composición reactiva sobre subscripciones manuales.
+- Lógica duplicada y complejidad innecesaria.
+- Posibles errores de null/undefined.
+- Problemas de rendimiento y vulnerabilidades de seguridad.
+- Breaking changes y código que pueda causar errores en runtime.
+
+### Arquitectura (Clean / Hexagonal)
+
+La dirección de dependencias esperada (ver §6.2/§7):
+
+```text
+UI
+→ Application / Use Cases
+→ Domain
+→ Repository Ports
+→ Infrastructure Adapters
+```
+
+Firebase debe permanecer aislado en `infrastructure/firebase/`. Componentes,
+modelos de dominio y casos de uso no deben importar `firebase/*` ni
+`@angular/fire` directamente. Reportar cualquier violación.
+
+### Firebase
+
+Revisar específicamente:
+
+- Acceso directo a Firestore desde componentes.
+- Tipos de Firebase filtrándose hacia modelos de dominio.
+- Subscripciones en tiempo real mal implementadas (listeners que no se
+  limpian, etc.).
+- Lecturas innecesarias de Firebase o queries N+1.
+- Manejo de errores faltante.
+- Operaciones sensibles de seguridad.
+
+### Calidad de código
+
+Aplicar SOLID de forma pragmática, evitando sobreingeniería. Preferir
+funciones pequeñas, nombres claros, responsabilidades bien definidas,
+código reutilizable e interfaces fuertemente tipadas. Señalar code smells
+y lógica duplicada.
+
+### Severidad de hallazgos
+
+Clasificar los hallazgos importantes como `CRITICAL`, `HIGH`, `MEDIUM` o
+`LOW`. Prestar especial atención a los `CRITICAL` y `HIGH` antes de
+recomendar el merge.
