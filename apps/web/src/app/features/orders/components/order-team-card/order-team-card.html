@@ -1,0 +1,46 @@
+<section class="team-card">
+  <h2>{{ 'orders.page.team.title' | transloco }}</h2>
+
+  @if (technicians().length > 0) {
+    <div class="team-list">
+      @for (technician of technicians(); track technician.id) {
+        <div class="team-member">
+          <app-avatar [name]="technician.displayName" size="md" />
+          <div class="team-member-info">
+            <p class="team-member-name">{{ technician.displayName }}</p>
+            @if (technician.specialty) {
+              <p class="team-member-role">{{ technician.specialty }}</p>
+            }
+            @if (technician.phone) {
+              <a class="team-member-contact" [href]="'tel:' + technician.phone">
+                <app-icon name="phone" />
+                {{ technician.phone }}
+              </a>
+            }
+            <a class="team-member-contact" [href]="'mailto:' + technician.email">
+              <app-icon name="mail" />
+              {{ technician.email }}
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="muted-text">{{ 'orders.unassigned' | transloco }}</p>
+  }
+
+  <div class="team-summary">
+    <div class="summary-stat">
+      <span class="summary-value">{{ notesCount() }}</span>
+      <span class="summary-label">{{ 'orders.page.team.notes' | transloco }}</span>
+    </div>
+    <div class="summary-stat">
+      <span class="summary-value">{{ evidenceCount() }}</span>
+      <span class="summary-label">{{ 'orders.page.team.evidence' | transloco }}</span>
+    </div>
+    <div class="summary-stat">
+      <span class="summary-value summary-value--time">{{ createdAt() | localizedRelativeTime }}</span>
+      <span class="summary-label">{{ 'orders.page.team.created' | transloco }}</span>
+    </div>
+  </div>
+</section>

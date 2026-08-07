@@ -1,7 +1,7 @@
 @if (role() === 'TECHNICIAN') {
   @if (canExecute()) {
     <section class="actions-card">
-      <app-button (click)="startExecution()" [disabled]="starting()">
+      <app-button variant="accent" (click)="startExecution()" [disabled]="starting()">
         {{ (starting() ? 'orders.page.actions.starting' : 'orders.page.actions.startExecution') | transloco }}
       </app-button>
     </section>
@@ -28,6 +28,7 @@
       }
 
       <app-button
+        variant="accent"
         (click)="requestClosure()"
         [disabled]="submittingClosure() || !!closureBlockedReason()"
       >
@@ -45,7 +46,7 @@
         </app-button>
       }
       @if (canCancel()) {
-        <app-button variant="danger" size="sm" (click)="cancelOrder()" [disabled]="cancelling()">
+        <app-button variant="danger-outline" size="sm" (click)="cancelOrder()" [disabled]="cancelling()">
           {{ 'orders.page.actions.cancelOrder' | transloco }}
         </app-button>
       }

@@ -5,7 +5,16 @@
     @for (milestone of milestones(); track milestone.key) {
       <li class="milestone-item" [class.milestone-item--done]="milestone.state === 'done'"
         [class.milestone-item--current]="milestone.state === 'current'">
-        <span class="milestone-marker" aria-hidden="true"></span>
+        <span class="milestone-marker" aria-hidden="true">
+          @switch (milestone.state) {
+            @case ('done') {
+              <app-icon name="circle-check-big" />
+            }
+            @case ('current') {
+              <app-icon name="clock" />
+            }
+          }
+        </span>
         <div class="milestone-content">
           <p class="milestone-label">{{ milestone.translationKey | transloco }}</p>
           @if (milestone.at) {

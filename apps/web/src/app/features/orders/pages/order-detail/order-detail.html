@@ -29,7 +29,12 @@
 
   <div class="order-detail-grid">
     <div class="order-detail-main">
-      <app-order-info-card [order]="o" [assignedTechnicianNames]="assignedTechnicianNames()" />
+      <app-order-info-card
+        [order]="o"
+        [assignedTechnicianNames]="assignedTechnicianNames()"
+        [canAssign]="canAssign()"
+        (assignRequested)="scrollToAssign()"
+      />
 
       @if (canSchedule() || canAssign() || canChangeStatusFreely()) {
         <app-order-management-card
@@ -69,6 +74,13 @@
     <div class="order-detail-side">
       <app-order-milestone-timeline [order]="o" [events]="events()" />
 
+      <app-order-team-card
+        [technicians]="assignedTechnicians()"
+        [notesCount]="notes().length"
+        [evidenceCount]="evidenceList().length"
+        [createdAt]="o.createdAt"
+      />
+
       <app-order-closure-actions-card
         [order]="o"
         [role]="role()"
@@ -79,6 +91,10 @@
         [canCancel]="canCancel()"
         (editRequested)="openEdit()"
       />
+
+      @if (client(); as c) {
+        <app-order-client-contact-card [client]="c" />
+      }
     </div>
   </div>
 

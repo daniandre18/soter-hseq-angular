@@ -54,6 +54,9 @@
   grid-template-columns: 1fr;
   gap: 1.5rem;
   align-items: start;
+  /** Deja aire bajo la última tarjeta para que no quede pegada al borde de
+   *  la ventana / cualquier barra flotante del sistema. */
+  padding-bottom: 3rem;
 
   @media (min-width: 1024px) {
     grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr);

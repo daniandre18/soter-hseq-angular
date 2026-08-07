@@ -38,7 +38,10 @@ export type IconName =
   | 'image'
   | 'upload-cloud'
   | 'paperclip'
-  | 'flag';
+  | 'flag'
+  | 'phone'
+  | 'mail'
+  | 'external-link';
 
 @Component({
   selector: 'app-icon',

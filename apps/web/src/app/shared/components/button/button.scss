@@ -79,3 +79,28 @@
     background: var(--color-gray-50);
   }
 }
+
+/** Acción principal "neutra" (no destructiva) de una pantalla — reservamos
+ *  `--primary` (rojo de marca) para no competir visualmente con `--danger`,
+ *  que debe seguir siendo la única señal de alerta real (CLAUDE.md §15
+ *  "confirmación antes de acciones destructivas"). */
+.btn--accent {
+  background: var(--color-indigo-600);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: var(--color-indigo-700);
+  }
+}
+
+/** Acción destructiva que no debe "gritar" tanto como un bloque rojo
+ *  sólido — borde/texto en rojo, fondo neutro. */
+.btn--danger-outline {
+  background: white;
+  color: var(--color-red-600);
+  border: 1px solid var(--color-red-400);
+
+  &:hover:not(:disabled) {
+    background: var(--color-red-50);
+  }
+}

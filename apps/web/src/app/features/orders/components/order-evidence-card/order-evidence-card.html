@@ -99,7 +99,7 @@
         </label>
       </div>
 
-      <app-button size="sm" (click)="upload()" [disabled]="uploading() || !selectedFile()">
+      <app-button variant="accent" size="sm" (click)="upload()" [disabled]="uploading() || !selectedFile()">
         {{ (uploading() ? 'orders.activity.uploading' : 'orders.activity.uploadEvidence') | transloco }}
       </app-button>
     }
