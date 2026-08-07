@@ -135,6 +135,12 @@
   }
 }
 
+.list-row-not-started {
+  font-size: 0.6875rem;
+  font-style: italic;
+  color: var(--color-gray-400);
+}
+
 .list-row-main {
   flex: 1;
   min-width: 0;

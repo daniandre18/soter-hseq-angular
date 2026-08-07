@@ -2,7 +2,7 @@ import { Component, input } from '@angular/core';
 import { Icon, type IconName } from '../icon/icon';
 import { LocalizedNumberPipe } from '../../pipes/localized-number.pipe';
 
-export type StatCardColor = 'brand' | 'green' | 'red' | 'orange' | 'blue' | 'purple';
+export type StatCardColor = 'brand' | 'green' | 'red' | 'orange' | 'blue' | 'purple' | 'neutral';
 
 @Component({
   selector: 'app-stat-card',

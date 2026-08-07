@@ -21,6 +21,8 @@
   "noServices": "Sin servicios con órdenes",
   "recentOrders": "Órdenes recientes",
   "noRecentOrders": "Sin órdenes recientes",
+  "viewAllOrders": "Ver todas",
+  "notStarted": "Sin iniciar",
   "upcomingVisits": "Próximas visitas",
   "viewSchedule": "Ver agenda",
   "noUpcomingVisits": "Sin visitas próximas"

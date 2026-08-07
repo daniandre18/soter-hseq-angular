@@ -6,7 +6,12 @@
       <div class="bar-row" [title]="item.value + ' ' + unit()">
         <div class="bar-row-top">
           <span class="bar-row-label">{{ item.label }}</span>
-          <span class="bar-row-percentage">{{ item.percentage }}%</span>
+          <span class="bar-row-numbers">
+            @if (showValue()) {
+              <span class="bar-row-value">{{ item.value }} {{ unit() }}</span>
+            }
+            <span class="bar-row-percentage">{{ item.percentage }}%</span>
+          </span>
         </div>
         <div class="bar-track">
           <div class="bar-fill" [style.width.%]="item.percentage" [style.background]="item.color"></div>

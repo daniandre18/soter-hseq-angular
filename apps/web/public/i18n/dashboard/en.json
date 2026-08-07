@@ -21,6 +21,8 @@
   "noServices": "No services with orders",
   "recentOrders": "Recent orders",
   "noRecentOrders": "No recent orders",
+  "viewAllOrders": "View all",
+  "notStarted": "Not started",
   "upcomingVisits": "Upcoming visits",
   "viewSchedule": "View schedule",
   "noUpcomingVisits": "No upcoming visits"
