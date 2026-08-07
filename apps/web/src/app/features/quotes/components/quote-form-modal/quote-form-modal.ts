@@ -3,7 +3,7 @@ import { FormField, applyEach, form, min, required, submit } from '@angular/form
 import { firstValueFrom } from 'rxjs';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
-import { formatCurrency } from '../../../../shared/utils/format-currency';
+import { LocalizedCurrencyPipe } from '../../../../shared/pipes/localized-currency.pipe';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { ServicesFacade } from '../../../services/facades/services.facade';
 import { QuotesFacade } from '../../facades/quotes.facade';
@@ -43,7 +43,7 @@ function emptyModel(): QuoteFormModel {
 
 @Component({
   selector: 'app-quote-form-modal',
-  imports: [Modal, Button, FormField],
+  imports: [Modal, Button, FormField, LocalizedCurrencyPipe],
   templateUrl: './quote-form-modal.html',
   styleUrl: './quote-form-modal.scss',
 })
@@ -58,7 +58,6 @@ export class QuoteFormModal {
 
   protected readonly saving = signal(false);
   protected readonly loadingDraft = signal(false);
-  protected readonly formatCurrency = formatCurrency;
 
   protected readonly activeClients = computed(() =>
     this.clientsFacade.clients().filter((client) => client.status === 'ACTIVE'),

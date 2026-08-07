@@ -1,0 +1,65 @@
+{
+  "languages": {
+    "selectorLabel": "Seleccionar idioma",
+    "spanish": "Español",
+    "english": "English"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "loading": "Cargando…",
+    "search": "Buscar",
+    "clearFilters": "Limpiar filtros",
+    "actions": "Acciones",
+    "create": "Crear",
+    "update": "Actualizar",
+    "all": "Todos",
+    "noDate": "Sin fecha",
+    "total": "Total",
+    "deleting": "Eliminando…",
+    "dismissMessage": "Cerrar mensaje",
+    "backToDashboard": "Volver al panel",
+    "accessDenied": {
+      "title": "Acceso denegado",
+      "message": "No tienes permisos para ver esta página."
+    },
+    "notFound": {
+      "title": "Página no encontrada",
+      "message": "La página que buscas no existe o fue movida."
+    }
+  },
+  "roles": {
+    "ADMIN": "Administrador",
+    "COMMERCIAL": "Comercial",
+    "COORDINATOR": "Coordinador",
+    "TECHNICIAN": "Técnico",
+    "VIEWER": "Cliente"
+  },
+  "routes": {
+    "login": "Acceso demo — SOTER HSEQ",
+    "forgotPassword": "Recuperar contraseña — SOTER HSEQ",
+    "accessDenied": "Acceso denegado — SOTER HSEQ",
+    "dashboard": "Panel — SOTER HSEQ",
+    "clients": "Clientes — SOTER HSEQ",
+    "quotes": "Cotizaciones — SOTER HSEQ",
+    "orders": "Órdenes — SOTER HSEQ",
+    "agenda": "Agenda de visitas — SOTER HSEQ",
+    "categories": "Categorías de servicios — SOTER HSEQ",
+    "services": "Servicios — SOTER HSEQ",
+    "technicians": "Técnicos — SOTER HSEQ",
+    "myOrders": "Mis órdenes — SOTER HSEQ",
+    "notFound": "Página no encontrada — SOTER HSEQ"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio.",
+    "email": "Ingresa un correo válido.",
+    "minLength": "Debe tener al menos {{min}} caracteres.",
+    "maxLength": "Máximo {{max}} caracteres.",
+    "invalid": "El valor ingresado no es válido."
+  }
+}

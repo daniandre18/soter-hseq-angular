@@ -1,0 +1,10 @@
+{
+  "title": "Notifications",
+  "markAllRead": "Mark all as read",
+  "empty": "No notifications.",
+  "dismiss": "Dismiss notification",
+  "dismissWithTitle": "Dismiss notification: {{title}}",
+  "viewOrder": "View order →",
+  "viewQuote": "View quote →",
+  "dismissAll": "Dismiss all notifications"
+}

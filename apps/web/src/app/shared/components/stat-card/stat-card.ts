@@ -1,11 +1,12 @@
 import { Component, input } from '@angular/core';
 import { Icon, type IconName } from '../icon/icon';
+import { LocalizedNumberPipe } from '../../pipes/localized-number.pipe';
 
 export type StatCardColor = 'brand' | 'green' | 'red' | 'orange' | 'blue' | 'purple';
 
 @Component({
   selector: 'app-stat-card',
-  imports: [Icon],
+  imports: [Icon, LocalizedNumberPipe],
   templateUrl: './stat-card.html',
   styleUrl: './stat-card.scss',
 })

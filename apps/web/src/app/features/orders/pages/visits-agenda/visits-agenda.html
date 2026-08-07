@@ -5,8 +5,8 @@
         <input
           type="search"
           class="search-input"
-          placeholder="Buscar cliente..."
-          aria-label="Buscar cliente"
+          [placeholder]="'orders.agenda.searchPlaceholder' | transloco"
+          [attr.aria-label]="'orders.agenda.searchAriaLabel' | transloco"
           role="combobox"
           aria-autocomplete="list"
           [attr.aria-expanded]="showClientSuggestions()"
@@ -20,7 +20,7 @@
             type="button"
             class="clear-search-btn"
             (click)="clearSearch()"
-            aria-label="Limpiar búsqueda de cliente"
+            [attr.aria-label]="'orders.agenda.clearSearch' | transloco"
           >
             <app-icon name="x" />
           </button>
@@ -31,7 +31,7 @@
               class="client-suggestions"
               role="listbox"
               [id]="clientListboxId"
-              aria-label="Clientes"
+              [attr.aria-label]="'orders.agenda.clientsAriaLabel' | transloco"
             >
               @for (client of clientSuggestions(); track client) {
                 <li role="option" [attr.aria-selected]="client === search()">
@@ -40,7 +40,9 @@
               }
             </ul>
           } @else {
-            <p class="client-suggestions client-suggestions--empty">Sin clientes coincidentes</p>
+            <p class="client-suggestions client-suggestions--empty">
+              {{ 'orders.agenda.noMatchingClients' | transloco }}
+            </p>
           }
         }
       </div>
@@ -51,7 +53,7 @@
         [attr.aria-expanded]="filtersSheetOpen()"
       >
         <app-icon name="sliders-horizontal" />
-        <span>Filtros</span>
+        <span>{{ 'orders.agenda.filters' | transloco }}</span>
         @if (activeFilterCount() > 0) {
           <span class="filter-badge">{{ activeFilterCount() }}</span>
         }
@@ -62,31 +64,35 @@
         [class.agenda-filters-advanced--open]="filtersSheetOpen()"
         role="dialog"
         aria-modal="true"
-        aria-label="Filtros de agenda"
+        [attr.aria-label]="'orders.agenda.filtersAriaLabel' | transloco"
       >
         <div class="filters-sheet-header">
-          <h2>Filtros</h2>
-          <button type="button" (click)="closeFiltersSheet()" aria-label="Cerrar filtros">
+          <h2>{{ 'orders.agenda.filters' | transloco }}</h2>
+          <button
+            type="button"
+            (click)="closeFiltersSheet()"
+            [attr.aria-label]="'orders.agenda.closeFilters' | transloco"
+          >
             <app-icon name="x" />
           </button>
         </div>
 
         <select
           class="status-select"
-          aria-label="Filtrar por estado"
+          [attr.aria-label]="'orders.agenda.statusFilterAriaLabel' | transloco"
           [value]="statusFilter()"
           (change)="onStatusChange($event)"
         >
-          <option value="all">Todos los estados</option>
+          <option value="all">{{ 'orders.allStatuses' | transloco }}</option>
           @for (entry of statusOptions; track entry[0]) {
-            <option [value]="entry[0]">{{ entry[1].label }}</option>
+            <option [value]="entry[0]">{{ entry[1].translationKey | transloco }}</option>
           }
         </select>
         @if (showTechnicianFilter()) {
           <label class="technician-filter">
-            <span>Técnico</span>
+            <span>{{ 'orders.agenda.technician' | transloco }}</span>
             <select [value]="selectedTechnicianId()" (change)="onTechnicianChange($event)">
-              <option value="all">Todos los técnicos</option>
+              <option value="all">{{ 'orders.agenda.allTechnicians' | transloco }}</option>
               @for (technician of ordersFacade.technicians(); track technician.id) {
                 <option [value]="technician.id">{{ technician.displayName }}</option>
               }
@@ -94,23 +100,25 @@
           </label>
         }
         <label class="date-filter">
-          <span>Desde</span>
+          <span>{{ 'orders.agenda.dateFrom' | transloco }}</span>
           <input type="date" [value]="dateFrom()" (change)="onDateFromChange($event)" />
         </label>
         <label class="date-filter">
-          <span>Hasta</span>
+          <span>{{ 'orders.agenda.dateTo' | transloco }}</span>
           <input type="date" [value]="dateTo()" (change)="onDateToChange($event)" />
         </label>
 
         <div class="filters-sheet-footer">
           @if (hasActiveFilters()) {
             <button type="button" class="clear-filters-btn" (click)="clearFilters()">
-              Limpiar filtros
+              {{ 'orders.agenda.clearFilters' | transloco }}
             </button>
           }
           <button type="button" class="apply-filters-btn" (click)="closeFiltersSheet()">
-            Ver {{ scheduledVisits().length }}
-            {{ scheduledVisits().length === 1 ? 'visita' : 'visitas' }}
+            {{
+              (scheduledVisits().length === 1 ? 'orders.agenda.viewVisitOne' : 'orders.agenda.viewVisitOther')
+                | transloco: { count: scheduledVisits().length }
+            }}
           </button>
         </div>
       </div>
@@ -121,30 +129,39 @@
         type="button"
         class="filters-backdrop"
         (click)="closeFiltersSheet()"
-        aria-label="Cerrar filtros"
+        [attr.aria-label]="'orders.agenda.closeFilters' | transloco"
       ></button>
     }
 
-    <div class="month-navigation" aria-label="Navegación del calendario">
-      <button type="button" class="today-button" (click)="goToToday()">Hoy</button>
+    <div class="month-navigation" [attr.aria-label]="'orders.agenda.calendarAriaLabel' | transloco">
+      <button type="button" class="today-button" (click)="goToToday()">
+        {{ 'orders.agenda.today' | transloco }}
+      </button>
       <button
         type="button"
         class="month-button"
         (click)="previousMonth()"
-        aria-label="Mes anterior"
+        [attr.aria-label]="'orders.agenda.previousMonth' | transloco"
       >
         <app-icon name="chevron-left" />
       </button>
       <p aria-live="polite">{{ monthLabel() }}</p>
-      <button type="button" class="month-button" (click)="nextMonth()" aria-label="Mes siguiente">
+      <button
+        type="button"
+        class="month-button"
+        (click)="nextMonth()"
+        [attr.aria-label]="'orders.agenda.nextMonth' | transloco"
+      >
         <app-icon name="chevron-right" />
       </button>
     </div>
   </div>
 
   <p class="agenda-results-count">
-    {{ scheduledVisits().length }}
-    {{ scheduledVisits().length === 1 ? 'visita encontrada' : 'visitas encontradas' }}
+    {{
+      (scheduledVisits().length === 1 ? 'orders.agenda.resultsFoundOne' : 'orders.agenda.resultsFoundOther')
+        | transloco: { count: scheduledVisits().length }
+    }}
   </p>
 
   @if (ordersFacade.error()) {
@@ -153,8 +170,12 @@
 
   <div class="agenda-layout">
     <app-card padding="none" class="calendar-card">
-      <div class="calendar" role="grid" [attr.aria-label]="'Agenda de ' + monthLabel()">
-        @for (weekday of weekdays; track weekday) {
+      <div
+        class="calendar"
+        role="grid"
+        [attr.aria-label]="'orders.agenda.calendarGridAriaLabel' | transloco: { month: monthLabel() }"
+      >
+        @for (weekday of weekdays(); track $index) {
           <div class="weekday" role="columnheader">{{ weekday }}</div>
         }
         @for (day of calendarDays(); track day.key) {
@@ -179,9 +200,10 @@
                 </a>
               }
               @if (day.visits.length > visibleVisitsPerDay) {
-                <span class="more-visits"
-                  >+{{ day.visits.length - visibleVisitsPerDay }} visitas</span
-                >
+                <span class="more-visits">{{
+                  'orders.agenda.moreVisits'
+                    | transloco: { count: day.visits.length - visibleVisitsPerDay }
+                }}</span>
               }
             </div>
           </div>
@@ -190,7 +212,11 @@
     </app-card>
 
     <app-card padding="none" class="day-strip-card">
-      <div class="mobile-day-strip" role="tablist" aria-label="Días del mes">
+      <div
+        class="mobile-day-strip"
+        role="tablist"
+        [attr.aria-label]="'orders.agenda.dayStripAriaLabel' | transloco"
+      >
         @for (day of calendarDays(); track day.key) {
           @if (day.currentMonth) {
             <button
@@ -202,7 +228,13 @@
               [attr.aria-pressed]="selectedDayKey() === day.key"
               [attr.aria-label]="
                 formatLongDate(day.date) +
-                (day.visits.length > 0 ? ', ' + day.visits.length + ' visitas' : '')
+                (day.visits.length > 0
+                  ? ', ' +
+                    ((day.visits.length === 1
+                      ? 'orders.agenda.visitsSelectedDayOne'
+                      : 'orders.agenda.visitsSelectedDayOther'
+                    ) | transloco: { count: day.visits.length })
+                  : '')
               "
             >
               <span class="day-pill-weekday">{{ weekdayShort(day.date) }}</span>
@@ -219,7 +251,7 @@
     <app-card padding="none" class="upcoming-card">
       <div class="upcoming-header">
         <div>
-          <h2>{{ selectedDayKey() ? selectedDayLabel() : 'Próximas visitas' }}</h2>
+          <h2>{{ selectedDayKey() ? selectedDayLabel() : ('orders.agenda.upcomingVisits' | transloco) }}</h2>
           <p>{{ displayedSubtitle() }}</p>
         </div>
         @if (selectedDayKey()) {
@@ -227,7 +259,7 @@
             type="button"
             class="clear-day-btn"
             (click)="clearSelectedDay()"
-            aria-label="Volver a próximas visitas"
+            [attr.aria-label]="'orders.agenda.backToUpcoming' | transloco"
           >
             <app-icon name="x" />
           </button>
@@ -245,9 +277,7 @@
               <a class="visit-summary" [routerLink]="orderDetailRoute()" [queryParams]="{ open: visit.id }">
                 <div class="upcoming-date">
                   <strong>{{ visit.scheduledStart!.getDate() }}</strong>
-                  <span>{{
-                    visit.scheduledStart!.toLocaleDateString('es-CO', { month: 'short' })
-                  }}</span>
+                  <span>{{ formatShortMonth(visit.scheduledStart!) }}</span>
                 </div>
                 <div>
                   <h3>{{ visit.title || visit.serviceSummary }}</h3>

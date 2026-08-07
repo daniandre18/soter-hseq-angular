@@ -16,8 +16,10 @@ import { OrderDetailModal } from '../../components/order-detail-modal/order-deta
 import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
-import { formatDateNumeric, formatDateTime } from '../../../../shared/utils/format-date';
 import type { OrderPriority, OrderStatus, ServiceOrder } from '../../models/order.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../../../core/i18n/language.service';
+import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
 
 type StatusFilterOption = 'all' | 'active' | 'closed' | OrderStatus;
 
@@ -36,7 +38,10 @@ const CLOSED_ORDER_STATUSES = new Set<OrderStatus>(['CLOSED', 'CANCELLED']);
     Icon,
     OrderDetailModal,
     OrderFormModal,
+    TranslocoPipe,
+    LocalizedDatePipe,
   ],
+  providers: [...provideTranslocoScope('orders')],
   templateUrl: './orders-list.html',
   styleUrl: './orders-list.scss',
 })
@@ -46,6 +51,8 @@ export class OrdersList {
   private readonly clientsFacade = inject(ClientsFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
+  private readonly language = inject(LanguageService);
 
   /** `?open=<id>` — usado por la campanita de notificaciones para abrir
    *  directo el detalle en vez de solo aterrizar en el listado. */
@@ -74,7 +81,7 @@ export class OrdersList {
 
   protected readonly statusOptions = Object.entries(ORDER_STATUS_CONFIG) as [
     OrderStatus,
-    { label: string; color: string },
+    { translationKey: string; color: string },
   ][];
 
   protected readonly totalOrdersCount = computed(() => this.ordersFacade.orders().length);
@@ -87,8 +94,6 @@ export class OrdersList {
       this.ordersFacade.orders().filter((order) => CLOSED_ORDER_STATUSES.has(order.status)).length,
   );
 
-  protected readonly formatDateNumeric = formatDateNumeric;
-  protected readonly formatDateTime = formatDateTime;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -151,7 +156,8 @@ export class OrdersList {
   }
 
   protected statusLabel(status: OrderStatus): string {
-    return ORDER_STATUS_CONFIG[status].label;
+    this.language.currentLanguage();
+    return this.transloco.translate(ORDER_STATUS_CONFIG[status].translationKey);
   }
 
   protected statusColor(status: OrderStatus): string {
@@ -159,7 +165,8 @@ export class OrdersList {
   }
 
   protected priorityLabel(priority: OrderPriority): string {
-    return ORDER_PRIORITY_CONFIG[priority].label;
+    this.language.currentLanguage();
+    return this.transloco.translate(ORDER_PRIORITY_CONFIG[priority].translationKey);
   }
 
   protected priorityColor(priority: OrderPriority): string {

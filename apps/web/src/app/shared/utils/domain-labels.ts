@@ -1,26 +1,18 @@
-import { ORDER_STATUS_CONFIG } from '../../features/orders/models/order-status-config';
-import { NOTE_TYPE_LABELS } from '../../features/orders/models/note.model';
-import { EVIDENCE_CATEGORY_LABELS } from '../../features/orders/models/evidence.model';
-import { QUOTE_STATUS_CONFIG } from '../../features/quotes/models/quote-status-config';
-
 /**
- * Un solo diccionario código→etiqueta en español, combinando los catálogos
- * que ya existen por dominio (`ORDER_STATUS_CONFIG`, `QUOTE_STATUS_CONFIG`,
- * `NOTE_TYPE_LABELS`, `EVIDENCE_CATEGORY_LABELS`) — no los duplica, solo los
- * junta para poder traducir texto ya armado (notificaciones, bitácora de
- * auditoría) sin tener que reescribir cada tipo de evento por separado.
+ * Adaptador temporal para datos históricos ya persistidos como frases en
+ * español. Los datos nuevos deben guardar códigos/variables y traducirse en
+ * presentación con Transloco; no se migran documentos existentes de Firebase.
  * Las claves repetidas entre catálogos (`DRAFT`/`APPROVED`, `FINDING`) ya
  * comparten la misma traducción en ambos, así que combinarlas es seguro.
  */
 const DOMAIN_CODE_LABELS: Record<string, string> = {
-  ...Object.fromEntries(
-    Object.entries(ORDER_STATUS_CONFIG).map(([code, config]) => [code, config.label]),
-  ),
-  ...Object.fromEntries(
-    Object.entries(QUOTE_STATUS_CONFIG).map(([code, config]) => [code, config.label]),
-  ),
-  ...NOTE_TYPE_LABELS,
-  ...EVIDENCE_CATEGORY_LABELS,
+  DRAFT: 'Borrador', SCHEDULED: 'Programada', ASSIGNED: 'Asignada',
+  IN_PROGRESS: 'En ejecución', EVIDENCE_PENDING: 'Evidencia pendiente',
+  UNDER_REVIEW: 'En revisión', CORRECTION_REQUIRED: 'Corrección requerida',
+  APPROVED: 'Aprobada', CLOSED: 'Cerrada', CANCELLED: 'Cancelada',
+  SENT: 'Enviada', REJECTED: 'Rechazada', EXPIRED: 'Vencida', CONVERTED: 'Convertida',
+  GENERAL: 'General', INTERNAL: 'Interna', FINDING: 'Hallazgo', RECOMMENDATION: 'Recomendación',
+  BEFORE: 'Antes', DURING: 'Durante', AFTER: 'Después', DOCUMENT: 'Documento', OTHER: 'Otra',
 };
 
 /**

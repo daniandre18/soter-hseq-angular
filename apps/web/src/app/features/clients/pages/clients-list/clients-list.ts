@@ -14,6 +14,8 @@ import { ClientTagsManagerModal } from '../../components/client-tags-manager-mod
 import { CLIENT_TAG_COLOR_PALETTE } from '../../models/client-tag.model';
 import type { Client } from '../../models/client.model';
 import { normalizeUniqueName } from '../../../../shared/utils/normalize-unique-value';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 
@@ -31,7 +33,9 @@ const PAGE_SIZE = 10;
     ClientFormModal,
     ClientDetailModal,
     ClientTagsManagerModal,
+    TranslocoPipe,
   ],
+  providers: [...provideTranslocoScope('clients')],
   templateUrl: './clients-list.html',
   styleUrl: './clients-list.scss',
 })
@@ -39,6 +43,7 @@ export class ClientsList {
   protected readonly clientsFacade = inject(ClientsFacade);
   protected readonly tagsFacade = inject(ClientTagsFacade);
   private readonly authFacade = inject(AuthFacade);
+  private readonly language = inject(LanguageService);
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilter>('all');
@@ -80,6 +85,7 @@ export class ClientsList {
   );
 
   protected readonly cityOptions = computed(() => {
+    const locale = this.language.currentLocale();
     const cities = new Map<string, string>();
     for (const client of this.clientsFacade.clients()) {
       const label = client.city?.trim();
@@ -89,7 +95,7 @@ export class ClientsList {
       }
     }
     return Array.from(cities, ([value, label]) => ({ value, label })).sort((a, b) =>
-      a.label.localeCompare(b.label, 'es'),
+      a.label.localeCompare(b.label, locale),
     );
   });
 

@@ -7,6 +7,7 @@ import { ServicesFacade } from '../../../services/facades/services.facade';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { ORDER_PRIORITY_CONFIG, ORDER_PRIORITY_KEYS } from '../../models/order-priority-config';
 import type { NewOrderServiceRow, OrderPriority, ServiceOrder } from '../../models/order.model';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 
 /** Una fila = un servicio = una orden nueva al guardar (ver `onSubmit`). */
 interface OrderServiceRow {
@@ -93,7 +94,8 @@ function shiftedScheduledEnd(order: ServiceOrder, scheduledStart: Date): Date | 
 
 @Component({
   selector: 'app-order-form-modal',
-  imports: [Modal, Button, FormField],
+  imports: [Modal, Button, FormField, TranslocoPipe],
+  providers: [...provideTranslocoScope('orders')],
   templateUrl: './order-form-modal.html',
   styleUrl: './order-form-modal.scss',
 })
@@ -118,38 +120,38 @@ export class OrderFormModal {
   protected readonly priorityLabels = ORDER_PRIORITY_CONFIG;
   protected readonly priorityKeys = ORDER_PRIORITY_KEYS;
 
-  protected readonly title = computed(() =>
-    this.editingOrder() ? 'Editar Orden' : 'Nueva Orden de Trabajo',
+  protected readonly titleKey = computed(() =>
+    this.editingOrder() ? 'orders.form.editTitle' : 'orders.form.createTitle',
   );
   /** La tabla de varios servicios necesita más ancho que el formulario plano de edición. */
   protected readonly modalSize = computed(() => (this.editingOrder() ? 'lg' : 'xl'));
 
   protected readonly orderForm = form(this.model, (schemaPath) => {
-    required(schemaPath.clientId, { message: 'Selecciona un cliente.' });
+    required(schemaPath.clientId, { message: 'orders.validation.selectClient' });
 
     const editing = () => this.editingOrder() !== null;
-    required(schemaPath.title, { message: 'El título es obligatorio.', when: editing });
-    required(schemaPath.serviceSummary, { message: 'Selecciona un servicio.', when: editing });
-    required(schemaPath.dueDate, { message: 'La fecha límite es obligatoria.', when: editing });
+    required(schemaPath.title, { message: 'orders.validation.titleRequired', when: editing });
+    required(schemaPath.serviceSummary, { message: 'orders.validation.selectService', when: editing });
+    required(schemaPath.dueDate, { message: 'orders.validation.dueDateRequired', when: editing });
     required(schemaPath.visitDate, {
-      message: 'Selecciona la fecha de la visita.',
+      message: 'orders.validation.visitDateRequired',
       when: ({ valueOf }) => editing() && Boolean(valueOf(schemaPath.visitTime)),
     });
     required(schemaPath.visitTime, {
-      message: 'Selecciona la hora de la visita.',
+      message: 'orders.validation.visitTimeRequired',
       when: ({ valueOf }) => editing() && Boolean(valueOf(schemaPath.visitDate)),
     });
 
     const creating = () => this.editingOrder() === null;
     applyEach(schemaPath.rows, (row) => {
-      required(row.serviceId, { message: 'Selecciona un servicio.', when: creating });
-      required(row.dueDate, { message: 'La fecha límite es obligatoria.', when: creating });
+      required(row.serviceId, { message: 'orders.validation.selectService', when: creating });
+      required(row.dueDate, { message: 'orders.validation.dueDateRequired', when: creating });
       required(row.visitDate, {
-        message: 'Selecciona la fecha de la visita.',
+        message: 'orders.validation.visitDateRequired',
         when: ({ valueOf }) => creating() && Boolean(valueOf(row.visitTime)),
       });
       required(row.visitTime, {
-        message: 'Selecciona la hora de la visita.',
+        message: 'orders.validation.visitTimeRequired',
         when: ({ valueOf }) => creating() && Boolean(valueOf(row.visitDate)),
       });
     });

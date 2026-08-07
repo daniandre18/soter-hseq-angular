@@ -3,7 +3,7 @@
     type="button"
     class="sidebar-backdrop"
     (click)="close()"
-    aria-label="Cerrar menú"
+    [attr.aria-label]="'layout.closeMenu' | transloco"
   ></button>
 }
 
@@ -25,8 +25,8 @@
       type="button"
       class="sidebar-icon-btn sidebar-collapse-btn"
       (click)="toggleCollapsed()"
-      [attr.aria-label]="isCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
-      [title]="isCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
+      [attr.aria-label]="(isCollapsed() ? 'layout.expandMenu' : 'layout.collapseMenu') | transloco"
+      [title]="(isCollapsed() ? 'layout.expandMenu' : 'layout.collapseMenu') | transloco"
     >
       <app-icon [name]="isCollapsed() ? 'chevron-right' : 'chevron-left'" />
     </button>
@@ -34,22 +34,22 @@
       type="button"
       class="sidebar-icon-btn sidebar-close-btn"
       (click)="close()"
-      aria-label="Cerrar menú"
+      [attr.aria-label]="'layout.closeMenu' | transloco"
     >
       <app-icon name="x" />
     </button>
   </div>
 
-  <nav class="sidebar-nav" aria-label="Menú principal">
+  <nav class="sidebar-nav" [attr.aria-label]="'layout.mainMenu' | transloco">
     @for (section of navSections(); track section.id) {
       <section
         class="sidebar-nav-section"
-        [attr.aria-label]="isCollapsed() ? section.label : null"
+        [attr.aria-label]="isCollapsed() ? (section.translationKey | transloco) : null"
         [attr.aria-labelledby]="isCollapsed() ? null : 'sidebar-section-' + section.id"
       >
         @if (!isCollapsed()) {
           <h2 class="sidebar-section-title" [id]="'sidebar-section-' + section.id">
-            {{ section.label }}
+            {{ section.translationKey | transloco }}
           </h2>
         }
         <ul>
@@ -62,12 +62,12 @@
                   [class.sidebar-group-toggle--active]="servicesExpanded()"
                   [attr.aria-expanded]="servicesExpanded()"
                   aria-controls="services-submenu"
-                  [title]="isCollapsed() ? entry.label : null"
+                  [title]="isCollapsed() ? (entry.translationKey | transloco) : null"
                   (click)="toggleServices()"
                 >
                   <app-icon [name]="entry.icon" class="sidebar-link-icon" />
                   @if (!isCollapsed()) {
-                    <span class="sidebar-link-label">{{ entry.label }}</span>
+                    <span class="sidebar-link-label">{{ entry.translationKey | transloco }}</span>
                     <app-icon
                       name="chevron-down"
                       class="sidebar-group-chevron"
@@ -87,7 +87,7 @@
                           class="sidebar-sublink"
                         >
                           <app-icon [name]="child.icon" class="sidebar-link-icon" />
-                          <span>{{ child.label }}</span>
+                          <span>{{ child.translationKey | transloco }}</span>
                         </a>
                       </li>
                     }
@@ -101,11 +101,11 @@
                   routerLinkActive="sidebar-link--active"
                   (click)="close()"
                   class="sidebar-link"
-                  [title]="isCollapsed() ? entry.label : null"
+                  [title]="isCollapsed() ? (entry.translationKey | transloco) : null"
                 >
                   <app-icon [name]="entry.icon" class="sidebar-link-icon" />
                   @if (!isCollapsed()) {
-                    <span class="sidebar-link-label">{{ entry.label }}</span>
+                    <span class="sidebar-link-label">{{ entry.translationKey | transloco }}</span>
                   }
                 </a>
               </li>
@@ -123,7 +123,7 @@
         @if (!isCollapsed()) {
           <div class="sidebar-user-info">
             <p class="sidebar-user-name">{{ user.displayName }}</p>
-            <p class="sidebar-user-role">{{ roleLabel() }}</p>
+            <p class="sidebar-user-role">{{ roleTranslationKey() | transloco }}</p>
           </div>
         }
       </div>
@@ -133,11 +133,11 @@
       type="button"
       class="sidebar-logout"
       (click)="logout()"
-      [title]="isCollapsed() ? 'Cerrar sesión' : null"
+      [title]="isCollapsed() ? ('layout.logout' | transloco) : null"
     >
       <app-icon name="log-out" class="sidebar-logout-icon" />
       @if (!isCollapsed()) {
-        <span>Cerrar sesión</span>
+        <span>{{ 'layout.logout' | transloco }}</span>
       }
     </button>
   </div>

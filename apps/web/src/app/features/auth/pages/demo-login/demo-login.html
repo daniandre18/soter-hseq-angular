@@ -1,24 +1,25 @@
 <main class="demo-login-page">
+  <app-language-selector />
   @if (transitioning()) {
     <div class="login-transition" role="status" aria-live="polite" aria-busy="true">
       <div class="login-transition__content">
         <span class="login-transition__spinner" aria-hidden="true"></span>
-        <strong>Preparando tu perfil</strong>
-        <span>Validando permisos y cargando la información…</span>
+        <strong>{{ 'auth.demo.preparing' | transloco }}</strong>
+        <span>{{ 'auth.demo.validating' | transloco }}</span>
       </div>
     </div>
   }
 
   <header class="demo-brand">
     <img src="soter-hseq-login.png" alt="SOTER HSEQ — Salud y Seguridad en el Trabajo" />
-    <p>Gestión Integral HSEQ &amp; SST</p>
+    <p>{{ 'auth.brandTagline' | transloco }}</p>
   </header>
 
   <section class="demo-card" aria-labelledby="demo-title">
     <div class="demo-card-heading">
       <span class="demo-badge">DEMO</span>
-      <h1 id="demo-title">Selecciona un perfil</h1>
-      <p>Explora la plataforma con las funciones de cada rol</p>
+      <h1 id="demo-title">{{ 'auth.demo.title' | transloco }}</h1>
+      <p>{{ 'auth.demo.subtitle' | transloco }}</p>
     </div>
 
     <div class="profile-list">
@@ -28,15 +29,15 @@
           [class]="'profile-card profile-card--' + profile.color"
           [disabled]="loading() || transitioning()"
           (click)="loginAs(profile)"
-          [attr.aria-label]="'Ingresar como ' + profile.role"
+          [attr.aria-label]="'auth.demo.enterAs' | transloco: { role: ('roles.' + profile.role | transloco) }"
         >
           <span class="profile-icon" aria-hidden="true">{{ profile.icon }}</span>
           <span class="profile-copy">
             <span class="profile-title">
-              <strong>{{ profile.role }}</strong>
+              <strong>{{ 'roles.' + profile.role | transloco }}</strong>
               <span>— {{ profile.name }}</span>
             </span>
-            <span class="profile-description">{{ profile.description }}</span>
+            <span class="profile-description">{{ 'auth.' + profile.descriptionKey | transloco }}</span>
           </span>
           <span class="profile-action" aria-hidden="true">
             {{ selectedEmail() === profile.email && loading() ? '···' : '›' }}
@@ -46,9 +47,9 @@
     </div>
 
     @if (authError()) {
-      <p class="form-error" role="alert">{{ authError() }}</p>
+      <p class="form-error" role="alert">{{ authError()! | transloco }}</p>
     }
   </section>
 
-  <footer>SOTER HSEQ · Demo académica · Colombia</footer>
+  <footer>{{ 'auth.demo.footer' | transloco }}</footer>
 </main>

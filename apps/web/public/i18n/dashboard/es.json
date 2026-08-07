@@ -1,0 +1,27 @@
+{
+  "kpi": {
+    "openOrders": "Órdenes abiertas",
+    "closedOrders": "Órdenes cerradas",
+    "overdue": "Vencidas",
+    "inProgress": "En proceso",
+    "activeClients": "Clientes activos",
+    "visitsToday": "Visitas hoy",
+    "techniciansInField": "Técnicos en campo",
+    "pendingOrders": "Órdenes pendientes"
+  },
+  "operationalAlerts": "Alertas operativas",
+  "overdueOrder": "{{orderNumber}} vencida",
+  "correctionRequired": "{{orderNumber}} requiere corrección",
+  "ordersByStatus": "Órdenes por estado",
+  "ordersTotalOne": "1 orden en total",
+  "ordersTotalOther": "{{count}} órdenes en total",
+  "ordersUnit": "órdenes",
+  "noOrders": "Sin órdenes registradas",
+  "topServices": "Servicios más solicitados",
+  "noServices": "Sin servicios con órdenes",
+  "recentOrders": "Órdenes recientes",
+  "noRecentOrders": "Sin órdenes recientes",
+  "upcomingVisits": "Próximas visitas",
+  "viewSchedule": "Ver agenda",
+  "noUpcomingVisits": "Sin visitas próximas"
+}

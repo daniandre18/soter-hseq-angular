@@ -1,13 +1,13 @@
 <section class="my-orders-page">
   <div class="kpi-row">
-    <app-stat-card label="Asignadas" [value]="assignedCount()" icon="clipboard-list" color="brand" />
-    <app-stat-card label="En Ejecución" [value]="inProgressCount()" icon="hard-hat" color="orange" />
-    <app-stat-card label="Total" [value]="myOrders().length" icon="clock" color="blue" />
+    <app-stat-card [label]="'orders.my.assigned' | transloco" [value]="assignedCount()" icon="clipboard-list" color="brand" />
+    <app-stat-card [label]="'orders.my.inProgress' | transloco" [value]="inProgressCount()" icon="hard-hat" color="orange" />
+    <app-stat-card [label]="'common.total' | transloco" [value]="myOrders().length" icon="clock" color="blue" />
   </div>
 
   @if (activeOrders().length > 0) {
     <div class="orders-section">
-      <h2>Órdenes Activas</h2>
+      <h2>{{ 'orders.my.active' | transloco }}</h2>
       <div class="orders-grid">
         @for (order of activeOrders(); track order.id) {
           <app-card [clickable]="true" (cardClick)="openDetail(order)">
@@ -21,7 +21,7 @@
             <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
             <div class="order-card-footer">
               @if (order.scheduledStart) {
-                <span>{{ formatDateTime(order.scheduledStart) }}</span>
+                <span>{{ order.scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}</span>
               }
               @if (order.city) {
                 <span>{{ order.city }}</span>
@@ -35,7 +35,7 @@
 
   @if (otherOrders().length > 0) {
     <div class="orders-section">
-      <h2>Otras</h2>
+      <h2>{{ 'orders.my.other' | transloco }}</h2>
       <div class="orders-grid">
         @for (order of otherOrders(); track order.id) {
           <app-card [clickable]="true" (cardClick)="openDetail(order)">
@@ -49,7 +49,7 @@
             <app-status-badge [label]="statusLabel(order.status)" [color]="statusColor(order.status)" />
             @if (order.scheduledStart) {
               <div class="order-card-footer">
-                <span>{{ formatDateTime(order.scheduledStart) }}</span>
+                <span>{{ order.scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}</span>
                 @if (order.city) {
                   <span>{{ order.city }}</span>
                 }
@@ -63,7 +63,7 @@
 
   @if (myOrders().length === 0) {
     <app-card class="empty-card">
-      <p>No tienes órdenes asignadas</p>
+      <p>{{ 'orders.my.empty' | transloco }}</p>
     </app-card>
   }
 </section>

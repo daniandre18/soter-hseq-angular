@@ -5,21 +5,21 @@
         <div>
           <p class="client-name">{{ q.clientBusinessName }}</p>
           @if (q.validUntil) {
-            <p class="valid-until">Válida hasta {{ formatDate(q.validUntil) }}</p>
+            <p class="valid-until">{{ 'quotes.validUntil' | transloco }} {{ q.validUntil | localizedDate }}</p>
           }
         </div>
         <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
       </div>
 
       <div>
-        <h4>Servicios</h4>
+        <h4>{{ 'quotes.detail.services' | transloco }}</h4>
         <table class="items-table">
           <thead>
             <tr>
-              <th>Servicio</th>
-              <th class="align-right">Cant.</th>
-              <th class="align-right">Valor Unit.</th>
-              <th class="align-right">Total</th>
+              <th>{{ 'quotes.detail.service' | transloco }}</th>
+              <th class="align-right">{{ 'quotes.detail.quantity' | transloco }}</th>
+              <th class="align-right">{{ 'quotes.detail.unitPrice' | transloco }}</th>
+              <th class="align-right">{{ 'common.total' | transloco }}</th>
             </tr>
           </thead>
           <tbody>
@@ -27,15 +27,15 @@
               <tr>
                 <td>{{ item.description }}</td>
                 <td class="align-right">{{ item.quantity }}</td>
-                <td class="align-right">{{ formatCurrency(item.unitPrice) }}</td>
-                <td class="align-right total-cell">{{ formatCurrency(item.total) }}</td>
+                <td class="align-right">{{ item.unitPrice | localizedCurrency }}</td>
+                <td class="align-right total-cell">{{ item.total | localizedCurrency }}</td>
               </tr>
             }
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="3" class="total-label">Total</td>
-              <td class="align-right total-cell">{{ formatCurrency(q.total) }}</td>
+              <td colspan="3" class="total-label">{{ 'common.total' | transloco }}</td>
+              <td class="align-right total-cell">{{ q.total | localizedCurrency }}</td>
             </tr>
           </tfoot>
         </table>
@@ -43,14 +43,14 @@
 
       @if (q.notes) {
         <div class="notes-box">
-          <p class="notes-label">Notas</p>
+          <p class="notes-label">{{ 'quotes.detail.notes' | transloco }}</p>
           <p>{{ q.notes }}</p>
         </div>
       }
 
       @if (relatedOrders().length > 0) {
         <div>
-          <h4>Órdenes generadas</h4>
+          <h4>{{ 'quotes.detail.generatedOrders' | transloco }}</h4>
           <ul class="related-orders">
             @for (order of relatedOrders(); track order.id) {
               <li>
@@ -58,7 +58,7 @@
                   {{ order.orderNumber }} — {{ order.serviceSummary }}
                 </a>
                 <app-status-badge
-                  [label]="orderStatusConfig[order.status].label"
+                  [label]="orderStatusLabel(order.status)"
                   [color]="orderStatusConfig[order.status].color"
                 />
               </li>
@@ -75,7 +75,7 @@
     <div modalFooter>
       @if (canManageQuotes() && q.status === 'APPROVED') {
         <app-button (click)="convertToOrder()" [disabled]="saving()">
-          {{ saving() ? 'Convirtiendo…' : 'Convertir a Orden' }}
+          {{ (saving() ? 'quotes.detail.converting' : 'quotes.detail.convert') | transloco }}
         </app-button>
       }
       @for (status of nextStatuses(); track status) {
@@ -84,7 +84,7 @@
           (click)="setStatus(status)"
           [disabled]="saving()"
         >
-          Marcar como {{ statusButtonLabel(status) }}
+          {{ 'quotes.detail.markAs' | transloco: { status: statusButtonLabel(status) } }}
         </app-button>
       }
     </div>

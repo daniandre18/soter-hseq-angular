@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Icon } from '../../../shared/components/icon/icon';
-import { formatRelativeTime } from '../../../shared/utils/format-date';
+import { LocalizedRelativeTimePipe } from '../../../shared/pipes/localized-relative-time.pipe';
 import { translateDomainCodes } from '../../../shared/utils/domain-labels';
 import { AuthFacade } from '../../../features/auth/facades/auth.facade';
 import { NotificationsFacade } from '../../../features/notifications/facades/notifications.facade';
@@ -10,6 +10,7 @@ import {
   NOTIFICATION_TYPE_ICON,
   type AppNotification,
 } from '../../../features/notifications/models/notification.model';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 
 /**
  * Inbox de notificaciones del header (ADMIN/COORDINATOR — CLAUDE.md §3.1/§3.3):
@@ -20,7 +21,8 @@ import {
  */
 @Component({
   selector: 'app-notification-bell',
-  imports: [RouterLink, Icon],
+  imports: [RouterLink, Icon, LocalizedRelativeTimePipe, TranslocoPipe],
+  providers: [...provideTranslocoScope('notifications')],
   templateUrl: './notification-bell.html',
   styleUrl: './notification-bell.scss',
 })
@@ -35,7 +37,6 @@ export class NotificationBell {
   protected readonly typeIcon = NOTIFICATION_TYPE_ICON;
   protected readonly entityRoute = NOTIFICATION_ENTITY_ROUTE;
   protected readonly translateDomainCodes = translateDomainCodes;
-  protected readonly formatRelativeTime = formatRelativeTime;
 
   protected isUnread(notification: AppNotification): boolean {
     const userId = this.authFacade.currentUser()?.id;

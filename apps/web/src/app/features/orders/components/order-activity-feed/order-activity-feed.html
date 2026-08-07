@@ -1,4 +1,4 @@
-<div class="activity-filters" role="tablist" aria-label="Filtrar actividad">
+<div class="activity-filters" role="tablist" [attr.aria-label]="'orders.activity.filterAriaLabel' | transloco">
   <button
     type="button"
     role="tab"
@@ -7,7 +7,7 @@
     [attr.aria-selected]="activeFilter() === 'all'"
     (click)="setFilter('all')"
   >
-    Todo
+    {{ 'orders.activity.filterAll' | transloco }}
   </button>
   <button
     type="button"
@@ -17,7 +17,7 @@
     [attr.aria-selected]="activeFilter() === 'comments'"
     (click)="setFilter('comments')"
   >
-    Comentarios
+    {{ 'orders.activity.filterComments' | transloco }}
   </button>
   <button
     type="button"
@@ -27,23 +27,27 @@
     [attr.aria-selected]="activeFilter() === 'history'"
     (click)="setFilter('history')"
   >
-    Historial
+    {{ 'orders.activity.filterHistory' | transloco }}
   </button>
 </div>
 
 @if (filteredItems().length === 0) {
-  <p class="empty-state">Sin actividad registrada.</p>
+  <p class="empty-state">{{ 'orders.activity.empty' | transloco }}</p>
 } @else {
   <div class="timeline">
     @for (item of filteredItems(); track item.id) {
       <div class="timeline-item">
-        <div class="timeline-marker"></div>
+        <div class="timeline-marker">
+          <span class="timeline-marker__icon">
+            <app-icon [name]="kindIcon(item.kind)" />
+          </span>
+        </div>
         <div class="timeline-content">
           <div class="timeline-header">
             <app-avatar [name]="resolveAuthorName()(item.createdBy)" size="sm" />
             <div class="timeline-header-text">
               <span class="timeline-author">{{ resolveAuthorName()(item.createdBy) }}</span>
-              <span class="timeline-meta">{{ formatDateTime(item.createdAt) }}</span>
+              <span class="timeline-meta">{{ item.createdAt | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}</span>
             </div>
           </div>
 
@@ -54,7 +58,7 @@
                 [class.chip--finding]="item.note.noteType === 'FINDING'"
                 [class.chip--recommendation]="item.note.noteType === 'RECOMMENDATION'"
               >
-                {{ noteTypeLabels[item.note.noteType] }}
+                {{ noteTypeLabels[item.note.noteType] | transloco }}
               </span>
               <p class="timeline-text">{{ item.note.content }}</p>
               @if (item.attachments.length > 0) {
@@ -66,7 +70,8 @@
                       target="_blank"
                       rel="noopener"
                     >
-                      📎 {{ file.fileName }}
+                      <app-icon name="paperclip" />
+                      {{ file.fileName }}
                     </a>
                   }
                 </div>
@@ -88,7 +93,7 @@
                 <div class="evidence-info">
                   <p class="evidence-name">{{ item.evidence.fileName }}</p>
                   @if (item.evidence.category) {
-                    <span class="chip">{{ evidenceCategoryLabels[item.evidence.category] }}</span>
+                    <span class="chip">{{ evidenceCategoryLabels[item.evidence.category] | transloco }}</span>
                   }
                   @if (item.evidence.description) {
                     <quill-view-html
@@ -103,7 +108,7 @@
             }
             @case ('event') {
               <p class="timeline-text timeline-text--event">
-                <strong>{{ actionLabels[item.event.action] }}</strong>
+                <strong>{{ actionLabels[item.event.action] | transloco }}</strong>
                 — {{ translateDomainCodes(item.event.description) }}
               </p>
             }

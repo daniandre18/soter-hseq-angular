@@ -1,0 +1,47 @@
+{
+  "brandTagline": "Integrated HSEQ & OHS Management",
+  "login": {
+    "title": "Sign in",
+    "subtitle": "Enter your credentials to continue",
+    "email": "Email",
+    "password": "Password",
+    "submitting": "Signing in…",
+    "submit": "Sign in",
+    "forgot": "Forgot your password?",
+    "emailRequired": "Email is required.",
+    "emailInvalid": "Enter a valid email address.",
+    "passwordRequired": "Password is required.",
+    "passwordMinLength": "Must contain at least 6 characters."
+  },
+  "forgot": {
+    "title": "Reset password",
+    "success": "If the email exists, we sent you a link to reset your password.",
+    "subtitle": "Enter your email and we will send you instructions.",
+    "sending": "Sending…",
+    "submit": "Send link",
+    "back": "Back to sign in"
+  },
+  "demo": {
+    "preparing": "Preparing your profile",
+    "validating": "Validating permissions and loading information…",
+    "title": "Select a profile",
+    "subtitle": "Explore the platform with each role's capabilities",
+    "enterAs": "Sign in as {{role}}",
+    "footer": "SOTER HSEQ · Academic demo · Colombia",
+    "profiles": {
+      "admin": "Full access to clients, orders, technicians, reports, and settings.",
+      "commercial": "Manages clients, services, quotes, and new orders.",
+      "coordinator": "Assigns orders, schedules visits, and oversees operations.",
+      "technician": "Views assigned orders and records progress, notes, and findings.",
+      "client": "Views quotes and service status without editing permissions."
+    }
+  },
+  "errors": {
+    "invalidCredential": "Incorrect email or password.",
+    "invalidEmail": "The email address is invalid.",
+    "userDisabled": "This user is inactive. Contact an administrator.",
+    "tooManyRequests": "Too many attempts. Wait a few minutes and try again.",
+    "network": "The server could not be reached. Try again.",
+    "default": "The operation could not be completed. Try again."
+  }
+}

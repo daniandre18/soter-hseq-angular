@@ -4,35 +4,35 @@
       <input
         type="search"
         class="search-input"
-        placeholder="Buscar por número o cliente..."
-        aria-label="Buscar órdenes"
+        [placeholder]="'orders.searchPlaceholder' | transloco"
+        [attr.aria-label]="'orders.searchAria' | transloco"
         [value]="search()"
         (input)="onSearchInput($event)"
       />
       <select
         class="status-select"
-        aria-label="Filtrar por estado"
+        [attr.aria-label]="'orders.filterByStatus' | transloco"
         [value]="statusFilter()"
         (change)="onStatusChange($event)"
       >
-        <option value="all">Todos los estados</option>
-        <option value="active">Órdenes activas</option>
-        <option value="closed">Órdenes cerradas</option>
+        <option value="all">{{ 'orders.allStatuses' | transloco }}</option>
+        <option value="active">{{ 'orders.activeOrders' | transloco }}</option>
+        <option value="closed">{{ 'orders.closedOrders' | transloco }}</option>
         @for (entry of statusOptions; track entry[0]) {
-          <option [value]="entry[0]">{{ entry[1].label }}</option>
+          <option [value]="entry[0]">{{ entry[1].translationKey | transloco }}</option>
         }
       </select>
     </div>
     <span class="orders-summary">
-      {{ filtered().length }} {{ filtered().length === 1 ? 'orden' : 'órdenes' }}
+      {{ (filtered().length === 1 ? 'orders.resultCountOne' : 'orders.resultCountOther') | transloco: { count: filtered().length } }}
     </span>
     @if (canManage()) {
-      <app-button class="new-order-btn" (click)="openCreate()">+ Nueva Orden</app-button>
+      <app-button class="new-order-btn" (click)="openCreate()">+ {{ 'orders.new' | transloco }}</app-button>
     }
   </div>
 
   <div class="orders-mobile-controls">
-    <div class="mobile-order-tabs" role="group" aria-label="Filtros rápidos de órdenes">
+    <div class="mobile-order-tabs" role="group" [attr.aria-label]="'orders.quickFilters' | transloco">
       <button
         type="button"
         class="mobile-order-tab"
@@ -41,7 +41,7 @@
         [attr.aria-pressed]="statusFilter() === 'all'"
         (click)="selectStatusFilter('all')"
       >
-        Todas ({{ totalOrdersCount() }})
+        {{ 'orders.allCount' | transloco: { count: totalOrdersCount() } }}
       </button>
       <button
         type="button"
@@ -51,7 +51,7 @@
         [attr.aria-pressed]="statusFilter() === 'active'"
         (click)="selectStatusFilter('active')"
       >
-        Activas ({{ activeOrdersCount() }})
+        {{ 'orders.activeCount' | transloco: { count: activeOrdersCount() } }}
       </button>
       <button
         type="button"
@@ -61,7 +61,7 @@
         [attr.aria-pressed]="statusFilter() === 'closed'"
         (click)="selectStatusFilter('closed')"
       >
-        Cerradas ({{ closedOrdersCount() }})
+        {{ 'orders.closedCount' | transloco: { count: closedOrdersCount() } }}
       </button>
     </div>
 
@@ -69,11 +69,11 @@
       @if (canManage()) {
         <button type="button" class="mobile-create-order-btn" (click)="openCreate()">
           <span aria-hidden="true">+</span>
-          Nueva orden
+          {{ 'orders.new' | transloco }}
         </button>
       }
       <span class="mobile-orders-count">
-        {{ filtered().length }} {{ filtered().length === 1 ? 'orden' : 'órdenes' }}
+        {{ (filtered().length === 1 ? 'orders.resultCountOne' : 'orders.resultCountOther') | transloco: { count: filtered().length } }}
       </span>
     </div>
 
@@ -82,15 +82,15 @@
         <app-icon name="search" />
         <input
           type="search"
-          placeholder="Buscar órdenes..."
-          aria-label="Buscar órdenes"
+          [placeholder]="'orders.searchPlaceholder' | transloco"
+          [attr.aria-label]="'orders.searchAria' | transloco"
           [value]="search()"
           (input)="onSearchInput($event)"
         />
       </label>
       <select
         class="mobile-order-status"
-        aria-label="Filtrar por estado"
+        [attr.aria-label]="'orders.filterByStatus' | transloco"
         [value]="statusFilter()"
         (change)="onStatusChange($event)"
       >
@@ -98,7 +98,7 @@
         <option value="active">Activas</option>
         <option value="closed">Cerradas</option>
         @for (entry of statusOptions; track entry[0]) {
-          <option [value]="entry[0]">{{ entry[1].label }}</option>
+          <option [value]="entry[0]">{{ entry[1].translationKey | transloco }}</option>
         }
       </select>
     </div>
@@ -106,7 +106,7 @@
 
   @if (filtered().length === 0) {
     <app-card class="empty-card">
-      <p>No hay órdenes registradas</p>
+      <p>{{ 'orders.empty' | transloco }}</p>
     </app-card>
   } @else {
     <app-card padding="none">
@@ -163,10 +163,10 @@
                   </div>
                 </td>
                 <td class="nowrap">
-                  {{ order.scheduledStart ? formatDateTime(order.scheduledStart) : 'Sin programar' }}
+                  {{ order.scheduledStart ? (order.scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' }) : ('orders.unscheduled' | transloco) }}
                 </td>
                 <td class="nowrap">
-                  {{ order.dueDate ? formatDateNumeric(order.dueDate) : '—' }}
+                  {{ order.dueDate ? (order.dueDate | localizedDate: { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—' }}
                 </td>
                 <td class="actions-cell">
                   <button
@@ -283,12 +283,12 @@
               <div class="mobile-order-date">
                 <span>Visita</span>
                 <strong>
-                  {{ order.scheduledStart ? formatDateTime(order.scheduledStart) : 'Sin programar' }}
+                  {{ order.scheduledStart ? (order.scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' }) : ('orders.unscheduled' | transloco) }}
                 </strong>
               </div>
               <div class="mobile-order-date mobile-order-date--end">
                 <span>Vence</span>
-                <strong>{{ order.dueDate ? formatDateNumeric(order.dueDate) : 'Sin fecha' }}</strong>
+                <strong>{{ order.dueDate ? (order.dueDate | localizedDate: { year: 'numeric', month: '2-digit', day: '2-digit' }) : ('common.noDate' | transloco) }}</strong>
               </div>
             </div>
           </article>

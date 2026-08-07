@@ -48,7 +48,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "1.6MB",
-                  "maximumError": "1.92MB"
+                  "maximumError": "1.96MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -85,7 +85,10 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "providersFile": "src/testing/test-providers.ts"
+          }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",

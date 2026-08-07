@@ -1,0 +1,113 @@
+import type { Translation, TranslocoLoader } from '@jsverse/transloco';
+import { provideTransloco } from '@jsverse/transloco';
+import { of, type Observable } from 'rxjs';
+
+const GLOBAL_ES: Translation = {
+  languages: { selectorLabel: 'Seleccionar idioma', spanish: 'Español', english: 'English' },
+  common: { total: 'Total', cancel: 'Cancelar', edit: 'Editar', delete: 'Eliminar' },
+  roles: {
+    ADMIN: 'Administrador',
+    COMMERCIAL: 'Comercial',
+    COORDINATOR: 'Coordinador',
+    TECHNICIAN: 'Técnico',
+    VIEWER: 'Cliente',
+  },
+};
+
+const SCOPES_ES: Record<string, Translation> = {
+  auth: {
+    brandTagline: 'Gestión Integral HSEQ & SST',
+    demo: {
+      preparing: 'Preparando tu perfil',
+      validating: 'Validando permisos y cargando la información…',
+      title: 'Selecciona un perfil',
+      subtitle: 'Explora la plataforma con las funciones de cada rol',
+      enterAs: 'Ingresar como {{role}}',
+      footer: 'SOTER HSEQ · Demo académica · Colombia',
+      profiles: {
+        admin: 'Acceso total', commercial: 'Gestiona clientes', coordinator: 'Supervisa la operación',
+        technician: 'Consulta sus órdenes', client: 'Consulta sus cotizaciones',
+      },
+    },
+  },
+  layout: {
+    sections: { primary: 'Principal', commercial: 'Gestión comercial', operations: 'Gestión operativa' },
+    navigation: {
+      dashboard: 'Panel', orders: 'Órdenes de trabajo', myOrders: 'Mis órdenes', agenda: 'Agenda de visitas',
+      clients: 'Clientes', quotes: 'Cotizaciones', services: 'Servicios', catalog: 'Catálogo',
+      categories: 'Categorías', technicians: 'Técnicos',
+    },
+  },
+  orders: {
+    new: 'Nueva orden',
+    unassignedTechnician: 'Sin técnico asignado',
+    resultCountOne: '1 orden',
+    resultCountOther: '{{count}} órdenes',
+    status: { draft: 'Borrador', assigned: 'Asignada', inProgress: 'En progreso' },
+    priority: { low: 'Baja', medium: 'Media', high: 'Alta', critical: 'Crítica' },
+    noteType: { general: 'General', finding: 'Hallazgo', activity: 'Actividad', recommendation: 'Recomendación' },
+    evidenceCategory: { before: 'Antes', during: 'Durante', after: 'Después', finding: 'Hallazgo', supportingDocument: 'Documento de soporte' },
+    eventAction: {
+      noteAdded: 'Nota agregada', evidenceUploaded: 'Evidencia cargada', statusChanged: 'Cambio de estado',
+      techniciansAssigned: 'Técnicos asignados', orderClosed: 'Orden cerrada',
+    },
+    form: {
+      client: 'Cliente', service: 'Servicio', visitDate: 'Fecha de visita', visitTime: 'Hora de visita',
+      dueDate: 'Fecha límite', description: 'Descripción (opcional)', title: 'Título', priority: 'Prioridad',
+    },
+    detail: {
+      changeStatus: 'Cambiar Estado', edit: 'Editar', starting: 'Iniciando…', startExecution: 'Iniciar Ejecución',
+      sending: 'Enviando…', sendToReview: 'Enviar a Revisión', resendToReview: 'Reenviar a Revisión',
+      cancelOrder: 'Cancelar Orden', tabsAriaLabel: 'Secciones de la orden',
+      tabs: { information: 'Información', activity: 'Actividad', report: 'Acta' },
+    },
+    activity: {
+      findings: 'Hallazgos', recommendations: 'Recomendaciones', note: 'Nota', evidence: 'Evidencia',
+      correction: 'Corrección', filterAriaLabel: 'Filtrar actividad', filterAll: 'Todo',
+      filterComments: 'Comentarios', filterHistory: 'Historial', empty: 'Sin actividad registrada.',
+    },
+  },
+  quotes: {
+    detail: {
+      statusError: 'No fue posible cambiar el estado. Verifica los permisos del perfil e inténtalo nuevamente.',
+    },
+    status: { draft: 'Borrador', sent: 'Enviada', approved: 'Aprobada', rejected: 'Rechazada', converted: 'Convertida' },
+  },
+  dashboard: {},
+  clients: {
+    stats: { total: 'Total clientes', active: 'Clientes activos', rate: 'Tasa de actividad', cities: 'Ciudades cubiertas' },
+    countOne: 'Mostrando 1 cliente', countOther: 'Mostrando {{count}} clientes',
+    activeOne: '{{count}} activo', activeOther: '{{count}} activos',
+    inactiveOne: '{{count}} inactivo', inactiveOther: '{{count}} inactivos',
+    sites: 'Sedes', sitesAndContacts: 'Sedes y responsables',
+    manageSites: 'Administrar sedes de {{name}}',
+  },
+  notifications: {
+    title: 'Notificaciones', markAllRead: 'Marcar todo leído', empty: 'Sin notificaciones.',
+    dismiss: 'Eliminar notificación', dismissWithTitle: 'Eliminar notificación: {{title}}',
+    viewOrder: 'Ver orden →', viewQuote: 'Ver cotización →', dismissAll: 'Eliminar todas las notificaciones',
+  },
+};
+
+class TestTranslationLoader implements TranslocoLoader {
+  getTranslation(lang: string): Observable<Translation> {
+    const [scope, language] = lang.split('/');
+    if (!language) {
+      return of(scope === 'es' ? GLOBAL_ES : {});
+    }
+    return of(language === 'es' ? (SCOPES_ES[scope] ?? {}) : {});
+  }
+}
+
+export default [
+  provideTransloco({
+    config: {
+      availableLangs: ['es', 'en'],
+      defaultLang: 'es',
+      fallbackLang: 'es',
+      reRenderOnLangChange: true,
+      missingHandler: { logMissingKey: false },
+    },
+    loader: TestTranslationLoader,
+  }),
+];

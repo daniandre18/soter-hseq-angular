@@ -1,0 +1,44 @@
+{
+  "brand": "SOTER HSEQ",
+  "openMenu": "Open menu",
+  "closeMenu": "Close menu",
+  "expandMenu": "Expand menu",
+  "collapseMenu": "Collapse menu",
+  "mainMenu": "Main menu",
+  "logout": "Sign out",
+  "sections": {
+    "primary": "Main",
+    "commercial": "Sales management",
+    "operations": "Operations management"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "orders": "Work orders",
+    "myOrders": "My orders",
+    "agenda": "Visit schedule",
+    "clients": "Clients",
+    "quotes": "Quotes",
+    "services": "Services",
+    "catalog": "Catalog",
+    "categories": "Categories",
+    "technicians": "Technicians"
+  },
+  "pageTitles": {
+    "dashboard": "Dashboard",
+    "clients": "Clients",
+    "quotes": "Quotes",
+    "orders": "Orders",
+    "agenda": "Visit schedule",
+    "categories": "Service categories",
+    "services": "Services",
+    "technicians": "Technicians",
+    "myOrders": "My orders"
+  },
+  "roles": {
+    "ADMIN": "Administrator",
+    "COMMERCIAL": "Sales",
+    "COORDINATOR": "Coordinator",
+    "TECHNICIAN": "Technician",
+    "VIEWER": "Client"
+  }
+}

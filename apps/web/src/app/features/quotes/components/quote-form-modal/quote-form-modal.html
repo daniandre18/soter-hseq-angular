@@ -62,7 +62,7 @@
               <td data-label="Valor unitario">
                 <input type="number" aria-label="Valor unitario" [formField]="item.unitPrice" />
               </td>
-              <td class="row-total" data-label="Total">{{ formatCurrency(rowTotal(i)) }}</td>
+              <td class="row-total" data-label="Total">{{ rowTotal(i) | localizedCurrency }}</td>
               <td>
                 @if (quoteForm.items.length > 1) {
                   <button
@@ -81,7 +81,7 @@
         <tfoot>
           <tr>
             <td colspan="3" class="total-label">Total</td>
-            <td class="total-value">{{ formatCurrency(subtotal()) }}</td>
+            <td class="total-value">{{ subtotal() | localizedCurrency }}</td>
             <td></td>
           </tr>
         </tfoot>

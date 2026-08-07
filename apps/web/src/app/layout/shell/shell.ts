@@ -5,7 +5,7 @@ import { filter, map } from 'rxjs';
 import { Sidebar } from '../sidebar/sidebar';
 import { Header } from '../header/header';
 
-const DEFAULT_TITLE = 'SOTER HSEQ';
+const DEFAULT_TITLE_KEY = 'layout.brand';
 
 function deepestTitle(route: ActivatedRoute): string {
   let current = route;
@@ -15,7 +15,7 @@ function deepestTitle(route: ActivatedRoute): string {
   // `snapshot` puede no estar disponible aún si se lee durante la
   // construcción síncrona del Shell, antes de que el Router termine de
   // resolver la ruta hija — de ahí el optional chaining defensivo.
-  return (current.snapshot?.data?.['title'] as string | undefined) ?? DEFAULT_TITLE;
+  return (current.snapshot?.data?.['titleKey'] as string | undefined) ?? DEFAULT_TITLE_KEY;
 }
 
 @Component({
@@ -35,7 +35,7 @@ export class Shell {
       filter((event) => event instanceof NavigationEnd),
       map(() => deepestTitle(this.activatedRoute)),
     ),
-    { initialValue: DEFAULT_TITLE },
+    { initialValue: DEFAULT_TITLE_KEY },
   );
 
   protected openMobileNav(): void {

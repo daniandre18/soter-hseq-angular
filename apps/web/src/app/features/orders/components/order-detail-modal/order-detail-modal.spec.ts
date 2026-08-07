@@ -101,10 +101,20 @@ describe('OrderDetailModal', () => {
     fixture.componentRef.setInput('order', order);
     fixture.detectChanges();
 
-    const activityTab = Array.from<HTMLElement>(
-      fixture.nativeElement.querySelectorAll('.tab'),
-    ).find((tab) => tab.textContent?.includes('Actividad'));
-    activityTab?.click();
+    // Las pestañas son "Información" / "Actividad" / "Acta", en ese orden fijo;
+    // se seleccionan por posición y no por texto porque su label pasa por
+    // `| transloco` (sin traducciones cargadas en este entorno de pruebas,
+    // el pipe devuelve la propia clave de traducción, no el texto en español).
+    const tabs = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.tab'));
+    tabs[1]?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Disparadores del composer, en orden fijo: Nota / Evidencia.
+    const composerTriggers = Array.from<HTMLElement>(
+      fixture.nativeElement.querySelectorAll('.composer-trigger'),
+    );
+    composerTriggers[1]?.click();
     fixture.detectChanges();
     await fixture.whenStable();
 

@@ -9,14 +9,17 @@ import { StatCard } from '../../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { OrderDetailModal } from '../../components/order-detail-modal/order-detail-modal';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
-import { formatDateTime } from '../../../../shared/utils/format-date';
 import type { ServiceOrder } from '../../models/order.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../../../core/i18n/language.service';
+import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
 
 const ACTIVE_STATUSES = new Set<ServiceOrder['status']>(['ASSIGNED', 'IN_PROGRESS']);
 
 @Component({
   selector: 'app-my-orders',
-  imports: [Card, StatCard, StatusBadge, OrderDetailModal],
+  imports: [Card, StatCard, StatusBadge, OrderDetailModal, TranslocoPipe, LocalizedDatePipe],
+  providers: [...provideTranslocoScope('orders')],
   templateUrl: './my-orders.html',
   styleUrl: './my-orders.scss',
 })
@@ -25,6 +28,8 @@ export class MyOrders {
   private readonly authFacade = inject(AuthFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
+  private readonly language = inject(LanguageService);
 
   /** `?open=<id>` — usado por la agenda de visitas y la campanita de
    *  notificaciones para abrir directo el detalle en vez de solo aterrizar
@@ -35,7 +40,6 @@ export class MyOrders {
   );
 
   protected readonly detailOrderId = signal<string | null>(null);
-  protected readonly formatDateTime = formatDateTime;
 
   protected readonly myOrders = computed(() => {
     const uid = this.authFacade.currentUser()?.id;
@@ -87,7 +91,8 @@ export class MyOrders {
   }
 
   protected statusLabel(status: ServiceOrder['status']): string {
-    return ORDER_STATUS_CONFIG[status].label;
+    this.language.currentLanguage();
+    return this.transloco.translate(ORDER_STATUS_CONFIG[status].translationKey);
   }
 
   protected statusColor(status: ServiceOrder['status']): string {

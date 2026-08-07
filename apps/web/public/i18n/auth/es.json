@@ -1,0 +1,47 @@
+{
+  "brandTagline": "Gestión Integral HSEQ & SST",
+  "login": {
+    "title": "Inicia sesión",
+    "subtitle": "Ingresa tus credenciales para continuar",
+    "email": "Correo",
+    "password": "Contraseña",
+    "submitting": "Ingresando…",
+    "submit": "Ingresar",
+    "forgot": "¿Olvidaste tu contraseña?",
+    "emailRequired": "El correo es obligatorio.",
+    "emailInvalid": "Ingresa un correo válido.",
+    "passwordRequired": "La contraseña es obligatoria.",
+    "passwordMinLength": "Debe tener al menos 6 caracteres."
+  },
+  "forgot": {
+    "title": "Recuperar contraseña",
+    "success": "Si el correo existe, te enviamos un enlace para restablecer tu contraseña.",
+    "subtitle": "Ingresa tu correo y te enviaremos instrucciones.",
+    "sending": "Enviando…",
+    "submit": "Enviar enlace",
+    "back": "Volver a iniciar sesión"
+  },
+  "demo": {
+    "preparing": "Preparando tu perfil",
+    "validating": "Validando permisos y cargando la información…",
+    "title": "Selecciona un perfil",
+    "subtitle": "Explora la plataforma con las funciones de cada rol",
+    "enterAs": "Ingresar como {{role}}",
+    "footer": "SOTER HSEQ · Demo académica · Colombia",
+    "profiles": {
+      "admin": "Acceso total: clientes, órdenes, técnicos, reportes y configuración.",
+      "commercial": "Gestiona clientes, servicios, cotizaciones y nuevas órdenes.",
+      "coordinator": "Asigna órdenes, programa visitas y supervisa la operación.",
+      "technician": "Consulta sus órdenes, registra avances, notas y hallazgos.",
+      "client": "Consulta sus cotizaciones y el estado de sus servicios, sin permisos de edición."
+    }
+  },
+  "errors": {
+    "invalidCredential": "Correo o contraseña incorrectos.",
+    "invalidEmail": "El correo ingresado no es válido.",
+    "userDisabled": "Este usuario está inactivo. Contacta a un administrador.",
+    "tooManyRequests": "Demasiados intentos. Espera unos minutos e intenta de nuevo.",
+    "network": "No hay conexión con el servidor. Intenta de nuevo.",
+    "default": "No fue posible completar la operación. Intenta de nuevo."
+  }
+}

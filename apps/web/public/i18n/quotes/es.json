@@ -1,0 +1,43 @@
+{
+  "title": "Gestión de cotizaciones",
+  "description": "Consulta y administra las propuestas comerciales de tus clientes.",
+  "new": "Nueva cotización",
+  "searchAndFilter": "Buscar y filtrar cotizaciones",
+  "search": "Buscar",
+  "searchPlaceholder": "Número de cotización o cliente…",
+  "statusLabel": "Estado",
+  "allStatuses": "Todos los estados",
+  "clearFilters": "Limpiar filtros ({{count}})",
+  "resultCountOne": "Mostrando 1 cotización",
+  "resultCountOther": "Mostrando {{count}} cotizaciones",
+  "empty": "No hay cotizaciones registradas.",
+  "number": "Número",
+  "client": "Cliente",
+  "validUntil": "Válida hasta",
+  "viewDetail": "Ver detalle de la cotización {{number}}",
+  "edit": "Editar cotización",
+  "delete": "Eliminar cotización",
+  "deleteTitle": "¿Eliminar esta cotización?",
+  "deleteConfirmation": "Se eliminarán la cotización {{number}} y todos sus servicios. Esta acción no se puede deshacer.",
+  "detail": {
+    "services": "Servicios",
+    "service": "Servicio",
+    "quantity": "Cant.",
+    "unitPrice": "Valor unit.",
+    "notes": "Notas",
+    "generatedOrders": "Órdenes generadas",
+    "converting": "Convirtiendo…",
+    "convert": "Convertir a orden",
+    "markAs": "Marcar como {{status}}",
+    "statusError": "No fue posible cambiar el estado. Verifica los permisos del perfil e inténtalo nuevamente.",
+    "convertError": "No fue posible convertir la cotización. Verifica su estado e inténtalo nuevamente."
+  },
+  "status": {
+    "draft": "Borrador",
+    "sent": "Enviada",
+    "approved": "Aprobada",
+    "rejected": "Rechazada",
+    "expired": "Vencida",
+    "converted": "Convertida"
+  }
+}

@@ -1,56 +1,56 @@
 <section class="dashboard">
   <div class="kpi-row">
     <app-stat-card
-      label="Órdenes Abiertas"
+      [label]="'dashboard.kpi.openOrders' | transloco"
       [value]="ordersFacade.openCount()"
       icon="clipboard-list"
       color="brand"
       [compact]="true"
     />
     <app-stat-card
-      label="Órdenes Cerradas"
+      [label]="'dashboard.kpi.closedOrders' | transloco"
       [value]="ordersFacade.closedCount()"
       icon="circle-check-big"
       color="green"
       [compact]="true"
     />
     <app-stat-card
-      label="Vencidas"
+      [label]="'dashboard.kpi.overdue' | transloco"
       [value]="ordersFacade.overdueCount()"
       icon="triangle-alert"
       color="red"
       [compact]="true"
     />
     <app-stat-card
-      label="En Proceso"
+      [label]="'dashboard.kpi.inProgress' | transloco"
       [value]="ordersFacade.inProgressCount()"
       icon="clock"
       color="orange"
       [compact]="true"
     />
     <app-stat-card
-      label="Clientes Activos"
+      [label]="'dashboard.kpi.activeClients' | transloco"
       [value]="clientsFacade.activeCount()"
       icon="building-2"
       color="blue"
       [compact]="true"
     />
     <app-stat-card
-      label="Visitas Hoy"
+      [label]="'dashboard.kpi.visitsToday' | transloco"
       [value]="ordersFacade.todayVisitsCount()"
       icon="calendar-days"
       color="purple"
       [compact]="true"
     />
     <app-stat-card
-      label="Técnicos en Campo"
+      [label]="'dashboard.kpi.techniciansInField' | transloco"
       [value]="ordersFacade.techniciansInFieldCount()"
       icon="hard-hat"
       color="orange"
       [compact]="true"
     />
     <app-stat-card
-      label="Órdenes Pendientes"
+      [label]="'dashboard.kpi.pendingOrders' | transloco"
       [value]="ordersFacade.pendingCount()"
       icon="file-text"
       color="brand"
@@ -67,7 +67,7 @@
   ) {
     <div class="dashboard-card dashboard-card--flush alerts-card">
       <div class="dashboard-card-header">
-        <h2>Alertas Operativas</h2>
+        <h2>{{ 'dashboard.operationalAlerts' | transloco }}</h2>
       </div>
       <div class="list">
         @for (order of ordersFacade.overdueOrders(); track order.id) {
@@ -78,7 +78,7 @@
           >
             <app-icon name="triangle-alert" class="alert-icon alert-icon--red" />
             <div class="list-row-main">
-              <p class="list-row-title">{{ order.orderNumber }} vencida</p>
+              <p class="list-row-title">{{ 'dashboard.overdueOrder' | transloco: { orderNumber: order.orderNumber } }}</p>
               <p class="list-row-subtitle">{{ order.clientBusinessName }}</p>
             </div>
           </a>
@@ -91,7 +91,7 @@
           >
             <app-icon name="triangle-alert" class="alert-icon alert-icon--orange" />
             <div class="list-row-main">
-              <p class="list-row-title">{{ order.orderNumber }} requiere corrección</p>
+              <p class="list-row-title">{{ 'dashboard.correctionRequired' | transloco: { orderNumber: order.orderNumber } }}</p>
               <p class="list-row-subtitle">{{ order.clientBusinessName }}</p>
             </div>
           </a>
@@ -103,34 +103,34 @@
   <div class="dashboard-grid">
     <div class="dashboard-card">
       <div class="dashboard-card-header">
-        <h2>Órdenes por Estado</h2>
-        <p>{{ ordersFacade.orders().length }} órdenes en total</p>
+        <h2>{{ 'dashboard.ordersByStatus' | transloco }}</h2>
+        <p>{{ (ordersFacade.orders().length === 1 ? 'dashboard.ordersTotalOne' : 'dashboard.ordersTotalOther') | transloco: { count: ordersFacade.orders().length } }}</p>
       </div>
       <app-pie-chart
-        [slices]="ordersFacade.statusBreakdown()"
-        unit="órdenes"
-        emptyMessage="Sin órdenes registradas"
+        [slices]="translatedStatusBreakdown()"
+        [unit]="'dashboard.ordersUnit' | transloco"
+        [emptyMessage]="'dashboard.noOrders' | transloco"
       />
     </div>
 
     <div class="dashboard-card">
       <div class="dashboard-card-header dashboard-card-header--divided">
         <app-icon name="chart-pie" class="dashboard-card-icon" />
-        <h2>Servicios Más Solicitados</h2>
+        <h2>{{ 'dashboard.topServices' | transloco }}</h2>
       </div>
       <app-bar-list
         [items]="ordersFacade.topServices()"
-        unit="órdenes"
-        emptyMessage="Sin servicios con órdenes"
+        [unit]="'dashboard.ordersUnit' | transloco"
+        [emptyMessage]="'dashboard.noServices' | transloco"
       />
     </div>
 
     <div class="dashboard-card dashboard-card--flush">
       <div class="dashboard-card-header">
-        <h2>Órdenes Recientes</h2>
+        <h2>{{ 'dashboard.recentOrders' | transloco }}</h2>
       </div>
       @if (ordersFacade.recentOrders().length === 0) {
-        <p class="dashboard-empty">Sin órdenes recientes</p>
+        <p class="dashboard-empty">{{ 'dashboard.noRecentOrders' | transloco }}</p>
       } @else {
         <div class="list">
           @for (order of ordersFacade.recentOrders(); track order.id) {
@@ -158,11 +158,11 @@
 
     <div class="dashboard-card dashboard-card--flush">
       <div class="dashboard-card-header dashboard-card-header--actions">
-        <h2>Próximas Visitas</h2>
-        <a routerLink="/agenda">Ver agenda</a>
+        <h2>{{ 'dashboard.upcomingVisits' | transloco }}</h2>
+        <a routerLink="/agenda">{{ 'dashboard.viewSchedule' | transloco }}</a>
       </div>
       @if (ordersFacade.upcomingVisits().length === 0) {
-        <p class="dashboard-empty">Sin visitas próximas</p>
+        <p class="dashboard-empty">{{ 'dashboard.noUpcomingVisits' | transloco }}</p>
       } @else {
         <div class="list">
           @for (order of ordersFacade.upcomingVisits(); track order.id) {
