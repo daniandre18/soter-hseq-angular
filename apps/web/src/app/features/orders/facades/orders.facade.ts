@@ -277,8 +277,7 @@ export class OrdersFacade {
     description: string | undefined,
     onProgress?: (percent: number) => void,
   ): Promise<string> {
-    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
-    return this.service.uploadEvidence(orderId, file, category, description, userId, onProgress);
+    return this.service.uploadEvidence(orderId, file, category, description, onProgress);
   }
 
   watchOrderEvents(orderId: string): Observable<OrderEvent[]> {
@@ -324,9 +323,5 @@ export class OrdersFacade {
 
   async closeOrderWithPdf(orderId: string, actId: string): Promise<string> {
     return this.service.closeOrderWithPdf(orderId, actId);
-  }
-
-  resolvePdfUrl(pdfPath: string): Promise<string> {
-    return this.service.resolvePdfUrl(pdfPath);
   }
 }

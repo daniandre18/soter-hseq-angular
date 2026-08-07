@@ -2,70 +2,21 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Las Storage Rules se evalúan aparte de las Firestore Rules: sin este
-    // cruce, cualquier usuario autenticado podía subir archivos directo a
-    // Storage aunque el rol o el estado de la orden ya lo bloquearan del
-    // lado de Firestore (CLAUDE.md §23.5 "bloquear cargas en órdenes
-    // cerradas" no se cumplía realmente si el cliente se saltaba Firestore).
-    function currentRole() {
-      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
-    }
-
-    function currentClientId() {
-      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.clientId;
-    }
-
-    function orderData(orderId) {
-      return firestore.get(/databases/(default)/documents/orders/$(orderId)).data;
-    }
-
-    function canReadOrder(orderId) {
-      return isSignedIn()
-             && (currentRole() in ['ADMIN', 'COORDINATOR', 'COMMERCIAL']
-                 || (currentRole() == 'TECHNICIAN'
-                     && request.auth.uid in orderData(orderId).assignedTechnicianIds)
-                 || (currentRole() == 'VIEWER'
-                     && currentClientId() == orderData(orderId).clientId));
-    }
-
-    function canReadClosingAct(actId) {
-      return canReadOrder(
-        firestore.get(/databases/(default)/documents/closingActs/$(actId)).data.orderId
-      );
-    }
-
-    function canUploadEvidence(orderId) {
-      return isSignedIn()
-             && currentRole() in ['ADMIN', 'COORDINATOR', 'TECHNICIAN']
-             && firestore.get(/databases/(default)/documents/orders/$(orderId)).data.status != 'CLOSED';
-    }
-
-    function isValidImage() {
-      return request.resource.contentType.matches('^image/(jpeg|png|webp)$')
-             && request.resource.size <= 10 * 1024 * 1024;
-    }
-
-    function isValidPdf() {
-      return request.resource.contentType == 'application/pdf'
-             && request.resource.size <= 20 * 1024 * 1024;
-    }
-
-    match /orders/{orderId}/evidence/{evidenceId}/{fileName} {
-      allow read: if canReadOrder(orderId);
-      allow write: if canUploadEvidence(orderId) && (isValidImage() || isValidPdf());
-    }
-
-    match /closing-acts/{actId}/{fileName} {
-      allow read: if canReadClosingAct(actId);
-      allow write: if false; // el PDF final lo escribe Cloud Functions
-    }
-
-    // Denegar por defecto cualquier otra ruta.
+    // Todo acceso a Storage pasa por Cloud Functions con el Admin SDK
+    // (`uploadEvidence`, `closeOrder`), que no evalúan estas reglas y
+    // validan rol/asignación/estado de la orden leyendo Firestore
+    // directo (ver el comentario junto a `buildDownloadUrl` en
+    // functions/src/index.ts). La lectura de archivos ya subidos usa las
+    // URLs con token (`downloadUrl`/`pdfUrl`) que esas funciones guardan
+    // en Firestore al momento de subir, no una llamada al SDK de cliente
+    // contra Storage — así que el cliente nunca necesita, ni debe tener,
+    // acceso directo de lectura o escritura acá.
+    //
+    // La razón de este diseño (y no `firestore.get()` dentro de estas
+    // reglas, como en un principio) es que la lectura cruzada
+    // Storage→Firestore no es confiable en este proyecto: falla incluso
+    // con un `firestore.exists()` mínimo sobre un documento que sí
+    // existe, verificado a mano contra producción.
     match /{allPaths=**} {
       allow read, write: if false;
     }

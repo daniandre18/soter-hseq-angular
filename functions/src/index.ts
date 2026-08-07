@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
@@ -10,6 +11,26 @@ import PDFDocument from 'pdfkit';
 initializeApp();
 
 type Role = 'ADMIN' | 'COMMERCIAL' | 'COORDINATOR' | 'TECHNICIAN' | 'VIEWER';
+
+/**
+ * Storage Rules necesitaría `firestore.get()` para validar rol/asignación
+ * antes de aceptar una lectura o escritura (CLAUDE.md §13.3/§13.4) — pero
+ * esa lectura cruzada Storage→Firestore no es confiable en este proyecto
+ * (falla incluso con un `firestore.exists()` mínimo, verificado a mano).
+ * Por eso `storage.rules` deniega todo acceso directo del cliente, y el
+ * único camino para leer o escribir en Storage es el Admin SDK: esta
+ * función construye la misma URL con token que genera `getDownloadURL()`
+ * del SDK de cliente, para poder guardarla ya resuelta en Firestore.
+ */
+function buildDownloadUrl(bucketName: string, path: string, token: string): string {
+  // El Storage Emulator sirve en su propio host (`FIREBASE_STORAGE_EMULATOR_HOST`,
+  // ej. "127.0.0.1:9199") en vez de `firebasestorage.googleapis.com` — sin este
+  // caso, la URL guardada apuntaría siempre a producción y las imágenes
+  // nunca cargarían en local aunque el archivo sí exista en el emulador.
+  const emulatorHost = process.env['FIREBASE_STORAGE_EMULATOR_HOST'];
+  const base = emulatorHost ? `http://${emulatorHost}` : 'https://firebasestorage.googleapis.com';
+  return `${base}/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+}
 
 /**
  * El Admin SDK ignora las Firestore Rules, así que cualquier función que
@@ -495,11 +516,23 @@ export const closeOrder = onCall(async (request) => {
   const pdfBuffer = await buildClosingActPdf(actSnapshot.data() ?? {}, orderNumber);
 
   const pdfPath = `closing-acts/${actId}/acta-${orderNumber}.pdf`;
-  await getStorage().bucket().file(pdfPath).save(pdfBuffer, { contentType: 'application/pdf' });
+  const downloadToken = randomUUID();
+  const bucket = getStorage().bucket();
+  await bucket.file(pdfPath).save(pdfBuffer, {
+    contentType: 'application/pdf',
+    metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+  });
+  const pdfUrl = buildDownloadUrl(bucket.name, pdfPath, downloadToken);
 
   const now = FieldValue.serverTimestamp();
   const batch = firestore.batch();
-  batch.update(actRef, { status: 'FINAL', pdfPath, updatedAt: now, updatedBy: request.auth.uid });
+  batch.update(actRef, {
+    status: 'FINAL',
+    pdfPath,
+    pdfUrl,
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
   batch.update(orderRef, { status: 'CLOSED', updatedAt: now, updatedBy: request.auth.uid });
   // Se escribe en ambas colecciones: `auditEvents` es la bitácora global
   // (CLAUDE.md §9.9, solo ADMIN/COORDINATOR), y `orders/{orderId}/events`
@@ -518,7 +551,7 @@ export const closeOrder = onCall(async (request) => {
   batch.set(orderRef.collection('events').doc(), closingEventData);
   await batch.commit();
 
-  return { pdfPath };
+  return { pdfPath, pdfUrl };
 });
 
 interface CreateUserRequest {
@@ -626,3 +659,130 @@ export const deleteUser = onCall(async (request) => {
 
   return { uid };
 });
+
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ACCEPTED_PDF_TYPE = 'application/pdf';
+
+type EvidenceCategory = 'BEFORE' | 'DURING' | 'AFTER' | 'FINDING' | 'SUPPORTING_DOCUMENT';
+
+interface UploadEvidenceRequest {
+  orderId: string;
+  fileName: string;
+  contentType: string;
+  fileBase64: string;
+  category?: EvidenceCategory;
+  description?: string;
+}
+
+function evidenceTypeFor(contentType: string): 'PHOTO' | 'PDF' | 'OTHER' {
+  if (contentType === ACCEPTED_PDF_TYPE) return 'PDF';
+  return contentType.startsWith('image/') ? 'PHOTO' : 'OTHER';
+}
+
+/**
+ * Sube una evidencia con el Admin SDK en vez de dejar que el cliente
+ * escriba directo a Storage (ver el comentario de `buildDownloadUrl` más
+ * arriba: `storage.rules` deniega todo acceso directo porque la lectura
+ * cruzada Storage→Firestore que necesitaría para validar rol/asignación/
+ * estado no es confiable en este proyecto). Toda esa validación —antes en
+ * `canUploadEvidence` de `storage.rules`— se hace acá, leyendo Firestore
+ * directo con el Admin SDK (sin Rules de por medio, siempre funciona).
+ */
+export const uploadEvidence = onCall(
+  { memory: '512MiB', timeoutSeconds: 120 },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Debes iniciar sesión para subir evidencias.');
+    }
+    const { orderId, fileName, contentType, fileBase64, category, description } =
+      (request.data ?? {}) as Partial<UploadEvidenceRequest>;
+    if (!orderId || !fileName || !contentType || !fileBase64) {
+      throw new HttpsError('invalid-argument', 'Faltan datos para subir la evidencia.');
+    }
+
+    const firestore = getFirestore();
+    const userSnapshot = await firestore.collection('users').doc(request.auth.uid).get();
+    const role = userSnapshot.data()?.['role'] as Role | undefined;
+    if (!role || !(['ADMIN', 'COORDINATOR', 'TECHNICIAN'] as Role[]).includes(role)) {
+      throw new HttpsError('permission-denied', 'Tu rol no tiene permiso para subir evidencias.');
+    }
+
+    const orderRef = firestore.collection('orders').doc(orderId);
+    const orderSnapshot = await orderRef.get();
+    if (!orderSnapshot.exists) {
+      throw new HttpsError('not-found', 'La orden no existe.');
+    }
+    const orderData = orderSnapshot.data() ?? {};
+    if (orderData['status'] === 'CLOSED') {
+      throw new HttpsError(
+        'failed-precondition',
+        'No se puede subir evidencia a una orden cerrada.',
+      );
+    }
+    if (role === 'TECHNICIAN') {
+      const assignedIds = (orderData['assignedTechnicianIds'] as string[] | undefined) ?? [];
+      if (!assignedIds.includes(request.auth.uid)) {
+        throw new HttpsError('permission-denied', 'No estás asignado a esta orden.');
+      }
+    }
+
+    const isImage = ACCEPTED_IMAGE_TYPES.has(contentType);
+    const isPdf = contentType === ACCEPTED_PDF_TYPE;
+    if (!isImage && !isPdf) {
+      throw new HttpsError('invalid-argument', 'Formato no permitido. Usa JPEG, PNG, WEBP o PDF.');
+    }
+
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(fileBase64, 'base64');
+    } catch {
+      throw new HttpsError('invalid-argument', 'El archivo enviado no es válido.');
+    }
+    const maxSize = isPdf ? MAX_PDF_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
+    if (buffer.length === 0 || buffer.length > maxSize) {
+      throw new HttpsError(
+        'invalid-argument',
+        `El archivo supera el tamaño máximo (${Math.round(maxSize / 1024 / 1024)} MB).`,
+      );
+    }
+
+    const evidenceRef = orderRef.collection('evidence').doc();
+    const safeFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+    const storagePath = `orders/${orderId}/evidence/${evidenceRef.id}/${safeFileName}`;
+    const downloadToken = randomUUID();
+
+    const bucket = getStorage().bucket();
+    await bucket.file(storagePath).save(buffer, {
+      contentType,
+      metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+    });
+    const downloadUrl = buildDownloadUrl(bucket.name, storagePath, downloadToken);
+
+    const now = FieldValue.serverTimestamp();
+    const batch = firestore.batch();
+    batch.set(evidenceRef, {
+      orderId,
+      type: evidenceTypeFor(contentType),
+      category: category ?? null,
+      fileName,
+      storagePath,
+      downloadUrl,
+      contentType,
+      size: buffer.length,
+      description: description || null,
+      uploadedAt: now,
+      uploadedBy: request.auth.uid,
+      status: 'ACTIVE',
+    });
+    batch.update(orderRef, {
+      evidenceCount: FieldValue.increment(1),
+      updatedAt: now,
+      updatedBy: request.auth.uid,
+    });
+    await batch.commit();
+
+    return { evidenceId: evidenceRef.id, downloadUrl };
+  },
+);
