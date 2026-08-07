@@ -4,7 +4,17 @@ import { of, type Observable } from 'rxjs';
 
 const GLOBAL_ES: Translation = {
   languages: { selectorLabel: 'Seleccionar idioma', spanish: 'Español', english: 'English' },
-  common: { total: 'Total', cancel: 'Cancelar', edit: 'Editar', delete: 'Eliminar' },
+  common: {
+    total: 'Total', cancel: 'Cancelar', edit: 'Editar', delete: 'Eliminar',
+    combobox: { searchPlaceholder: 'Buscar...', clearSelection: 'Limpiar selección', noResults: 'Sin resultados' },
+    phone: {
+      country: 'País', countryAriaLabel: 'País del teléfono', label: 'Teléfono',
+      tooShort: 'El número para {{country}} parece incompleto.',
+      tooLong: 'El número para {{country}} tiene demasiados dígitos.',
+      invalid: 'El número no es válido para {{country}}.',
+    },
+    countries: { CO: 'Colombia', US: 'Estados Unidos', MX: 'México' },
+  },
   roles: {
     ADMIN: 'Administrador',
     COMMERCIAL: 'Comercial',

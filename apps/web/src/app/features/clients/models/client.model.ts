@@ -9,6 +9,7 @@ export interface Client {
   email?: string;
   phone?: string;
   address?: string;
+  department?: string;
   city?: string;
   notes?: string;
   status: ClientStatus;
@@ -46,6 +47,7 @@ export interface ClientSite {
   id: string;
   name: string;
   address: string;
+  department?: string;
   city: string;
   responsible: ClientSiteResponsible;
   status: ClientStatus;
@@ -57,12 +59,21 @@ export interface ClientSite {
 
 export type NewClient = Pick<
   Client,
-  'businessName' | 'legalName' | 'taxId' | 'email' | 'phone' | 'address' | 'city' | 'notes' | 'status'
+  | 'businessName'
+  | 'legalName'
+  | 'taxId'
+  | 'email'
+  | 'phone'
+  | 'address'
+  | 'department'
+  | 'city'
+  | 'notes'
+  | 'status'
 >;
 
 export type NewClientContact = Omit<ClientContact, 'id'>;
 
 export type NewClientSite = Pick<
   ClientSite,
-  'name' | 'address' | 'city' | 'responsible' | 'status'
+  'name' | 'address' | 'department' | 'city' | 'responsible' | 'status'
 >;

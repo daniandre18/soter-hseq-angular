@@ -17,19 +17,27 @@
     </label>
 
     <label class="field">
-      Ciudad
-      <input [formField]="clientForm.city" placeholder="Bogotá" />
-    </label>
-
-    <label class="field">
       Correo
       <input type="email" [formField]="clientForm.email" placeholder="contacto@empresa.com" />
     </label>
 
-    <label class="field">
-      Teléfono
-      <input [formField]="clientForm.phone" placeholder="+57 300 000 0000" />
-    </label>
+    <div class="field field--full">
+      <app-location-select
+        [department]="clientForm.department().value()"
+        (departmentChange)="clientForm.department().value.set($event)"
+        [city]="clientForm.city().value()"
+        (cityChange)="clientForm.city().value.set($event)"
+      />
+    </div>
+
+    <div class="field field--full">
+      {{ 'clients.form.phone' | transloco }}
+      <app-phone-input
+        [value]="clientForm.phone().value()"
+        (valueChange)="clientForm.phone().value.set($event)"
+        [ariaLabel]="'clients.form.phoneAriaLabel' | transloco"
+      />
+    </div>
 
     <label class="field field--full">
       Dirección
@@ -132,13 +140,17 @@
               }
             </label>
 
-            <label class="site-draft-field">
-              Ciudad *
-              <input [formField]="siteDraftForm.city" placeholder="Bogotá" />
+            <div class="site-draft-field site-draft-field--full">
+              <app-location-select
+                [department]="siteDraftForm.department().value()"
+                (departmentChange)="siteDraftForm.department().value.set($event)"
+                [city]="siteDraftForm.city().value()"
+                (cityChange)="siteDraftForm.city().value.set($event)"
+              />
               @if (siteDraftForm.city().touched() && siteDraftForm.city().errors().length) {
                 <span class="field-error">{{ siteDraftForm.city().errors()[0].message }}</span>
               }
-            </label>
+            </div>
 
             <label class="site-draft-field">
               Responsable *

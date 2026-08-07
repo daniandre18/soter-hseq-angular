@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.phone-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.phone-input-row {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.phone-country {
+  min-width: 0;
+}
+
+.phone-number-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+
+  input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: var(--color-gray-900);
+    background: white;
+
+    &:focus {
+      outline: none;
+      border-color: transparent;
+      box-shadow: 0 0 0 2px var(--color-brand-500);
+    }
+
+    &:disabled {
+      background: var(--color-gray-50);
+      color: var(--color-gray-400);
+      cursor: not-allowed;
+    }
+
+    &::placeholder {
+      color: var(--color-gray-400);
+    }
+  }
+
+  &--valid input {
+    border-color: var(--color-green-400, var(--color-gray-300));
+  }
+
+  &--invalid input {
+    border-color: var(--color-red-400, var(--color-gray-300));
+  }
+}
+
+.phone-status {
+  position: absolute;
+  right: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+
+  &--valid {
+    background: var(--color-green-100, #dcfce7);
+    color: var(--color-green-700, #15803d);
+  }
+
+  &--invalid {
+    background: var(--color-red-100, #fee2e2);
+    color: var(--color-red-700, #b91c1c);
+  }
+
+  &--loading {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: -0.125rem;
+    border: 2px solid var(--color-gray-200);
+    border-top-color: var(--color-brand-500);
+    border-radius: 50%;
+    background: transparent;
+    animation: phone-input-spin 700ms linear infinite;
+  }
+}
+
+@keyframes phone-input-spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.phone-error {
+  font-size: 0.75rem;
+  color: var(--color-red-500);
+}
+
+@media (max-width: 480px) {
+  .phone-input-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

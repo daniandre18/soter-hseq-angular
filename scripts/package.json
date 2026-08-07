@@ -6,7 +6,8 @@
     "seed": "tsx seed-emulator.ts",
     "seed:catalog": "tsx seed-emulator.ts --catalog-only",
     "seed:clients": "tsx seed-emulator.ts --clients-only",
-    "seed:clients:production": "tsx seed-production-clients.ts --confirm-production"
+    "seed:clients:production": "tsx seed-production-clients.ts --confirm-production",
+    "fetch:co-locations": "tsx fetch-co-locations.ts"
   },
   "dependencies": {
     "firebase-admin": "^14.2.0"

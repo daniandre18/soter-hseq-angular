@@ -25,5 +25,18 @@
   "showLess": "Show less", "showMore": "Show {{count}} more", "showAll": "Show all ({{count}})",
   "deleteTitleOne": "Delete this client?", "deleteTitleOther": "Delete {{count}} clients?",
   "deleteConfirmationOne": "This action cannot be undone. Existing quotes and orders keep this client's name, but you will no longer be able to open the client record.",
-  "deleteConfirmationOther": "This action cannot be undone. Existing quotes and orders keep these clients' names, but you will no longer be able to open their records."
+  "deleteConfirmationOther": "This action cannot be undone. Existing quotes and orders keep these clients' names, but you will no longer be able to open their records.",
+  "form": {
+    "phone": "Phone",
+    "phoneAriaLabel": "Client phone",
+    "location": {
+      "department": "Department",
+      "city": "City",
+      "searchDepartment": "Search department...",
+      "searchCity": "Search city...",
+      "selectDepartmentFirst": "Choose a department first",
+      "noMatches": "No matches",
+      "loadError": "Could not load the department/city catalog."
+    }
+  }
 }

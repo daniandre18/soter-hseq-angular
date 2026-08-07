@@ -1,0 +1,60 @@
+<div class="combobox" [class.combobox--disabled]="disabled()">
+  <div class="combobox-control">
+    <input
+      type="text"
+      role="combobox"
+      autocomplete="off"
+      [attr.id]="inputId()"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-expanded]="isOpen()"
+      [attr.aria-controls]="listboxId"
+      [placeholder]="placeholder() || ('common.combobox.searchPlaceholder' | transloco)"
+      [disabled]="disabled()"
+      [value]="displayValue()"
+      (focus)="onFocus()"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+    />
+    @if (loading()) {
+      <span class="combobox-spinner" aria-hidden="true"></span>
+    } @else if (value() && !disabled()) {
+      <button
+        type="button"
+        class="combobox-clear"
+        [attr.aria-label]="'common.combobox.clearSelection' | transloco"
+        (click)="clear($event)"
+      >
+        <app-icon name="x" />
+      </button>
+    } @else {
+      <app-icon name="chevron-down" class="combobox-caret" />
+    }
+  </div>
+
+  @if (isOpen() && !disabled()) {
+    <ul class="combobox-listbox" role="listbox" [id]="listboxId">
+      @if (loading()) {
+        @for (item of [1, 2, 3]; track item) {
+          <li class="combobox-skeleton" aria-hidden="true"></li>
+        }
+      } @else if (filteredOptions().length === 0) {
+        <li class="combobox-empty">
+          {{ emptyMessage() || ('common.combobox.noResults' | transloco) }}
+        </li>
+      } @else {
+        @for (option of filteredOptions(); track option.value; let index = $index) {
+          <li
+            role="option"
+            class="combobox-option"
+            [class.combobox-option--active]="index === activeIndex()"
+            [class.combobox-option--selected]="option.value === value()"
+            [attr.aria-selected]="option.value === value()"
+            (mousedown)="$event.preventDefault(); selectOption(option)"
+          >
+            {{ option.label }}
+          </li>
+        }
+      }
+    </ul>
+  }
+</div>
