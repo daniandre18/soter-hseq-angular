@@ -4,7 +4,7 @@
     class="bell-button"
     aria-haspopup="true"
     [attr.aria-expanded]="open()"
-    aria-label="Notificaciones"
+    [attr.aria-label]="'notifications.title' | transloco"
     (click)="toggle()"
   >
     <app-icon name="bell" />
@@ -16,16 +16,16 @@
   @if (open()) {
     <div class="notification-panel" role="menu">
       <div class="notification-panel-header">
-        <h3>Notificaciones</h3>
+        <h3>{{ 'notifications.title' | transloco }}</h3>
         @if (unreadCount() > 0) {
           <button type="button" class="mark-all-read-btn" (click)="markAllAsRead()">
-            Marcar todo leído
+            {{ 'notifications.markAllRead' | transloco }}
           </button>
         }
       </div>
 
       @if (notifications().length === 0) {
-        <p class="notification-empty">Sin notificaciones.</p>
+        <p class="notification-empty">{{ 'notifications.empty' | transloco }}</p>
       } @else {
         <ul class="notification-list">
           @for (notification of notifications(); track notification.id) {
@@ -37,9 +37,9 @@
                 type="button"
                 class="notification-dismiss-btn"
                 [attr.aria-label]="
-                  'Eliminar notificación: ' + translateDomainCodes(notification.title)
+                  'notifications.dismissWithTitle' | transloco: { title: translateDomainCodes(notification.title) }
                 "
-                title="Eliminar notificación"
+                [title]="'notifications.dismiss' | transloco"
                 (click)="dismiss(notification.id)"
               >
                 <app-icon name="x" />
@@ -54,7 +54,7 @@
                 </p>
                 <div class="notification-meta">
                   <span class="notification-time">
-                    {{ formatRelativeTime(notification.createdAt) }}
+                    {{ notification.createdAt | localizedRelativeTime }}
                   </span>
                   <a
                     class="notification-cta"
@@ -62,7 +62,7 @@
                     [queryParams]="{ open: notification.entityId }"
                     (click)="onNotificationClick(notification)"
                   >
-                    Ver {{ notification.entityType === 'ORDER' ? 'orden' : 'cotización' }} →
+                    {{ (notification.entityType === 'ORDER' ? 'notifications.viewOrder' : 'notifications.viewQuote') | transloco }}
                   </a>
                 </div>
               </div>
@@ -75,7 +75,7 @@
         <div class="notification-panel-footer">
           <button type="button" class="dismiss-all-btn" (click)="dismissAll()">
             <app-icon name="trash-2" />
-            Eliminar todas las notificaciones
+            {{ 'notifications.dismissAll' | transloco }}
           </button>
         </div>
       }

@@ -90,7 +90,7 @@
                     <span class="muted">Sin categoría</span>
                   }
                 </td>
-                <td class="nowrap">{{ formatCurrency(service.price) }}</td>
+                <td class="nowrap">{{ service.price | localizedCurrency }}</td>
                 <td>{{ service.unit }}</td>
                 <td>
                   <app-status-badge
@@ -163,7 +163,7 @@
 
             <div class="mobile-service-footer">
               <div class="mobile-service-price">
-                <strong>{{ formatCurrency(service.price) }}</strong>
+                <strong>{{ service.price | localizedCurrency }}</strong>
                 <span>por {{ service.unit }}</span>
               </div>
               <app-status-badge

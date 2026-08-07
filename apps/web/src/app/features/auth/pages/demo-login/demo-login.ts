@@ -1,12 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthFacade } from '../../facades/auth.facade';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { LanguageSelector } from '../../../../shared/components/language-selector/language-selector';
+import type { UserRole } from '../../../../core/models/user-role.model';
 
 interface DemoProfile {
   email: string;
-  role: string;
+  role: UserRole;
   name: string;
-  description: string;
+  descriptionKey: `demo.profiles.${string}`;
   icon: string;
   color: 'red' | 'blue' | 'purple' | 'orange' | 'green';
 }
@@ -15,7 +18,8 @@ const DEMO_PASSWORD = '123456';
 
 @Component({
   selector: 'app-demo-login',
-  imports: [],
+  imports: [TranslocoPipe, LanguageSelector],
+  providers: [...provideTranslocoScope('auth')],
   templateUrl: './demo-login.html',
   styleUrl: './demo-login.scss',
 })
@@ -26,42 +30,41 @@ export class DemoLogin {
   protected readonly profiles: readonly DemoProfile[] = [
     {
       email: 'admin@soterhseq.demo',
-      role: 'Administrador',
+      role: 'ADMIN',
       name: 'Carlos Méndez',
-      description: 'Acceso total: clientes, órdenes, técnicos, reportes y configuración.',
+      descriptionKey: 'demo.profiles.admin',
       icon: '🛡️',
       color: 'red',
     },
     {
       email: 'comercial@soterhseq.demo',
-      role: 'Comercial',
+      role: 'COMMERCIAL',
       name: 'Luisa Fernández',
-      description: 'Gestiona clientes, servicios, cotizaciones y nuevas órdenes.',
+      descriptionKey: 'demo.profiles.commercial',
       icon: '💼',
       color: 'blue',
     },
     {
       email: 'coordinador@soterhseq.demo',
-      role: 'Coordinador',
+      role: 'COORDINATOR',
       name: 'Andrés Rojas',
-      description: 'Asigna órdenes, programa visitas y supervisa la operación.',
+      descriptionKey: 'demo.profiles.coordinator',
       icon: '👥',
       color: 'purple',
     },
     {
       email: 'tecnico1@soterhseq.demo',
-      role: 'Técnico',
+      role: 'TECHNICIAN',
       name: 'Andrés Morales',
-      description: 'Consulta sus órdenes, registra avances, notas y hallazgos.',
+      descriptionKey: 'demo.profiles.technician',
       icon: '⛑️',
       color: 'orange',
     },
     {
       email: 'cliente@soterhseq.demo',
-      role: 'Cliente',
+      role: 'VIEWER',
       name: 'María Torres',
-      description:
-        'Consulta sus cotizaciones y el estado de sus servicios, sin permisos de edición.',
+      descriptionKey: 'demo.profiles.client',
       icon: '🏢',
       color: 'green',
     },

@@ -1,14 +1,16 @@
 import { Component, computed, input, signal } from '@angular/core';
 import { QuillViewHTMLComponent } from 'ngx-quill';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
-import { formatDateTime } from '../../../../shared/utils/format-date';
+import { Icon, type IconName } from '../../../../shared/components/icon/icon';
 import { translateDomainCodes } from '../../../../shared/utils/domain-labels';
-import { NOTE_TYPE_LABELS } from '../../models/note.model';
-import { EVIDENCE_CATEGORY_LABELS, type Evidence } from '../../models/evidence.model';
-import { ORDER_EVENT_ACTION_LABELS } from '../../models/order-event.model';
+import { NOTE_TYPE_TRANSLATION_KEYS } from '../../models/note.model';
+import { EVIDENCE_CATEGORY_TRANSLATION_KEYS, type Evidence } from '../../models/evidence.model';
+import { ORDER_EVENT_ACTION_TRANSLATION_KEYS } from '../../models/order-event.model';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 import type { OrderEvent } from '../../models/order-event.model';
 import type { TechnicalNote } from '../../models/note.model';
 import type { ActivityFilter, ActivityItem } from '../../models/activity-item.model';
+import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
 
 /**
  * Feed cronológico único que combina notas técnicas, evidencia y el
@@ -16,9 +18,16 @@ import type { ActivityFilter, ActivityItem } from '../../models/activity-item.mo
  * Jira). Presentacional puro: no inyecta Firestore ni la fachada, recibe
  * todo por `input()` (CLAUDE.md §6.2 — sin acceso a datos desde componentes).
  */
+const KIND_ICONS: Record<ActivityItem['kind'], IconName> = {
+  note: 'message-square',
+  evidence: 'image',
+  event: 'clock',
+};
+
 @Component({
   selector: 'app-order-activity-feed',
-  imports: [Avatar, QuillViewHTMLComponent],
+  imports: [Avatar, Icon, QuillViewHTMLComponent, TranslocoPipe, LocalizedDatePipe],
+  providers: [...provideTranslocoScope('orders')],
   templateUrl: './order-activity-feed.html',
   styleUrl: './order-activity-feed.scss',
 })
@@ -28,11 +37,11 @@ export class OrderActivityFeed {
   readonly events = input<OrderEvent[]>([]);
   readonly resolveAuthorName = input<(userId: string) => string>((id) => id);
 
-  protected readonly formatDateTime = formatDateTime;
   protected readonly translateDomainCodes = translateDomainCodes;
-  protected readonly noteTypeLabels = NOTE_TYPE_LABELS;
-  protected readonly evidenceCategoryLabels = EVIDENCE_CATEGORY_LABELS;
-  protected readonly actionLabels = ORDER_EVENT_ACTION_LABELS;
+  protected readonly noteTypeLabels = NOTE_TYPE_TRANSLATION_KEYS;
+  protected readonly evidenceCategoryLabels = EVIDENCE_CATEGORY_TRANSLATION_KEYS;
+  protected readonly actionLabels = ORDER_EVENT_ACTION_TRANSLATION_KEYS;
+  protected readonly kindIcon = (kind: ActivityItem['kind']): IconName => KIND_ICONS[kind];
 
   protected readonly activeFilter = signal<ActivityFilter>('all');
 

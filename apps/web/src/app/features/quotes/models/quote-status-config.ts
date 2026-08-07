@@ -1,17 +1,17 @@
 import type { QuoteStatus } from './quote.model';
 
 export interface QuoteStatusConfig {
-  label: string;
+  translationKey: `quotes.status.${string}`;
   color: string;
 }
 
 export const QUOTE_STATUS_CONFIG: Record<QuoteStatus, QuoteStatusConfig> = {
-  DRAFT: { label: 'Borrador', color: 'gray' },
-  SENT: { label: 'Enviada', color: 'blue' },
-  APPROVED: { label: 'Aprobada', color: 'green' },
-  REJECTED: { label: 'Rechazada', color: 'red' },
-  EXPIRED: { label: 'Vencida', color: 'orange' },
-  CONVERTED: { label: 'Convertida', color: 'purple' },
+  DRAFT: { translationKey: 'quotes.status.draft', color: 'gray' },
+  SENT: { translationKey: 'quotes.status.sent', color: 'blue' },
+  APPROVED: { translationKey: 'quotes.status.approved', color: 'green' },
+  REJECTED: { translationKey: 'quotes.status.rejected', color: 'red' },
+  EXPIRED: { translationKey: 'quotes.status.expired', color: 'orange' },
+  CONVERTED: { translationKey: 'quotes.status.converted', color: 'purple' },
 };
 
 // Solo transiciones manuales (CLAUDE.md §10.1); EXPIRED se asume automática

@@ -1,87 +1,112 @@
 @if (order(); as o) {
   <app-modal [open]="true" [title]="o.orderNumber" size="xl" (closeRequested)="close()">
     <div class="detail-sections">
-      <div class="detail-header">
-        <div class="order-client-summary">
-          <p class="client-name">{{ o.clientBusinessName }}</p>
-          @if (o.city) {
-            <p class="valid-until">{{ o.serviceAddress }} · {{ o.city }}</p>
-          }
-        </div>
-        <div class="header-actions">
-          <div class="header-badges">
-            <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
-            <app-status-badge [label]="priorityLabel()" [color]="priorityColor()" />
-          </div>
-          <div class="header-buttons">
-            @if (canChangeStatusFreely()) {
-              <app-button variant="outline" size="sm" (click)="openStatusChange()">
-                Cambiar Estado
-              </app-button>
-            }
-            @if (canEditOrder()) {
-              <app-button variant="outline" size="sm" (click)="editOrder()">Editar</app-button>
-            }
-            @if (canExecute()) {
-              <app-button size="sm" (click)="startExecution()" [disabled]="saving()">
-                {{ saving() ? 'Iniciando…' : 'Iniciar Ejecución' }}
-              </app-button>
-            }
-            @if (canSendToReview()) {
-              <app-button
-                size="sm"
-                (click)="sendToReview()"
-                [disabled]="saving() || !!sendToReviewBlockedReason()"
-                [title]="sendToReviewBlockedReason() ?? ''"
-              >
-                {{ saving() ? 'Enviando…' : sendToReviewLabel() }}
-              </app-button>
+      <div class="sticky-header">
+        <div class="detail-header">
+          <div class="order-client-summary">
+            <p class="client-name">{{ o.clientBusinessName }}</p>
+            @if (o.city) {
+              <p class="valid-until">{{ o.serviceAddress }} · {{ o.city }}</p>
             }
           </div>
+          <div class="header-actions">
+            <div class="header-badges">
+              <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
+              <app-status-badge [label]="priorityLabel()" [color]="priorityColor()" />
+            </div>
+            <div class="header-buttons">
+              @if (canChangeStatusFreely()) {
+                <app-button variant="outline" size="sm" (click)="openStatusChange()">
+                  {{ 'orders.detail.changeStatus' | transloco }}
+                </app-button>
+              }
+              @if (canEditOrder()) {
+                <app-button variant="outline" size="sm" (click)="editOrder()">
+                  {{ 'orders.detail.edit' | transloco }}
+                </app-button>
+              }
+              @if (canExecute()) {
+                <app-button size="sm" (click)="startExecution()" [disabled]="saving()">
+                  {{ (saving() ? 'orders.detail.starting' : 'orders.detail.startExecution') | transloco }}
+                </app-button>
+              }
+              @if (canSendToReview()) {
+                <app-button
+                  size="sm"
+                  (click)="sendToReview()"
+                  [disabled]="saving() || !!sendToReviewBlockedReason()"
+                  [title]="sendToReviewBlockedReason() ?? ''"
+                >
+                  {{ (saving() ? 'orders.detail.sending' : sendToReviewLabelKey()) | transloco }}
+                </app-button>
+              }
+            </div>
+          </div>
         </div>
-      </div>
-      @if (canSendToReview() && sendToReviewBlockedReason()) {
-        <p class="review-hint">{{ sendToReviewBlockedReason() }}</p>
-      }
+        @if (canSendToReview() && sendToReviewBlockedReason()) {
+          <p class="review-hint">{{ sendToReviewBlockedReason() }}</p>
+        }
 
-      <div class="tabs">
-        <button
-          type="button"
-          class="tab"
-          [class.tab--active]="activeTab() === 'info'"
-          (click)="setActiveTab('info')"
-        >
-          Información
-        </button>
-        <button
-          type="button"
-          class="tab"
-          [class.tab--active]="activeTab() === 'activity'"
-          (click)="setActiveTab('activity')"
-        >
-          Actividad ({{ notes().length + evidenceList().length }})
-        </button>
-        <button
-          type="button"
-          class="tab"
-          [class.tab--active]="activeTab() === 'acta'"
-          (click)="setActiveTab('acta')"
-        >
-          Acta
-        </button>
+        <div class="tabs" role="tablist" [attr.aria-label]="'orders.detail.tabsAriaLabel' | transloco">
+          <button
+            type="button"
+            role="tab"
+            id="tab-info"
+            class="tab"
+            [class.tab--active]="activeTab() === 'info'"
+            [attr.aria-selected]="activeTab() === 'info'"
+            [attr.tabindex]="activeTab() === 'info' ? 0 : -1"
+            aria-controls="tabpanel-info"
+            (click)="setActiveTab('info')"
+            (keydown)="onTabKeydown($event, 'info')"
+          >
+            {{ 'orders.detail.tabs.information' | transloco }}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-activity"
+            class="tab"
+            [class.tab--active]="activeTab() === 'activity'"
+            [attr.aria-selected]="activeTab() === 'activity'"
+            [attr.tabindex]="activeTab() === 'activity' ? 0 : -1"
+            aria-controls="tabpanel-activity"
+            (click)="setActiveTab('activity')"
+            (keydown)="onTabKeydown($event, 'activity')"
+          >
+            {{ 'orders.detail.tabs.activity' | transloco }}
+            @if (activityCount() > 0) {
+              <span class="tab-count">{{ activityCount() }}</span>
+            }
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-acta"
+            class="tab"
+            [class.tab--active]="activeTab() === 'acta'"
+            [attr.aria-selected]="activeTab() === 'acta'"
+            [attr.tabindex]="activeTab() === 'acta' ? 0 : -1"
+            aria-controls="tabpanel-acta"
+            (click)="setActiveTab('acta')"
+            (keydown)="onTabKeydown($event, 'acta')"
+          >
+            {{ 'orders.detail.tabs.report' | transloco }}
+          </button>
+        </div>
       </div>
 
       @switch (activeTab()) {
         @case ('info') {
-          <div class="tab-panel">
+          <div class="tab-panel" id="tabpanel-info" role="tabpanel" aria-labelledby="tab-info">
             <div class="info-grid">
               <div>
-                <p class="info-label">Servicio</p>
+                <p class="info-label">{{ 'orders.detail.info.service' | transloco }}</p>
                 <p class="info-value">{{ o.serviceSummary }}</p>
               </div>
               @if (o.quoteId) {
                 <div>
-                  <p class="info-label">Cotización de origen</p>
+                  <p class="info-label">{{ 'orders.detail.info.sourceQuote' | transloco }}</p>
                   <a class="info-value info-value--link" [routerLink]="['/cotizaciones']" [queryParams]="{ open: o.quoteId }">
                     {{ o.quoteNumber ?? o.quoteId }}
                   </a>
@@ -89,12 +114,12 @@
               }
               @if (o.dueDate) {
                 <div>
-                  <p class="info-label">Fecha límite</p>
-                  <p class="info-value">{{ formatDateTime(o.dueDate) }}</p>
+                  <p class="info-label">{{ 'orders.detail.info.dueDate' | transloco }}</p>
+                  <p class="info-value">{{ o.dueDate | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}</p>
                 </div>
               }
               <div>
-                <p class="info-label">Técnicos asignados</p>
+                <p class="info-label">{{ 'orders.detail.info.assignedTechnicians' | transloco }}</p>
                 @if (assignedTechnicianNames().length > 0) {
                   <div class="technician-chips">
                     @for (name of assignedTechnicianNames(); track name) {
@@ -105,44 +130,44 @@
                     }
                   </div>
                 } @else {
-                  <p class="info-value info-value--muted">Sin asignar</p>
+                  <p class="info-value info-value--muted">{{ 'orders.unassigned' | transloco }}</p>
                 }
               </div>
               @if (o.scheduledStart) {
                 <div>
-                  <p class="info-label">Visita programada</p>
+                  <p class="info-label">{{ 'orders.detail.info.scheduledVisit' | transloco }}</p>
                   <p class="info-value">
-                    {{ formatDateTime(o.scheduledStart) }}
+                    {{ o.scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
                     @if (o.scheduledEnd) {
-                      — {{ formatDateTime(o.scheduledEnd) }}
+                      — {{ o.scheduledEnd | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}
                     }
                   </p>
                 </div>
               }
               @if (o.actualStart) {
                 <div>
-                  <p class="info-label">Inicio real</p>
-                  <p class="info-value">{{ formatDateTime(o.actualStart) }}</p>
+                  <p class="info-label">{{ 'orders.detail.info.actualStart' | transloco }}</p>
+                  <p class="info-value">{{ o.actualStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}</p>
                 </div>
               }
               @if (o.actualEnd) {
                 <div>
-                  <p class="info-label">Fin real</p>
-                  <p class="info-value">{{ formatDateTime(o.actualEnd) }}</p>
+                  <p class="info-label">{{ 'orders.detail.info.actualEnd' | transloco }}</p>
+                  <p class="info-value">{{ o.actualEnd | localizedDate: { dateStyle: 'medium', timeStyle: 'short' } }}</p>
                 </div>
               }
             </div>
 
             @if (o.description) {
               <div class="action-section">
-                <p class="info-label">Descripción</p>
+                <p class="info-label">{{ 'orders.detail.info.description' | transloco }}</p>
                 <p class="info-value">{{ o.description }}</p>
               </div>
             }
 
             <div class="action-section">
               <div class="progress-heading">
-                <h4>Avance</h4>
+                <h4>{{ 'orders.detail.progress.title' | transloco }}</h4>
                 <span class="progress-percent">{{ progressValue() }}%</span>
               </div>
               <app-progress-bar [value]="progressValue()" />
@@ -153,18 +178,18 @@
                     min="0"
                     max="100"
                     step="5"
-                    aria-label="Avance"
+                    [attr.aria-label]="'orders.detail.progress.title' | transloco"
                     [value]="progressValue()"
                     (input)="onProgressInput($event)"
                   />
                   <input
                     type="text"
-                    placeholder="Nota de avance (opcional)..."
+                    [placeholder]="'orders.detail.progress.notePlaceholder' | transloco"
                     [value]="progressNote()"
                     (input)="progressNote.set($any($event.target).value)"
                   />
                   <app-button size="sm" (click)="saveProgress()" [disabled]="savingProgress()">
-                    {{ savingProgress() ? 'Guardando…' : 'Guardar' }}
+                    {{ (savingProgress() ? 'orders.detail.progress.saving' : 'orders.detail.progress.save') | transloco }}
                   </app-button>
                 </div>
               }
@@ -172,10 +197,10 @@
 
             @if (canSchedule()) {
               <div class="action-section">
-                <h4>Programar visita</h4>
+                <h4>{{ 'orders.detail.schedule.title' | transloco }}</h4>
                 <div class="schedule-fields">
                   <label class="field">
-                    Inicio
+                    {{ 'orders.detail.schedule.start' | transloco }}
                     <input
                       type="datetime-local"
                       [value]="scheduledStartValue()"
@@ -183,7 +208,7 @@
                     />
                   </label>
                   <label class="field">
-                    Fin
+                    {{ 'orders.detail.schedule.end' | transloco }}
                     <input
                       type="datetime-local"
                       [value]="scheduledEndValue()"
@@ -195,7 +220,7 @@
                     (click)="saveSchedule()"
                     [disabled]="saving() || !scheduledStartValue() || !scheduledEndValue()"
                   >
-                    {{ saving() ? 'Guardando…' : 'Programar' }}
+                    {{ (saving() ? 'orders.detail.progress.saving' : 'orders.detail.schedule.schedule') | transloco }}
                   </app-button>
                 </div>
               </div>
@@ -203,9 +228,11 @@
 
             @if (canAssign()) {
               <div class="action-section">
-                <h4>Asignar técnicos</h4>
+                <h4>{{ 'orders.detail.assign.title' | transloco }}</h4>
                 @if (technicians().length === 0) {
-                  <p class="info-value info-value--muted">No hay técnicos registrados.</p>
+                  <p class="info-value info-value--muted">
+                    {{ 'orders.detail.assign.noTechnicians' | transloco }}
+                  </p>
                 } @else {
                   <div class="technician-options">
                     @for (technician of technicians(); track technician.id) {
@@ -221,7 +248,7 @@
                     }
                   </div>
                   <app-button size="sm" (click)="saveAssignment()" [disabled]="saving()">
-                    {{ saving() ? 'Guardando…' : 'Asignar' }}
+                    {{ (saving() ? 'orders.detail.progress.saving' : 'orders.detail.assign.assign') | transloco }}
                   </app-button>
                 }
               </div>
@@ -230,10 +257,10 @@
         }
 
         @case ('activity') {
-          <div class="tab-panel">
+          <div class="tab-panel" id="tabpanel-activity" role="tabpanel" aria-labelledby="tab-activity">
             @if (o.findings && o.findings.length > 0) {
               <div class="chip-group">
-                <p class="info-label">Hallazgos</p>
+                <p class="info-label">{{ 'orders.activity.findings' | transloco }}</p>
                 @for (finding of o.findings; track finding) {
                   <span class="chip chip--finding">{{ finding }}</span>
                 }
@@ -241,140 +268,261 @@
             }
             @if (o.recommendations && o.recommendations.length > 0) {
               <div class="chip-group">
-                <p class="info-label">Recomendaciones</p>
+                <p class="info-label">{{ 'orders.activity.recommendations' | transloco }}</p>
                 @for (recommendation of o.recommendations; track recommendation) {
                   <span class="chip chip--recommendation">{{ recommendation }}</span>
                 }
               </div>
             }
 
-            @if (canLog()) {
-              <div class="action-section">
-                <h4>Registrar nota</h4>
-                <div class="note-form">
-                  <select
-                    [value]="newNoteType()"
-                    (change)="newNoteType.set($any($event.target).value)"
-                  >
-                    @for (entry of noteTypeLabels | keyvalue; track entry.key) {
-                      <option [value]="entry.key">{{ entry.value }}</option>
-                    }
-                  </select>
-                  <textarea
-                    rows="2"
-                    placeholder="Describe la nota, hallazgo o recomendación..."
-                    [value]="newNoteContent()"
-                    (input)="newNoteContent.set($any($event.target).value)"
-                  ></textarea>
-                  <app-button
-                    size="sm"
-                    (click)="addNoteSubmit()"
-                    [disabled]="addingNote() || !newNoteContent().trim()"
-                  >
-                    {{ addingNote() ? 'Guardando…' : 'Agregar' }}
-                  </app-button>
-                </div>
-              </div>
-            }
-
-            @if (canRequestCorrection()) {
-              <div class="action-section">
-                <h4>Solicitar corrección</h4>
-                <div class="note-form">
-                  <textarea
-                    rows="2"
-                    placeholder="Explica qué falta corregir antes de aprobar..."
-                    [value]="correctionReason()"
-                    (input)="correctionReason.set($any($event.target).value)"
-                  ></textarea>
-                  <app-button
-                    variant="danger"
-                    size="sm"
-                    (click)="requestCorrectionSubmit()"
-                    [disabled]="requestingCorrection() || !correctionReason().trim()"
-                  >
-                    {{ requestingCorrection() ? 'Enviando…' : 'Solicitar Corrección' }}
-                  </app-button>
-                </div>
-              </div>
-            }
-
-            @if (canLog()) {
-              <div class="action-section">
-                <h4>Subir evidencia</h4>
-                @if (!evidenceUploadsEnabled) {
-                  <p class="field-help">
-                    Modo demo gratuito: las evidencias migradas están disponibles en modo lectura;
-                    la carga de archivos nuevos requiere almacenamiento externo.
-                  </p>
-                } @else {
-                  <div class="evidence-form">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                    (change)="onFileSelected($event)"
-                  />
-                  <select
-                    aria-label="Categoría de la evidencia"
-                    [value]="evidenceCategory()"
-                    (change)="evidenceCategory.set($any($event.target).value)"
-                  >
-                    <option value="">Sin categoría</option>
-                    @for (entry of evidenceCategoryLabels | keyvalue; track entry.key) {
-                      <option [value]="entry.key">{{ entry.value }}</option>
-                    }
-                  </select>
-                  <div class="evidence-editor-field">
-                    <div class="evidence-editor-heading">
-                      <label for="evidence-description">Descripción profesional (opcional)</label>
-                      <span aria-live="polite">
-                        {{ evidenceDescriptionTextLength() }}/{{ evidenceDescriptionMaxLength }}
-                      </span>
-                    </div>
-                    <quill-editor
-                      id="evidence-description"
-                      class="evidence-rich-editor"
-                      aria-label="Descripción enriquecida de la evidencia"
-                      aria-describedby="evidence-description-help"
-                      [formControl]="evidenceDescriptionControl"
-                      [modules]="evidenceEditorModules"
-                      [formats]="evidenceEditorFormats"
-                      [sanitize]="true"
-                      [maxLength]="evidenceDescriptionMaxLength"
-                      [defaultEmptyValue]="''"
-                      format="html"
-                      theme="snow"
-                      bounds="self"
-                      placeholder="Describe el contexto, hallazgos y observaciones de esta evidencia..."
-                    />
-                    <p id="evidence-description-help" class="field-help">
-                      Usa formato para destacar hallazgos, actividades y observaciones importantes.
-                    </p>
-                    @if (
-                      evidenceDescriptionControl.invalid &&
-                      (evidenceDescriptionControl.dirty || evidenceDescriptionControl.touched)
-                    ) {
-                      <p class="field-error">
-                        La descripción no puede superar
-                        {{ evidenceDescriptionMaxLength }} caracteres.
-                      </p>
-                    }
-                  </div>
-                  <div class="evidence-upload-actions">
-                    <app-button
-                      size="sm"
-                      (click)="uploadSelectedFile()"
-                      [disabled]="
-                        uploading() || !selectedFile() || evidenceDescriptionControl.invalid
-                      "
+            @if (composerModes().length > 0) {
+              <div class="composer">
+                <div class="composer-triggers">
+                  @if (canLog()) {
+                    <button
+                      type="button"
+                      class="composer-trigger"
+                      [class.composer-trigger--active]="composerMode() === 'note'"
+                      [attr.aria-expanded]="composerMode() === 'note'"
+                      (click)="toggleComposer('note')"
                     >
-                      {{ uploading() ? (uploadProgress() ?? 0) + '%' : 'Subir evidencia' }}
-                    </app-button>
+                      <app-icon name="message-square" />
+                      {{ 'orders.activity.note' | transloco }}
+                    </button>
+                    <button
+                      type="button"
+                      class="composer-trigger"
+                      [class.composer-trigger--active]="composerMode() === 'evidence'"
+                      [attr.aria-expanded]="composerMode() === 'evidence'"
+                      (click)="toggleComposer('evidence')"
+                    >
+                      <app-icon name="image" />
+                      {{ 'orders.activity.evidence' | transloco }}
+                    </button>
+                  }
+                  @if (canRequestCorrection()) {
+                    <button
+                      type="button"
+                      class="composer-trigger composer-trigger--muted"
+                      [class.composer-trigger--active]="composerMode() === 'correction'"
+                      [attr.aria-expanded]="composerMode() === 'correction'"
+                      (click)="toggleComposer('correction')"
+                    >
+                      <app-icon name="flag" />
+                      {{ 'orders.activity.correction' | transloco }}
+                    </button>
+                  }
+                </div>
+
+                @if (composerMode(); as mode) {
+                  <div class="composer-panel">
+                    <button
+                      type="button"
+                      class="composer-close"
+                      [attr.aria-label]="'orders.activity.closeComposer' | transloco"
+                      (click)="closeComposer()"
+                    >
+                      <app-icon name="x" />
+                    </button>
+
+                    @switch (mode) {
+                      @case ('note') {
+                        <div class="composer-field">
+                          <label class="field" for="composer-note-type">
+                            {{ 'orders.activity.noteType' | transloco }}
+                            <select
+                              id="composer-note-type"
+                              [value]="newNoteType()"
+                              (change)="newNoteType.set($any($event.target).value)"
+                            >
+                              @for (entry of noteTypeLabels | keyvalue; track entry.key) {
+                                <option [value]="entry.key">{{ entry.value | transloco }}</option>
+                              }
+                            </select>
+                          </label>
+                          <label class="field" for="composer-note-content">
+                            {{ 'orders.activity.noteContent' | transloco }}
+                            <textarea
+                              id="composer-note-content"
+                              rows="3"
+                              [placeholder]="'orders.activity.notePlaceholder' | transloco"
+                              [value]="newNoteContent()"
+                              (input)="newNoteContent.set($any($event.target).value)"
+                            ></textarea>
+                          </label>
+                          <div class="composer-actions">
+                            <app-button
+                              size="sm"
+                              (click)="addNoteSubmit()"
+                              [disabled]="addingNote() || !newNoteContent().trim()"
+                            >
+                              {{ (addingNote() ? 'orders.detail.progress.saving' : 'orders.activity.saveNote') | transloco }}
+                            </app-button>
+                          </div>
+                        </div>
+                      }
+
+                      @case ('correction') {
+                        <div class="composer-field">
+                          <p class="field-help">
+                            {{ 'orders.activity.correctionHelp' | transloco }}
+                          </p>
+                          <label class="field" for="composer-correction-reason">
+                            {{ 'orders.activity.correctionReason' | transloco }}
+                            <textarea
+                              id="composer-correction-reason"
+                              rows="3"
+                              [placeholder]="'orders.activity.correctionPlaceholder' | transloco"
+                              [value]="correctionReason()"
+                              (input)="correctionReason.set($any($event.target).value)"
+                            ></textarea>
+                          </label>
+                          <div class="composer-actions">
+                            <app-button
+                              variant="outline"
+                              size="sm"
+                              (click)="requestCorrectionSubmit()"
+                              [disabled]="requestingCorrection() || !correctionReason().trim()"
+                            >
+                              {{ (requestingCorrection() ? 'orders.detail.sending' : 'orders.activity.requestCorrection') | transloco }}
+                            </app-button>
+                          </div>
+                        </div>
+                      }
+
+                      @case ('evidence') {
+                        <div class="composer-field">
+                          @if (!evidenceUploadsEnabled) {
+                            <p class="field-help">
+                              {{ 'orders.activity.demoModeHelp' | transloco }}
+                            </p>
+                          } @else {
+                            @if (!selectedFile()) {
+                              <div
+                                class="dropzone"
+                                [class.dropzone--active]="dropzoneActive()"
+                                (dragover)="onDropzoneDragOver($event)"
+                                (dragleave)="onDropzoneDragLeave()"
+                                (drop)="onDropzoneDrop($event)"
+                              >
+                                <app-icon name="upload-cloud" />
+                                <p class="dropzone-text">
+                                  {{ 'orders.activity.dropzoneText' | transloco }}
+                                  <label class="dropzone-browse">
+                                    {{ 'orders.activity.dropzoneBrowse' | transloco }}
+                                    <input
+                                      type="file"
+                                      class="sr-only"
+                                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                                      (change)="onFileSelected($event)"
+                                    />
+                                  </label>
+                                </p>
+                                <p class="dropzone-help">{{ acceptedFilesHelp }}</p>
+                              </div>
+                            } @else {
+                              <div class="attachment-card">
+                                @if (selectedFilePreviewUrl(); as previewUrl) {
+                                  <img [src]="previewUrl" class="attachment-card__thumb" alt="" />
+                                } @else {
+                                  <div class="attachment-card__icon">
+                                    <app-icon name="file-text" />
+                                  </div>
+                                }
+                                <div class="attachment-card__info">
+                                  <p class="attachment-card__name">{{ selectedFile()!.name }}</p>
+                                  <p class="attachment-card__meta">{{ selectedFileSizeLabel() }}</p>
+                                  @if (uploading()) {
+                                    <app-progress-bar [value]="uploadProgress() ?? 0" />
+                                  }
+                                </div>
+                                @if (!uploading()) {
+                                  <button
+                                    type="button"
+                                    class="attachment-card__remove"
+                                    [attr.aria-label]="'orders.activity.removeFile' | transloco"
+                                    (click)="clearSelectedFile()"
+                                  >
+                                    <app-icon name="x" />
+                                  </button>
+                                }
+                              </div>
+                            }
+                            @if (fileError()) {
+                              <p class="field-error">{{ fileError() }}</p>
+                            }
+
+                            <label class="field" for="composer-evidence-category">
+                              {{ 'orders.activity.category' | transloco }}
+                              <select
+                                id="composer-evidence-category"
+                                [value]="evidenceCategory()"
+                                (change)="evidenceCategory.set($any($event.target).value)"
+                              >
+                                <option value="">{{ 'orders.activity.noCategory' | transloco }}</option>
+                                @for (entry of evidenceCategoryLabels | keyvalue; track entry.key) {
+                                  <option [value]="entry.key">{{ entry.value | transloco }}</option>
+                                }
+                              </select>
+                            </label>
+
+                            <div class="evidence-editor-field">
+                              <div class="evidence-editor-heading">
+                                <label for="evidence-description">
+                                  {{ 'orders.activity.descriptionLabel' | transloco }}
+                                </label>
+                                <span aria-live="polite">
+                                  {{ evidenceDescriptionTextLength() }}/{{ evidenceDescriptionMaxLength }}
+                                </span>
+                              </div>
+                              <quill-editor
+                                id="evidence-description"
+                                class="evidence-rich-editor"
+                                [attr.aria-label]="'orders.activity.descriptionAriaLabel' | transloco"
+                                aria-describedby="evidence-description-help"
+                                [formControl]="evidenceDescriptionControl"
+                                [modules]="evidenceEditorModules"
+                                [formats]="evidenceEditorFormats"
+                                [sanitize]="true"
+                                [maxLength]="evidenceDescriptionMaxLength"
+                                [defaultEmptyValue]="''"
+                                format="html"
+                                theme="snow"
+                                bounds="self"
+                                [placeholder]="'orders.activity.descriptionPlaceholder' | transloco"
+                              />
+                              <p id="evidence-description-help" class="field-help">
+                                {{ 'orders.activity.descriptionHelp' | transloco }}
+                              </p>
+                              @if (
+                                evidenceDescriptionControl.invalid &&
+                                (evidenceDescriptionControl.dirty || evidenceDescriptionControl.touched)
+                              ) {
+                                <p class="field-error">
+                                  {{
+                                    'orders.activity.descriptionMaxLength'
+                                      | transloco: { max: evidenceDescriptionMaxLength }
+                                  }}
+                                </p>
+                              }
+                            </div>
+
+                            <div class="composer-actions">
+                              <app-button
+                                size="sm"
+                                (click)="uploadSelectedFile()"
+                                [disabled]="
+                                  uploading() || !selectedFile() || evidenceDescriptionControl.invalid
+                                "
+                              >
+                                {{ (uploading() ? 'orders.activity.uploading' : 'orders.activity.uploadEvidence') | transloco }}
+                              </app-button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
                   </div>
-                  </div>
-                }
-                @if (fileError()) {
-                  <p class="field-error">{{ fileError() }}</p>
                 }
               </div>
             }
@@ -389,25 +537,24 @@
         }
 
         @case ('acta') {
-          <div class="tab-panel">
+          <div class="tab-panel" id="tabpanel-acta" role="tabpanel" aria-labelledby="tab-acta">
             @if (actaError()) {
               <p class="field-error">{{ actaError() }}</p>
             }
             @if (!closingAct()) {
               @if (canRequestActa()) {
                 <div class="action-section">
-                  <h4>Generar borrador con IA</h4>
+                  <h4>{{ 'orders.report.generateTitle' | transloco }}</h4>
                   <p class="info-value info-value--muted">
-                    Se enviará un resumen de las notas de campo a la IA para redactar un borrador.
-                    Siempre queda sujeto a revisión y aprobación humana antes del cierre.
+                    {{ 'orders.report.generateHelp' | transloco }}
                   </p>
                   <app-button size="sm" (click)="generateActa()" [disabled]="generatingActa()">
-                    {{ generatingActa() ? 'Generando…' : 'Generar borrador con IA' }}
+                    {{ (generatingActa() ? 'orders.report.generating' : 'orders.report.generate') | transloco }}
                   </app-button>
                 </div>
               } @else {
                 <p class="info-value info-value--muted">
-                  El acta se puede generar una vez la orden esté en revisión.
+                  {{ 'orders.report.notReady' | transloco }}
                 </p>
               }
             } @else {
@@ -417,7 +564,7 @@
               </div>
 
               <label class="field field--full">
-                Resumen ejecutivo
+                {{ 'orders.report.executiveSummary' | transloco }}
                 <textarea
                   rows="3"
                   [disabled]="!canEditActa()"
@@ -427,7 +574,7 @@
               </label>
 
               <label class="field field--full">
-                Actividades realizadas (una por línea)
+                {{ 'orders.report.activitiesPerformed' | transloco }}
                 <textarea
                   rows="3"
                   [disabled]="!canEditActa()"
@@ -437,7 +584,7 @@
               </label>
 
               <label class="field field--full">
-                Hallazgos (uno por línea)
+                {{ 'orders.report.findings' | transloco }}
                 <textarea
                   rows="3"
                   [disabled]="!canEditActa()"
@@ -447,7 +594,7 @@
               </label>
 
               <label class="field field--full">
-                Recomendaciones (una por línea)
+                {{ 'orders.report.recommendations' | transloco }}
                 <textarea
                   rows="3"
                   [disabled]="!canEditActa()"
@@ -457,7 +604,7 @@
               </label>
 
               <label class="field field--full">
-                Conclusiones
+                {{ 'orders.report.conclusions' | transloco }}
                 <textarea
                   rows="2"
                   [disabled]="!canEditActa()"
@@ -467,7 +614,7 @@
               </label>
 
               <label class="field field--full">
-                Limitaciones
+                {{ 'orders.report.limitations' | transloco }}
                 <textarea
                   rows="2"
                   [disabled]="!canEditActa()"
@@ -484,12 +631,12 @@
                     (click)="saveActaContent()"
                     [disabled]="savingActa()"
                   >
-                    {{ savingActa() ? 'Guardando…' : 'Guardar cambios' }}
+                    {{ (savingActa() ? 'orders.detail.progress.saving' : 'orders.report.saveChanges') | transloco }}
                   </app-button>
                 }
                 @if (canApproveActa()) {
                   <app-button size="sm" (click)="approveActa()" [disabled]="approvingActa()">
-                    {{ approvingActa() ? 'Aprobando…' : 'Aprobar Acta' }}
+                    {{ (approvingActa() ? 'orders.report.approving' : 'orders.report.approve') | transloco }}
                   </app-button>
                 }
                 @if (canCloseOrder()) {
@@ -498,12 +645,12 @@
                     (click)="closeOrderAndGeneratePdf()"
                     [disabled]="closingOrder()"
                   >
-                    {{ closingOrder() ? 'Generando PDF…' : 'Cerrar Orden y Generar PDF' }}
+                    {{ (closingOrder() ? 'orders.report.generatingPdf' : 'orders.report.closeAndGeneratePdf') | transloco }}
                   </app-button>
                 }
                 @if (pdfUrl() ?? closingAct()!.pdfUrl; as href) {
                   <a class="pdf-link" [href]="href" target="_blank" rel="noopener"
-                    >Descargar PDF</a
+                    >{{ 'orders.report.downloadPdf' | transloco }}</a
                   >
                 }
               </div>
@@ -516,7 +663,7 @@
     <div modalFooter>
       @if (canCancel()) {
         <app-button variant="danger" (click)="cancelOrder()" [disabled]="saving()">
-          Cancelar Orden
+          {{ 'orders.detail.cancelOrder' | transloco }}
         </app-button>
       }
     </div>
@@ -524,26 +671,28 @@
 
   <app-modal
     [open]="statusChangeOpen()"
-    title="Cambiar Estado"
+    [title]="'orders.statusChangeModal.title' | transloco"
     size="sm"
     (closeRequested)="closeStatusChange()"
   >
     <label class="field field--full">
-      Nuevo estado
+      {{ 'orders.statusChangeModal.newStatus' | transloco }}
       <select
         [value]="statusChangeTarget()"
         (change)="statusChangeTarget.set($any($event.target).value)"
       >
         @for (status of freelySettableStatuses; track status) {
-          <option [value]="status">{{ statusOptionLabel(status) }}</option>
+          <option [value]="status">{{ statusOptionLabel(status) | transloco }}</option>
         }
       </select>
     </label>
 
     <div modalFooter>
-      <app-button variant="outline" (click)="closeStatusChange()">Cancelar</app-button>
+      <app-button variant="outline" (click)="closeStatusChange()">
+        {{ 'orders.statusChangeModal.cancel' | transloco }}
+      </app-button>
       <app-button (click)="confirmStatusChange()" [disabled]="changingStatus()">
-        {{ changingStatus() ? 'Guardando…' : 'Confirmar' }}
+        {{ (changingStatus() ? 'orders.detail.progress.saving' : 'orders.statusChangeModal.confirm') | transloco }}
       </app-button>
     </div>
   </app-modal>

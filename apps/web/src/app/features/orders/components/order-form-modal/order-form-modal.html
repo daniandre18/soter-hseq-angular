@@ -1,181 +1,180 @@
-<app-modal [open]="open()" [title]="title()" [size]="modalSize()" (closeRequested)="close()">
+<app-modal [open]="open()" [title]="titleKey() | transloco" [size]="modalSize()" (closeRequested)="close()">
   <form class="order-form" (submit)="onSubmit(); $event.preventDefault()">
     <label class="field" [class.field--full]="!editingOrder()">
-      Cliente *
-      <select aria-label="Cliente" [formField]="orderForm.clientId">
-        <option value="">Seleccionar cliente...</option>
+      {{ 'orders.form.client' | transloco }} *
+      <select [attr.aria-label]="'orders.form.client' | transloco" [formField]="orderForm.clientId">
+        <option value="">{{ 'orders.form.selectClient' | transloco }}</option>
         @for (client of activeClients(); track client.id) {
           <option [value]="client.id">{{ client.businessName }}</option>
         }
       </select>
       @if (orderForm.clientId().touched() && orderForm.clientId().errors().length) {
-        <span class="field-error">{{ orderForm.clientId().errors()[0].message }}</span>
+        <span class="field-error">{{ orderForm.clientId().errors()[0].message | transloco }}</span>
       }
     </label>
 
     @if (editingOrder()) {
       <label class="field field--full">
-        Título *
+        {{ 'orders.form.title' | transloco }} *
         <input
-          aria-label="Título de la orden"
+          [attr.aria-label]="'orders.form.title' | transloco"
           [formField]="orderForm.title"
-          placeholder="Ej: Inspección de Seguridad — Planta Principal"
+          [placeholder]="'orders.form.titlePlaceholder' | transloco"
         />
         @if (orderForm.title().touched() && orderForm.title().errors().length) {
-          <span class="field-error">{{ orderForm.title().errors()[0].message }}</span>
+          <span class="field-error">{{ orderForm.title().errors()[0].message | transloco }}</span>
         }
       </label>
 
       <label class="field">
-        Servicio *
+        {{ 'orders.form.service' | transloco }} *
         <select
-          aria-label="Servicio"
+          [attr.aria-label]="'orders.form.service' | transloco"
           [formField]="orderForm.serviceId"
           (change)="onServiceSelected($any($event.target).value)"
         >
-          <option value="">Seleccionar servicio...</option>
+          <option value="">{{ 'orders.form.selectService' | transloco }}</option>
           @for (service of activeServices(); track service.id) {
             <option [value]="service.id">{{ service.name }}</option>
           }
         </select>
         @if (currentServiceHint()) {
-          <span class="field-hint">Actual: {{ currentServiceHint() }}</span>
+          <span class="field-hint">{{ 'orders.form.current' | transloco: { value: currentServiceHint() } }}</span>
         }
         @if (orderForm.serviceSummary().touched() && orderForm.serviceSummary().errors().length) {
-          <span class="field-error">{{ orderForm.serviceSummary().errors()[0].message }}</span>
+          <span class="field-error">{{ orderForm.serviceSummary().errors()[0].message | transloco }}</span>
         }
       </label>
 
       <label class="field">
-        Prioridad
+        {{ 'orders.form.priority' | transloco }}
         <select [formField]="orderForm.priority">
           @for (key of priorityKeys; track key) {
-            <option [value]="key">{{ priorityLabels[key].label }}</option>
+            <option [value]="key">{{ priorityLabels[key].translationKey | transloco }}</option>
           }
         </select>
       </label>
 
       <label class="field">
-        Fecha Límite *
-        <input type="date" aria-label="Fecha límite" [formField]="orderForm.dueDate" />
+        {{ 'orders.form.dueDate' | transloco }} *
+        <input type="date" [attr.aria-label]="'orders.form.dueDate' | transloco" [formField]="orderForm.dueDate" />
         @if (orderForm.dueDate().touched() && orderForm.dueDate().errors().length) {
-          <span class="field-error">{{ orderForm.dueDate().errors()[0].message }}</span>
+          <span class="field-error">{{ orderForm.dueDate().errors()[0].message | transloco }}</span>
         }
       </label>
 
       <fieldset class="visit-schedule">
-        <legend>Programación de la visita</legend>
-        <p>La fecha y hora se mostrarán en la agenda, el dashboard y la orden del técnico.</p>
+        <legend>{{ 'orders.form.visitSchedule' | transloco }}</legend>
+        <p>{{ 'orders.form.visitScheduleHelp' | transloco }}</p>
         <div class="visit-schedule-fields">
           <label class="field">
-            Fecha de visita
-            <input type="date" aria-label="Fecha de visita" [formField]="orderForm.visitDate" />
+            {{ 'orders.form.visitDate' | transloco }}
+            <input type="date" [attr.aria-label]="'orders.form.visitDate' | transloco" [formField]="orderForm.visitDate" />
             @if (orderForm.visitDate().touched() && orderForm.visitDate().errors().length) {
-              <span class="field-error">{{ orderForm.visitDate().errors()[0].message }}</span>
+              <span class="field-error">{{ orderForm.visitDate().errors()[0].message | transloco }}</span>
             }
           </label>
 
           <label class="field">
-            Hora de visita
-            <input type="time" aria-label="Hora de visita" [formField]="orderForm.visitTime" />
+            {{ 'orders.form.visitTime' | transloco }}
+            <input type="time" [attr.aria-label]="'orders.form.visitTime' | transloco" [formField]="orderForm.visitTime" />
             @if (orderForm.visitTime().touched() && orderForm.visitTime().errors().length) {
-              <span class="field-error">{{ orderForm.visitTime().errors()[0].message }}</span>
+              <span class="field-error">{{ orderForm.visitTime().errors()[0].message | transloco }}</span>
             }
           </label>
         </div>
       </fieldset>
 
       <label class="field field--full">
-        Descripción (opcional)
+        {{ 'orders.form.description' | transloco }}
         <textarea
           [formField]="orderForm.description"
           rows="3"
-          placeholder="Detalles del trabajo a realizar..."
+          [placeholder]="'orders.form.descriptionPlaceholder' | transloco"
         ></textarea>
       </label>
     } @else {
       <div class="order-rows-section">
         <div class="order-rows-header">
-          <h4>Servicios</h4>
-          <button type="button" class="add-row-btn" (click)="addRow()">+ Agregar servicio</button>
+          <h4>{{ 'orders.form.services' | transloco }}</h4>
+          <button type="button" class="add-row-btn" (click)="addRow()">+ {{ 'orders.form.addService' | transloco }}</button>
         </div>
         <p class="field-hint">
-          Cada servicio genera su propia orden, con su propia prioridad, fecha límite y
-          programación de visita.
+          {{ 'orders.form.servicesHelp' | transloco }}
         </p>
 
         @for (row of orderForm.rows; track $index; let i = $index) {
           <fieldset class="order-service-row">
-            <legend>Servicio {{ i + 1 }}</legend>
+            <legend>{{ 'orders.form.serviceNumber' | transloco: { number: i + 1 } }}</legend>
             @if (orderForm.rows.length > 1) {
               <button
                 type="button"
                 class="remove-row-btn"
                 (click)="removeRow(i)"
-                aria-label="Quitar servicio"
+                [attr.aria-label]="'orders.form.removeService' | transloco"
               >
                 ✕
               </button>
             }
 
             <label class="field">
-              Servicio *
+              {{ 'orders.form.service' | transloco }} *
               <select
-                aria-label="Servicio"
+                [attr.aria-label]="'orders.form.service' | transloco"
                 [formField]="row.serviceId"
                 (change)="onRowServiceSelected(i, $any($event.target).value)"
               >
-                <option value="">Seleccionar servicio...</option>
+                <option value="">{{ 'orders.form.selectService' | transloco }}</option>
                 @for (service of activeServices(); track service.id) {
                   <option [value]="service.id">{{ service.name }}</option>
                 }
               </select>
               @if (row.serviceId().touched() && row.serviceId().errors().length) {
-                <span class="field-error">{{ row.serviceId().errors()[0].message }}</span>
+                <span class="field-error">{{ row.serviceId().errors()[0].message | transloco }}</span>
               }
             </label>
 
             <label class="field">
-              Prioridad
+              {{ 'orders.form.priority' | transloco }}
               <select [formField]="row.priority">
                 @for (key of priorityKeys; track key) {
-                  <option [value]="key">{{ priorityLabels[key].label }}</option>
+                  <option [value]="key">{{ priorityLabels[key].translationKey | transloco }}</option>
                 }
               </select>
             </label>
 
             <label class="field">
-              Fecha Límite *
-              <input type="date" aria-label="Fecha límite" [formField]="row.dueDate" />
+              {{ 'orders.form.dueDate' | transloco }} *
+              <input type="date" [attr.aria-label]="'orders.form.dueDate' | transloco" [formField]="row.dueDate" />
               @if (row.dueDate().touched() && row.dueDate().errors().length) {
-                <span class="field-error">{{ row.dueDate().errors()[0].message }}</span>
+                <span class="field-error">{{ row.dueDate().errors()[0].message | transloco }}</span>
               }
             </label>
 
             <div class="visit-schedule-fields">
               <label class="field">
-                Fecha de visita
-                <input type="date" aria-label="Fecha de visita" [formField]="row.visitDate" />
+                {{ 'orders.form.visitDate' | transloco }}
+                <input type="date" [attr.aria-label]="'orders.form.visitDate' | transloco" [formField]="row.visitDate" />
                 @if (row.visitDate().touched() && row.visitDate().errors().length) {
-                  <span class="field-error">{{ row.visitDate().errors()[0].message }}</span>
+                  <span class="field-error">{{ row.visitDate().errors()[0].message | transloco }}</span>
                 }
               </label>
 
               <label class="field">
-                Hora de visita
-                <input type="time" aria-label="Hora de visita" [formField]="row.visitTime" />
+                {{ 'orders.form.visitTime' | transloco }}
+                <input type="time" [attr.aria-label]="'orders.form.visitTime' | transloco" [formField]="row.visitTime" />
                 @if (row.visitTime().touched() && row.visitTime().errors().length) {
-                  <span class="field-error">{{ row.visitTime().errors()[0].message }}</span>
+                  <span class="field-error">{{ row.visitTime().errors()[0].message | transloco }}</span>
                 }
               </label>
             </div>
 
             <label class="field field--full">
-              Descripción (opcional)
+              {{ 'orders.form.description' | transloco }}
               <textarea
                 [formField]="row.description"
                 rows="2"
-                placeholder="Detalles del trabajo a realizar..."
+                [placeholder]="'orders.form.descriptionPlaceholder' | transloco"
               ></textarea>
             </label>
           </fieldset>
@@ -186,11 +185,11 @@
 
   <div modalFooter class="order-form-actions">
     <span class="order-form-action">
-      <app-button variant="outline" (click)="close()">Cancelar</app-button>
+      <app-button variant="outline" (click)="close()">{{ 'common.cancel' | transloco }}</app-button>
     </span>
     <span class="order-form-action">
       <app-button (click)="onSubmit()" [disabled]="orderForm().invalid() || saving()">
-        {{ saving() ? 'Guardando…' : editingOrder() ? 'Guardar Cambios' : 'Crear Orden(es)' }}
+        {{ (saving() ? 'orders.form.saving' : editingOrder() ? 'orders.form.saveChanges' : 'orders.form.createOrders') | transloco }}
       </app-button>
     </span>
   </div>

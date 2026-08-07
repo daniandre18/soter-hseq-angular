@@ -22,10 +22,10 @@ export interface OrderEvent {
   createdBy: string;
 }
 
-export const ORDER_EVENT_ACTION_LABELS: Record<OrderEventAction, string> = {
-  NOTE_ADDED: 'Nota agregada',
-  EVIDENCE_UPLOADED: 'Evidencia cargada',
-  ORDER_STATUS_CHANGED: 'Cambio de estado',
-  ORDER_ASSIGNED: 'Técnicos asignados',
-  ORDER_CLOSED: 'Orden cerrada',
+export const ORDER_EVENT_ACTION_TRANSLATION_KEYS: Record<OrderEventAction, `orders.eventAction.${string}`> = {
+  NOTE_ADDED: 'orders.eventAction.noteAdded',
+  EVIDENCE_UPLOADED: 'orders.eventAction.evidenceUploaded',
+  ORDER_STATUS_CHANGED: 'orders.eventAction.statusChanged',
+  ORDER_ASSIGNED: 'orders.eventAction.techniciansAssigned',
+  ORDER_CLOSED: 'orders.eventAction.orderClosed',
 };

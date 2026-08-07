@@ -1,0 +1,43 @@
+{
+  "title": "Quote management",
+  "description": "View and manage commercial proposals for your clients.",
+  "new": "New quote",
+  "searchAndFilter": "Search and filter quotes",
+  "search": "Search",
+  "searchPlaceholder": "Quote number or client…",
+  "statusLabel": "Status",
+  "allStatuses": "All statuses",
+  "clearFilters": "Clear filters ({{count}})",
+  "resultCountOne": "Showing 1 quote",
+  "resultCountOther": "Showing {{count}} quotes",
+  "empty": "No quotes have been registered.",
+  "number": "Number",
+  "client": "Client",
+  "validUntil": "Valid until",
+  "viewDetail": "View quote {{number}} details",
+  "edit": "Edit quote",
+  "delete": "Delete quote",
+  "deleteTitle": "Delete this quote?",
+  "deleteConfirmation": "Quote {{number}} and all its services will be deleted. This action cannot be undone.",
+  "detail": {
+    "services": "Services",
+    "service": "Service",
+    "quantity": "Qty.",
+    "unitPrice": "Unit price",
+    "notes": "Notes",
+    "generatedOrders": "Generated orders",
+    "converting": "Converting…",
+    "convert": "Convert to order",
+    "markAs": "Mark as {{status}}",
+    "statusError": "The status could not be changed. Check the profile permissions and try again.",
+    "convertError": "The quote could not be converted. Check its status and try again."
+  },
+  "status": {
+    "draft": "Draft",
+    "sent": "Sent",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "expired": "Expired",
+    "converted": "Converted"
+  }
+}

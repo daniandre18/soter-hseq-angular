@@ -1,0 +1,29 @@
+{
+  "title": "Gestión de clientes",
+  "description": "Consulta, segmenta y administra la información de tus clientes.",
+  "new": "Nuevo cliente",
+  "summaryAria": "Resumen de clientes",
+  "stats": { "total": "Total clientes", "active": "Clientes activos", "rate": "Tasa de actividad", "cities": "Ciudades cubiertas" },
+  "filters": {
+    "title": "Buscar y filtrar clientes", "help": "Combina los filtros para encontrar resultados específicos.",
+    "clear": "Limpiar filtros ({{count}})", "search": "Buscar", "searchPlaceholder": "Nombre, NIT, correo, teléfono o ciudad…",
+    "status": "Estado", "allStatuses": "Todos los estados", "active": "Activos", "inactive": "Inactivos",
+    "city": "Ciudad", "allCities": "Todas las ciudades", "tag": "Etiqueta", "allTags": "Todas las etiquetas"
+  },
+  "countOne": "Mostrando 1 cliente", "countOther": "Mostrando {{count}} clientes",
+  "activeOne": "{{count}} activo", "activeOther": "{{count}} activos",
+  "inactiveOne": "{{count}} inactivo", "inactiveOther": "{{count}} inactivos",
+  "selectedOne": "cliente seleccionado", "selectedOther": "clientes seleccionados",
+  "clearSelection": "Quitar selección", "empty": "No hay clientes registrados.",
+  "client": "Cliente", "location": "Ubicación", "tags": "Etiquetas", "status": "Estado",
+  "selectAll": "Seleccionar todos los clientes visibles", "select": "Seleccionar {{name}}",
+  "noCity": "Sin ciudad", "noCityRegistered": "Sin ciudad registrada", "noTags": "Sin etiquetas",
+  "active": "Activo", "inactive": "Inactivo", "sites": "Sedes", "sitesAndContacts": "Sedes y responsables",
+  "manageSites": "Administrar sedes de {{name}}", "tagClient": "Etiquetar cliente",
+  "tagSearch": "Buscar o crear etiqueta…", "createTag": "Crear “{{name}}”", "noTagsYet": "Sin etiquetas todavía.",
+  "manage": "Administrar", "view": "Ver cliente", "edit": "Editar cliente", "delete": "Eliminar cliente",
+  "showLess": "Mostrar menos", "showMore": "Mostrar {{count}} más", "showAll": "Mostrar todas ({{count}})",
+  "deleteTitleOne": "¿Eliminar este cliente?", "deleteTitleOther": "¿Eliminar {{count}} clientes?",
+  "deleteConfirmationOne": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con este cliente conservan su nombre, pero ya no vas a poder abrir su ficha.",
+  "deleteConfirmationOther": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con estos clientes conservan su nombre, pero ya no vas a poder abrir sus fichas."
+}

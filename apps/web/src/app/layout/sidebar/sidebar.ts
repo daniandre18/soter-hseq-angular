@@ -3,12 +3,13 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
 import { Avatar } from '../../shared/components/avatar/avatar';
 import { Icon, type IconName } from '../../shared/components/icon/icon';
-import { USER_ROLE_LABELS, type UserRole } from '../../core/models/user-role.model';
+import type { UserRole } from '../../core/models/user-role.model';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 
 interface NavItem {
   kind: 'link';
   path: string;
-  label: string;
+  translationKey: string;
   icon: IconName;
   roles: UserRole[];
 }
@@ -16,7 +17,7 @@ interface NavItem {
 interface NavGroup {
   kind: 'group';
   id: 'services';
-  label: string;
+  translationKey: string;
   icon: IconName;
   roles: UserRole[];
   children: NavItem[];
@@ -26,28 +27,28 @@ type NavEntry = NavItem | NavGroup;
 
 interface NavSection {
   id: 'primary' | 'commercial' | 'operations';
-  label: string;
+  translationKey: string;
   entries: NavEntry[];
 }
 
 const SERVICES_GROUP: NavGroup = {
   kind: 'group',
   id: 'services',
-  label: 'Servicios',
+  translationKey: 'layout.navigation.services',
   icon: 'wrench',
   roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
   children: [
     {
       kind: 'link',
       path: '/servicios',
-      label: 'Catálogo',
+      translationKey: 'layout.navigation.catalog',
       icon: 'wrench',
       roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
     },
     {
       kind: 'link',
       path: '/servicios/categorias',
-      label: 'Categorías',
+      translationKey: 'layout.navigation.categories',
       icon: 'tag',
       roles: ['ADMIN', 'COMMERCIAL'],
     },
@@ -60,33 +61,33 @@ const SERVICES_GROUP: NavGroup = {
 const NAV_SECTIONS: NavSection[] = [
   {
     id: 'primary',
-    label: 'Principal',
+    translationKey: 'layout.sections.primary',
     entries: [
       {
         kind: 'link',
         path: '/dashboard',
-        label: 'Panel',
+        translationKey: 'layout.navigation.dashboard',
         icon: 'layout-dashboard',
         roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
       },
       {
         kind: 'link',
         path: '/ordenes',
-        label: 'Órdenes de trabajo',
+        translationKey: 'layout.navigation.orders',
         icon: 'clipboard-list',
         roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER'],
       },
       {
         kind: 'link',
         path: '/mis-ordenes',
-        label: 'Mis órdenes',
+        translationKey: 'layout.navigation.myOrders',
         icon: 'hard-hat',
         roles: ['TECHNICIAN'],
       },
       {
         kind: 'link',
         path: '/agenda',
-        label: 'Agenda de visitas',
+        translationKey: 'layout.navigation.agenda',
         icon: 'calendar-days',
         roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN', 'VIEWER'],
       },
@@ -94,19 +95,19 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'commercial',
-    label: 'Gestión comercial',
+    translationKey: 'layout.sections.commercial',
     entries: [
       {
         kind: 'link',
         path: '/clientes',
-        label: 'Clientes',
+        translationKey: 'layout.navigation.clients',
         icon: 'building-2',
         roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR'],
       },
       {
         kind: 'link',
         path: '/cotizaciones',
-        label: 'Cotizaciones',
+        translationKey: 'layout.navigation.quotes',
         icon: 'file-text',
         roles: ['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'VIEWER'],
       },
@@ -115,12 +116,12 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'operations',
-    label: 'Gestión operativa',
+    translationKey: 'layout.sections.operations',
     entries: [
       {
         kind: 'link',
         path: '/tecnicos',
-        label: 'Técnicos',
+        translationKey: 'layout.navigation.technicians',
         icon: 'hard-hat',
         roles: ['ADMIN'],
       },
@@ -130,7 +131,8 @@ const NAV_SECTIONS: NavSection[] = [
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, Avatar, Icon],
+  imports: [RouterLink, RouterLinkActive, Avatar, Icon, TranslocoPipe],
+  providers: [...provideTranslocoScope('layout')],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -180,9 +182,9 @@ export class Sidebar {
     return visibleSections;
   });
 
-  protected readonly roleLabel = computed(() => {
+  protected readonly roleTranslationKey = computed(() => {
     const role = this.authFacade.currentRole();
-    return role ? USER_ROLE_LABELS[role] : '';
+    return role ? `roles.${role}` : '';
   });
 
   protected toggleCollapsed(): void {

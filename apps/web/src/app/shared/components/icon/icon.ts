@@ -32,7 +32,13 @@ export type IconName =
   | 'chevron-down'
   | 'chevrons-down'
   | 'search'
-  | 'sliders-horizontal';
+  | 'sliders-horizontal'
+  | 'plus'
+  | 'message-square'
+  | 'image'
+  | 'upload-cloud'
+  | 'paperclip'
+  | 'flag';
 
 @Component({
   selector: 'app-icon',

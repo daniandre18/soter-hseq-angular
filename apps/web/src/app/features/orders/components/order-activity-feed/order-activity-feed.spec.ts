@@ -96,22 +96,26 @@ describe('OrderActivityFeed', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
+    // Los filtros son "Todo" / "Comentarios" / "Historial", en ese orden fijo;
+    // se seleccionan por posición y no por texto porque su label pasa por
+    // `| transloco` (sin traducciones cargadas en este entorno de pruebas,
+    // el pipe devuelve la propia clave de traducción, no el texto en español).
     const filterButtons = Array.from<HTMLElement>(
       fixture.nativeElement.querySelectorAll('.activity-filter'),
     );
 
-    filterButtons.find((button) => button.textContent?.includes('Comentarios'))?.click();
+    filterButtons[1]?.click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.timeline-item').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.timeline-text')?.textContent).toContain(
       'tablero eléctrico',
     );
 
-    filterButtons.find((button) => button.textContent?.includes('Historial'))?.click();
+    filterButtons[2]?.click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.timeline-item').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.timeline-text--event')?.textContent).toContain(
-      'Estado cambiado',
+      'Cambio de estado',
     );
   });
 

@@ -8,14 +8,14 @@ import { StatusBadge } from '../../../../shared/components/status-badge/status-b
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { ServiceFormModal } from '../../components/service-form-modal/service-form-modal';
-import { formatCurrency } from '../../../../shared/utils/format-currency';
+import { LocalizedCurrencyPipe } from '../../../../shared/pipes/localized-currency.pipe';
 import type { Service } from '../../models/service.model';
 
 const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-services-list',
-  imports: [RouterLink, Card, Button, StatusBadge, Modal, Icon, ServiceFormModal],
+  imports: [RouterLink, Card, Button, StatusBadge, Modal, Icon, ServiceFormModal, LocalizedCurrencyPipe],
   templateUrl: './services-list.html',
   styleUrl: './services-list.scss',
 })
@@ -31,7 +31,6 @@ export class ServicesList {
   protected readonly editingService = signal<Service | null>(null);
   protected readonly deletingId = signal<string | null>(null);
 
-  protected readonly formatCurrency = formatCurrency;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();

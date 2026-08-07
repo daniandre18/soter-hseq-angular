@@ -12,15 +12,18 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { QuoteFormModal } from '../../components/quote-form-modal/quote-form-modal';
 import { QuoteDetailModal } from '../../components/quote-detail-modal/quote-detail-modal';
 import { QUOTE_STATUS_CONFIG } from '../../models/quote-status-config';
-import { formatCurrency } from '../../../../shared/utils/format-currency';
-import { formatDate } from '../../../../shared/utils/format-date';
 import type { Quote, QuoteStatus } from '../../models/quote.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../../../core/i18n/language.service';
+import { LocalizedCurrencyPipe } from '../../../../shared/pipes/localized-currency.pipe';
+import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
 
 type StatusFilterOption = 'all' | QuoteStatus;
 
 @Component({
   selector: 'app-quotes-list',
-  imports: [Button, Card, StatusBadge, Icon, Modal, QuoteFormModal, QuoteDetailModal],
+  imports: [Button, Card, StatusBadge, Icon, Modal, QuoteFormModal, QuoteDetailModal, TranslocoPipe, LocalizedCurrencyPipe, LocalizedDatePipe],
+  providers: [...provideTranslocoScope('quotes')],
   templateUrl: './quotes-list.html',
   styleUrl: './quotes-list.scss',
 })
@@ -29,6 +32,8 @@ export class QuotesList {
   private readonly clientsFacade = inject(ClientsFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
+  private readonly language = inject(LanguageService);
 
   /** `?open=<id>` — usado por la campanita de notificaciones para abrir
    *  directo el detalle en vez de solo aterrizar en el listado. */
@@ -47,11 +52,9 @@ export class QuotesList {
 
   protected readonly statusOptions = Object.entries(QUOTE_STATUS_CONFIG) as [
     QuoteStatus,
-    { label: string; color: string },
+    { translationKey: string; color: string },
   ][];
 
-  protected readonly formatCurrency = formatCurrency;
-  protected readonly formatDate = formatDate;
   protected readonly canManageQuotes = this.quotesFacade.canManageQuotes;
   protected readonly canEditDraftQuotes = this.quotesFacade.canEditDraftQuotes;
 
@@ -112,7 +115,8 @@ export class QuotesList {
   }
 
   protected statusLabel(status: QuoteStatus): string {
-    return QUOTE_STATUS_CONFIG[status].label;
+    this.language.currentLanguage();
+    return this.transloco.translate(QUOTE_STATUS_CONFIG[status].translationKey);
   }
 
   protected statusColor(status: QuoteStatus): string {

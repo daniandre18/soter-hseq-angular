@@ -18,12 +18,12 @@ export interface Evidence {
   status: 'ACTIVE' | 'REMOVED';
 }
 
-export const EVIDENCE_CATEGORY_LABELS: Record<EvidenceCategory, string> = {
-  BEFORE: 'Antes',
-  DURING: 'Durante',
-  AFTER: 'Después',
-  FINDING: 'Hallazgo',
-  SUPPORTING_DOCUMENT: 'Documento de soporte',
+export const EVIDENCE_CATEGORY_TRANSLATION_KEYS: Record<EvidenceCategory, `orders.evidenceCategory.${string}`> = {
+  BEFORE: 'orders.evidenceCategory.before',
+  DURING: 'orders.evidenceCategory.during',
+  AFTER: 'orders.evidenceCategory.after',
+  FINDING: 'orders.evidenceCategory.finding',
+  SUPPORTING_DOCUMENT: 'orders.evidenceCategory.supportingDocument',
 };
 
 // Debe coincidir con storage.rules (isValidImage/isValidPdf).

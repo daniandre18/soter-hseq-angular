@@ -12,9 +12,9 @@ export interface TechnicalNote {
   createdBy: string;
 }
 
-export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
-  GENERAL: 'General',
-  FINDING: 'Hallazgo',
-  ACTIVITY: 'Actividad',
-  RECOMMENDATION: 'Recomendación',
+export const NOTE_TYPE_TRANSLATION_KEYS: Record<NoteType, `orders.noteType.${string}`> = {
+  GENERAL: 'orders.noteType.general',
+  FINDING: 'orders.noteType.finding',
+  ACTIVITY: 'orders.noteType.activity',
+  RECOMMENDATION: 'orders.noteType.recommendation',
 };

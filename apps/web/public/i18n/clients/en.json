@@ -1,0 +1,29 @@
+{
+  "title": "Client management",
+  "description": "View, segment, and manage your clients' information.",
+  "new": "New client",
+  "summaryAria": "Client summary",
+  "stats": { "total": "Total clients", "active": "Active clients", "rate": "Activity rate", "cities": "Cities covered" },
+  "filters": {
+    "title": "Search and filter clients", "help": "Combine filters to find specific results.",
+    "clear": "Clear filters ({{count}})", "search": "Search", "searchPlaceholder": "Name, tax ID, email, phone, or city…",
+    "status": "Status", "allStatuses": "All statuses", "active": "Active", "inactive": "Inactive",
+    "city": "City", "allCities": "All cities", "tag": "Tag", "allTags": "All tags"
+  },
+  "countOne": "Showing 1 client", "countOther": "Showing {{count}} clients",
+  "activeOne": "{{count}} active", "activeOther": "{{count}} active",
+  "inactiveOne": "{{count}} inactive", "inactiveOther": "{{count}} inactive",
+  "selectedOne": "client selected", "selectedOther": "clients selected",
+  "clearSelection": "Clear selection", "empty": "No clients have been registered.",
+  "client": "Client", "location": "Location", "tags": "Tags", "status": "Status",
+  "selectAll": "Select all visible clients", "select": "Select {{name}}",
+  "noCity": "No city", "noCityRegistered": "No city registered", "noTags": "No tags",
+  "active": "Active", "inactive": "Inactive", "sites": "Sites", "sitesAndContacts": "Sites and contacts",
+  "manageSites": "Manage {{name}} sites", "tagClient": "Tag client",
+  "tagSearch": "Search or create a tag…", "createTag": "Create “{{name}}”", "noTagsYet": "No tags yet.",
+  "manage": "Manage", "view": "View client", "edit": "Edit client", "delete": "Delete client",
+  "showLess": "Show less", "showMore": "Show {{count}} more", "showAll": "Show all ({{count}})",
+  "deleteTitleOne": "Delete this client?", "deleteTitleOther": "Delete {{count}} clients?",
+  "deleteConfirmationOne": "This action cannot be undone. Existing quotes and orders keep this client's name, but you will no longer be able to open the client record.",
+  "deleteConfirmationOther": "This action cannot be undone. Existing quotes and orders keep these clients' names, but you will no longer be able to open their records."
+}

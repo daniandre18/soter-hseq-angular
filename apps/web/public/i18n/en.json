@@ -1,0 +1,65 @@
+{
+  "languages": {
+    "selectorLabel": "Select language",
+    "spanish": "Español",
+    "english": "English"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "loading": "Loading…",
+    "search": "Search",
+    "clearFilters": "Clear filters",
+    "actions": "Actions",
+    "create": "Create",
+    "update": "Update",
+    "all": "All",
+    "noDate": "No date",
+    "total": "Total",
+    "deleting": "Deleting…",
+    "dismissMessage": "Dismiss message",
+    "backToDashboard": "Back to dashboard",
+    "accessDenied": {
+      "title": "Access denied",
+      "message": "You do not have permission to view this page."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "message": "The page you are looking for does not exist or has moved."
+    }
+  },
+  "roles": {
+    "ADMIN": "Administrator",
+    "COMMERCIAL": "Sales",
+    "COORDINATOR": "Coordinator",
+    "TECHNICIAN": "Technician",
+    "VIEWER": "Client"
+  },
+  "routes": {
+    "login": "Demo access — SOTER HSEQ",
+    "forgotPassword": "Reset password — SOTER HSEQ",
+    "accessDenied": "Access denied — SOTER HSEQ",
+    "dashboard": "Dashboard — SOTER HSEQ",
+    "clients": "Clients — SOTER HSEQ",
+    "quotes": "Quotes — SOTER HSEQ",
+    "orders": "Orders — SOTER HSEQ",
+    "agenda": "Visit schedule — SOTER HSEQ",
+    "categories": "Service categories — SOTER HSEQ",
+    "services": "Services — SOTER HSEQ",
+    "technicians": "Technicians — SOTER HSEQ",
+    "myOrders": "My orders — SOTER HSEQ",
+    "notFound": "Page not found — SOTER HSEQ"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "email": "Enter a valid email address.",
+    "minLength": "Must contain at least {{min}} characters.",
+    "maxLength": "Maximum {{max}} characters.",
+    "invalid": "The entered value is invalid."
+  }
+}

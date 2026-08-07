@@ -1,6 +1,6 @@
 <div class="status-page">
   <p class="status-code">404</p>
-  <h1>Página no encontrada</h1>
-  <p class="status-message">La página que buscas no existe o fue movida.</p>
-  <a routerLink="/dashboard" class="status-link">Volver al panel</a>
+  <h1>{{ 'common.notFound.title' | transloco }}</h1>
+  <p class="status-message">{{ 'common.notFound.message' | transloco }}</p>
+  <a routerLink="/dashboard" class="status-link">{{ 'common.backToDashboard' | transloco }}</a>
 </div>

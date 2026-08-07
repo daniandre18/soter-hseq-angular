@@ -157,7 +157,7 @@ export class OrdersFacade {
     }
     return Array.from(counts.entries()).map(([status, value]) => ({
       key: status,
-      label: ORDER_STATUS_CONFIG[status].label,
+      label: ORDER_STATUS_CONFIG[status].translationKey,
       value,
       color: ORDER_STATUS_CONFIG[status].hex,
     }));

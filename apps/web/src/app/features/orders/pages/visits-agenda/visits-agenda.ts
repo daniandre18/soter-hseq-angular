@@ -16,6 +16,8 @@ import { Icon } from '../../../../shared/components/icon/icon';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import type { OrderStatus, ServiceOrder } from '../../models/order.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 type AgendaStatusFilter = OrderStatus | 'all';
 
@@ -28,7 +30,6 @@ interface CalendarDay {
   visits: ServiceOrder[];
 }
 
-const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const VISIBLE_VISITS_PER_DAY = 3;
 let nextClientListboxId = 0;
 
@@ -44,7 +45,8 @@ function dateKey(date: Date): string {
 
 @Component({
   selector: 'app-visits-agenda',
-  imports: [RouterLink, Card, Icon, StatusBadge, Avatar],
+  imports: [RouterLink, Card, Icon, StatusBadge, Avatar, TranslocoPipe],
+  providers: [...provideTranslocoScope('orders')],
   templateUrl: './visits-agenda.html',
   styleUrl: './visits-agenda.scss',
 })
@@ -52,9 +54,23 @@ export class VisitsAgenda {
   protected readonly ordersFacade = inject(OrdersFacade);
   private readonly authFacade = inject(AuthFacade);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly transloco = inject(TranslocoService);
+  private readonly language = inject(LanguageService);
   protected readonly clientListboxId = `agenda-client-listbox-${nextClientListboxId++}`;
-  protected readonly weekdays = WEEKDAYS;
   protected readonly visibleVisitsPerDay = VISIBLE_VISITS_PER_DAY;
+
+  /** Cabecera de días de la grilla (lunes primero, según `mondayOffset` de
+   *  `calendarDays`). Se deriva del locale activo en vez de hardcodear
+   *  español, para que reaccione al cambio de idioma. */
+  protected readonly weekdays = computed(() => {
+    const formatter = new Intl.DateTimeFormat(this.language.currentLocale(), { weekday: 'short' });
+    const referenceMonday = new Date(2024, 0, 1);
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(referenceMonday);
+      date.setDate(referenceMonday.getDate() + index);
+      return formatter.format(date);
+    });
+  });
 
   /** El selector "Técnico" solo tiene sentido para roles internos con
    *  visibilidad de todo el equipo. Un TECHNICIAN solo debe ver su propia
@@ -104,7 +120,7 @@ export class VisitsAgenda {
 
   protected readonly statusOptions = Object.entries(ORDER_STATUS_CONFIG) as [
     OrderStatus,
-    { label: string; color: string; hex: string },
+    { translationKey: string; color: string; hex: string },
   ][];
 
   protected readonly clientOptions = computed(() => {
@@ -179,7 +195,10 @@ export class VisitsAgenda {
   });
 
   protected readonly monthLabel = computed(() =>
-    this.visibleMonth().toLocaleDateString('es-CO', { month: 'long', year: 'numeric' }),
+    this.visibleMonth().toLocaleDateString(this.language.currentLocale(), {
+      month: 'long',
+      year: 'numeric',
+    }),
   );
 
   protected readonly calendarDays = computed<CalendarDay[]>(() => {
@@ -242,18 +261,24 @@ export class VisitsAgenda {
   });
 
   protected readonly displayedSubtitle = computed(() => {
+    this.language.currentLanguage();
+    this.language.translationsLoaded();
     const count = this.displayedVisits().length;
     if (this.selectedDayKey()) {
-      return count === 1 ? '1 visita' : `${count} visitas`;
+      const key = count === 1 ? 'orders.agenda.visitsSelectedDayOne' : 'orders.agenda.visitsSelectedDayOther';
+      return this.transloco.translate(key, { count });
     }
-    return count === 1 ? '1 programada' : `${count} programadas`;
+    const key = count === 1 ? 'orders.agenda.scheduledOne' : 'orders.agenda.scheduledOther';
+    return this.transloco.translate(key, { count });
   });
 
-  protected readonly displayedEmptyMessage = computed(() =>
-    this.selectedDayKey()
-      ? 'No hay visitas programadas para este día.'
-      : 'No hay visitas próximas para este filtro.',
-  );
+  protected readonly displayedEmptyMessage = computed(() => {
+    this.language.currentLanguage();
+    this.language.translationsLoaded();
+    return this.transloco.translate(
+      this.selectedDayKey() ? 'orders.agenda.noVisitsForDay' : 'orders.agenda.noUpcomingVisitsFiltered',
+    );
+  });
 
   constructor() {
     this.ordersFacade.init();
@@ -310,7 +335,7 @@ export class VisitsAgenda {
   }
 
   protected weekdayShort(date: Date): string {
-    return WEEKDAYS[(date.getDay() + 6) % 7];
+    return new Intl.DateTimeFormat(this.language.currentLocale(), { weekday: 'short' }).format(date);
   }
 
   protected openFiltersSheet(): void {
@@ -367,7 +392,9 @@ export class VisitsAgenda {
   }
 
   protected technicianNames(order: ServiceOrder): string {
-    if (order.assignedTechnicianIds.length === 0) return 'Sin técnico asignado';
+    if (order.assignedTechnicianIds.length === 0) {
+      return this.transloco.translate('orders.unassignedTechnician');
+    }
     if (order.assignedTechnicianNames?.length) {
       return order.assignedTechnicianNames.join(', ');
     }
@@ -379,27 +406,42 @@ export class VisitsAgenda {
       return order.assignedTechnicianNames[0];
     }
     const technicianId = order.assignedTechnicianIds[0];
-    return technicianId ? this.ordersFacade.technicianName(technicianId) : 'Sin técnico asignado';
+    return technicianId
+      ? this.ordersFacade.technicianName(technicianId)
+      : this.transloco.translate('orders.unassignedTechnician');
   }
 
   protected primaryTechnicianSpecialty(order: ServiceOrder): string {
     const technicianId = order.assignedTechnicianIds[0];
-    return (
-      this.ordersFacade.technicians().find((technician) => technician.id === technicianId)
-        ?.specialty ?? 'Técnico de campo'
-    );
+    const specialty = this.ordersFacade
+      .technicians()
+      .find((technician) => technician.id === technicianId)?.specialty;
+    return specialty ?? this.transloco.translate('orders.agenda.fieldTechnician');
   }
 
   protected formatTime(date: Date): string {
-    return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return date.toLocaleTimeString(this.language.currentLocale(), {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  protected formatShortMonth(date: Date): string {
+    return date.toLocaleDateString(this.language.currentLocale(), { month: 'short' });
   }
 
   protected formatLongDate(date: Date): string {
-    return date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+    return date.toLocaleDateString(this.language.currentLocale(), {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   protected statusLabel(order: ServiceOrder): string {
-    return ORDER_STATUS_CONFIG[order.status].label;
+    this.language.currentLanguage();
+    return this.transloco.translate(ORDER_STATUS_CONFIG[order.status].translationKey);
   }
 
   protected statusColor(

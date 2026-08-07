@@ -2,25 +2,27 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
 import { Avatar } from '../../shared/components/avatar/avatar';
 import { NotificationBell } from './notification-bell/notification-bell';
-import { USER_ROLE_LABELS } from '../../core/models/user-role.model';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { LanguageSelector } from '../../shared/components/language-selector/language-selector';
 
 @Component({
   selector: 'app-header',
-  imports: [Avatar, NotificationBell],
+  imports: [Avatar, NotificationBell, TranslocoPipe, LanguageSelector],
+  providers: [...provideTranslocoScope('layout')],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
 export class Header {
   private readonly authFacade = inject(AuthFacade);
 
-  readonly title = input('SOTER HSEQ');
+  readonly title = input('layout.brand');
   readonly menuClick = output<void>();
 
   protected readonly currentUser = this.authFacade.currentUser;
 
-  protected readonly roleLabel = computed(() => {
+  protected readonly roleTranslationKey = computed(() => {
     const role = this.authFacade.currentRole();
-    return role ? USER_ROLE_LABELS[role] : '';
+    return role ? `roles.${role}` : '';
   });
 
   /** El inbox de notificaciones es para quienes gestionan órdenes/cotizaciones

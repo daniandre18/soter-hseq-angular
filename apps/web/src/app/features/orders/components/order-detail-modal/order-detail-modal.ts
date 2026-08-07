@@ -15,28 +15,29 @@ import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
+import { Icon } from '../../../../shared/components/icon/icon';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
-import { NOTE_TYPE_LABELS, type NoteType } from '../../models/note.model';
+import { NOTE_TYPE_TRANSLATION_KEYS, type NoteType } from '../../models/note.model';
 import {
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_PDF_TYPE,
-  EVIDENCE_CATEGORY_LABELS,
+  EVIDENCE_CATEGORY_TRANSLATION_KEYS,
   MAX_IMAGE_SIZE_BYTES,
   MAX_PDF_SIZE_BYTES,
   type EvidenceCategory,
 } from '../../models/evidence.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../../../core/i18n/language.service';
 import { OrderActivityFeed } from '../order-activity-feed/order-activity-feed';
-import {
-  formatDateTime,
-  fromDateTimeLocalValue,
-  toDateTimeLocalValue,
-} from '../../../../shared/utils/format-date';
+import { fromDateTimeLocalValue, toDateTimeLocalValue } from '../../../../shared/utils/format-date';
 import type { OrderStatus, ServiceOrder } from '../../models/order.model';
 import type { ClosingActContent } from '../../models/closing-act.model';
 import { environment } from '../../../../../environments/environment';
+import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
 
 const SCHEDULABLE_STATUSES = new Set<ServiceOrder['status']>(['DRAFT', 'SCHEDULED']);
 const ASSIGNABLE_STATUSES = new Set<ServiceOrder['status']>(['SCHEDULED', 'ASSIGNED']);
@@ -59,16 +60,28 @@ const FREELY_SETTABLE_STATUSES: OrderStatus[] = [
   'CANCELLED',
 ];
 type DetailTab = 'info' | 'activity' | 'acta';
+const TAB_ORDER: DetailTab[] = ['info', 'activity', 'acta'];
+
+/** Qué formulario contextual está abierto en la pestaña Actividad; solo uno
+ *  a la vez, per §11 del brief de rediseño (evitar tres bloques siempre visibles). */
+type ComposerMode = 'note' | 'evidence' | 'correction';
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  const kb = bytes / 1024;
+  if (kb < 1024) {
+    return `${kb.toFixed(kb < 10 ? 1 : 0)} KB`;
+  }
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
 
 function linesToArray(text: string): string[] {
   return text
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-}
-
-function messageFor(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
 }
 
 function richTextPlainText(html: string): string {
@@ -311,30 +324,37 @@ Quill.register('modules/attachmentUpload', AttachmentUploadModule);
     StatusBadge,
     Avatar,
     ProgressBar,
+    Icon,
     KeyValuePipe,
     ReactiveFormsModule,
     QuillEditorComponent,
     OrderActivityFeed,
     RouterLink,
+    TranslocoPipe,
+    LocalizedDatePipe,
   ],
+  providers: [...provideTranslocoScope('orders')],
   templateUrl: './order-detail-modal.html',
   styleUrl: './order-detail-modal.scss',
 })
 export class OrderDetailModal {
   private readonly authFacade = inject(AuthFacade);
   private readonly ordersFacade = inject(OrdersFacade);
+  private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly language = inject(LanguageService);
 
   readonly order = input<ServiceOrder | null>(null);
   readonly closeRequested = output<void>();
   readonly editRequested = output<ServiceOrder>();
 
   protected readonly saving = signal(false);
-  protected readonly formatDateTime = formatDateTime;
   protected readonly technicians = this.ordersFacade.technicians;
-  protected readonly noteTypeLabels = NOTE_TYPE_LABELS;
-  protected readonly evidenceCategoryLabels = EVIDENCE_CATEGORY_LABELS;
+  protected readonly noteTypeLabels = NOTE_TYPE_TRANSLATION_KEYS;
+  protected readonly evidenceCategoryLabels = EVIDENCE_CATEGORY_TRANSLATION_KEYS;
 
   protected readonly activeTab = signal<DetailTab>('info');
+  protected readonly tabOrder = TAB_ORDER;
 
   protected readonly notes = toSignal(
     toObservable(this.order).pipe(
@@ -366,9 +386,15 @@ export class OrderDetailModal {
 
   protected readonly resolveAuthorName = (id: string): string => this.ordersFacade.displayNameFor(id);
 
+  protected readonly activityCount = computed(() => this.notes().length + this.evidenceList().length);
+
   protected readonly statusLabel = computed(() => {
+    this.language.currentLanguage();
+    this.language.translationsLoaded();
     const order = this.order();
-    return order ? ORDER_STATUS_CONFIG[order.status].label : '';
+    return order
+      ? this.transloco.translate(ORDER_STATUS_CONFIG[order.status].translationKey)
+      : '';
   });
 
   protected readonly statusColor = computed(() => {
@@ -377,8 +403,12 @@ export class OrderDetailModal {
   });
 
   protected readonly priorityLabel = computed(() => {
+    this.language.currentLanguage();
+    this.language.translationsLoaded();
     const order = this.order();
-    return order ? ORDER_PRIORITY_CONFIG[order.priority].label : '';
+    return order
+      ? this.transloco.translate(ORDER_PRIORITY_CONFIG[order.priority].translationKey)
+      : '';
   });
 
   protected readonly priorityColor = computed(() => {
@@ -419,7 +449,8 @@ export class OrderDetailModal {
   });
 
   protected readonly freelySettableStatuses = FREELY_SETTABLE_STATUSES;
-  protected readonly statusOptionLabel = (status: OrderStatus) => ORDER_STATUS_CONFIG[status].label;
+  protected readonly statusOptionLabel = (status: OrderStatus) =>
+    ORDER_STATUS_CONFIG[status].translationKey;
 
   protected readonly canExecute = computed(() => {
     const order = this.order();
@@ -463,8 +494,10 @@ export class OrderDetailModal {
     );
   });
 
-  protected readonly sendToReviewLabel = computed(() =>
-    this.order()?.status === 'CORRECTION_REQUIRED' ? 'Reenviar a Revisión' : 'Enviar a Revisión',
+  protected readonly sendToReviewLabelKey = computed(() =>
+    this.order()?.status === 'CORRECTION_REQUIRED'
+      ? 'orders.detail.resendToReview'
+      : 'orders.detail.sendToReview',
   );
 
   /** Coordinador/admin devuelven la orden a campo (CLAUDE.md §3.3 "solicitar
@@ -529,6 +562,21 @@ export class OrderDetailModal {
   protected readonly correctionReason = signal('');
   protected readonly requestingCorrection = signal(false);
 
+  /** Formulario contextual activo en la pestaña Actividad (nota, evidencia o
+   *  corrección). `null` = colapsado, mostrando solo los botones disparadores. */
+  protected readonly composerMode = signal<ComposerMode | null>(null);
+
+  protected readonly composerModes = computed<ComposerMode[]>(() => {
+    const modes: ComposerMode[] = [];
+    if (this.canLog()) {
+      modes.push('note', 'evidence');
+    }
+    if (this.canRequestCorrection()) {
+      modes.push('correction');
+    }
+    return modes;
+  });
+
   protected readonly statusChangeOpen = signal(false);
   protected readonly statusChangeTarget = linkedSignal<OrderStatus>(
     () => this.order()?.status ?? 'DRAFT',
@@ -540,6 +588,13 @@ export class OrderDetailModal {
   protected readonly addingNote = signal(false);
 
   protected readonly selectedFile = signal<File | null>(null);
+  protected readonly selectedFilePreviewUrl = signal<string | null>(null);
+  protected readonly dropzoneActive = signal(false);
+  protected readonly acceptedFilesHelp = `JPG, PNG o WEBP · máx. ${Math.round(MAX_IMAGE_SIZE_BYTES / 1024 / 1024)} MB — PDF · máx. ${Math.round(MAX_PDF_SIZE_BYTES / 1024 / 1024)} MB`;
+  protected readonly selectedFileSizeLabel = computed(() => {
+    const file = this.selectedFile();
+    return file ? formatFileSize(file.size) : '';
+  });
   protected readonly evidenceUploadsEnabled = environment.evidenceUploadsEnabled;
   protected readonly evidenceCategory = signal<EvidenceCategory | ''>('');
   protected readonly evidenceDescriptionControl = new FormControl('', { nonNullable: true });
@@ -643,7 +698,10 @@ export class OrderDetailModal {
     this.changingStatus.set(true);
     try {
       await this.ordersFacade.updateStatus(order.id, this.statusChangeTarget());
+      this.toast.success(this.transloco.translate('orders.toast.statusUpdated'));
       this.statusChangeOpen.set(false);
+    } catch {
+      this.toast.error(this.transloco.translate('orders.toast.statusError'));
     } finally {
       this.changingStatus.set(false);
     }
@@ -764,7 +822,10 @@ export class OrderDetailModal {
     this.requestingCorrection.set(true);
     try {
       await this.ordersFacade.requestCorrection(order.id, reason);
-      this.correctionReason.set('');
+      this.toast.success(this.transloco.translate('orders.toast.correctionRequested'));
+      this.closeComposer();
+    } catch {
+      this.toast.error(this.transloco.translate('orders.toast.correctionError'));
     } finally {
       this.requestingCorrection.set(false);
     }
@@ -772,6 +833,51 @@ export class OrderDetailModal {
 
   protected setActiveTab(tab: DetailTab): void {
     this.activeTab.set(tab);
+  }
+
+  /** Navegación por teclado entre pestañas (WAI-ARIA Tabs pattern): flechas
+   *  mueven el foco y activan la pestaña, Home/End saltan a los extremos. */
+  protected onTabKeydown(event: KeyboardEvent, currentTab: DetailTab): void {
+    const currentIndex = this.tabOrder.indexOf(currentTab);
+    let nextIndex: number;
+    switch (event.key) {
+      case 'ArrowRight':
+        nextIndex = (currentIndex + 1) % this.tabOrder.length;
+        break;
+      case 'ArrowLeft':
+        nextIndex = (currentIndex - 1 + this.tabOrder.length) % this.tabOrder.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = this.tabOrder.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    const nextTab = this.tabOrder[nextIndex];
+    this.activeTab.set(nextTab);
+    const nextButton = (event.currentTarget as HTMLElement).parentElement?.querySelectorAll(
+      'button[role="tab"]',
+    )[nextIndex] as HTMLElement | undefined;
+    nextButton?.focus();
+  }
+
+  /** Abre/cierra el composer de actividad; reabrir con el mismo modo lo colapsa. */
+  protected toggleComposer(mode: ComposerMode): void {
+    this.composerMode.set(this.composerMode() === mode ? null : mode);
+  }
+
+  protected closeComposer(): void {
+    this.composerMode.set(null);
+    this.newNoteContent.set('');
+    this.correctionReason.set('');
+    this.fileError.set(null);
+    this.setSelectedFile(null);
+    this.evidenceCategory.set('');
+    this.evidenceDescriptionControl.reset('');
   }
 
   /** Validación compartida por el input de evidencia y el de adjunto de nota. */
@@ -797,26 +903,69 @@ export class OrderDetailModal {
     this.addingNote.set(true);
     try {
       await this.ordersFacade.addNote(order.id, this.newNoteType(), content);
-      this.newNoteContent.set('');
+      this.toast.success(this.transloco.translate('orders.toast.noteAdded'));
+      this.closeComposer();
+    } catch {
+      this.toast.error(this.transloco.translate('orders.toast.noteError'));
     } finally {
       this.addingNote.set(false);
     }
   }
 
-  protected onFileSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
-    this.fileError.set(null);
-    if (!file) {
-      this.selectedFile.set(null);
-      return;
+  /** Único punto de entrada para fijar el archivo seleccionado, sea por el
+   *  input nativo o por drag&drop; gestiona la vista previa de imagen. */
+  private setSelectedFile(file: File | null): void {
+    const previousUrl = this.selectedFilePreviewUrl();
+    if (previousUrl) {
+      URL.revokeObjectURL(previousUrl);
     }
+    this.selectedFile.set(file);
+    this.selectedFilePreviewUrl.set(
+      file && ACCEPTED_IMAGE_TYPES.includes(file.type) ? URL.createObjectURL(file) : null,
+    );
+  }
+
+  private tryAssignFile(file: File): void {
+    this.fileError.set(null);
     const error = this.validateAttachmentFile(file);
     if (error) {
       this.fileError.set(error);
-      this.selectedFile.set(null);
+      this.setSelectedFile(null);
       return;
     }
-    this.selectedFile.set(file);
+    this.setSelectedFile(file);
+  }
+
+  protected onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (file) {
+      this.tryAssignFile(file);
+    }
+    input.value = '';
+  }
+
+  protected clearSelectedFile(): void {
+    this.fileError.set(null);
+    this.setSelectedFile(null);
+  }
+
+  protected onDropzoneDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dropzoneActive.set(true);
+  }
+
+  protected onDropzoneDragLeave(): void {
+    this.dropzoneActive.set(false);
+  }
+
+  protected onDropzoneDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dropzoneActive.set(false);
+    const file = event.dataTransfer?.files?.[0] ?? null;
+    if (file) {
+      this.tryAssignFile(file);
+    }
   }
 
   protected async uploadSelectedFile(): Promise<void> {
@@ -835,9 +984,10 @@ export class OrderDetailModal {
         normalizedRichText(this.evidenceDescriptionControl.value),
         (percent) => this.uploadProgress.set(percent),
       );
-      this.selectedFile.set(null);
-      this.evidenceCategory.set('');
-      this.evidenceDescriptionControl.reset('');
+      this.toast.success(this.transloco.translate('orders.toast.evidenceUploaded'));
+      this.closeComposer();
+    } catch {
+      this.toast.error(this.transloco.translate('orders.toast.evidenceError'));
     } finally {
       this.uploading.set(false);
       this.uploadProgress.set(null);
@@ -854,8 +1004,8 @@ export class OrderDetailModal {
     try {
       const summary = this.ordersFacade.buildNotesSummary(order, this.notes());
       await this.ordersFacade.generateClosingActDraft(order.id, summary);
-    } catch (error) {
-      this.actaError.set(messageFor(error, 'No se pudo generar el borrador con IA.'));
+    } catch {
+      this.actaError.set(this.transloco.translate('orders.toast.draftError'));
     } finally {
       this.generatingActa.set(false);
     }
@@ -878,8 +1028,8 @@ export class OrderDetailModal {
     this.actaError.set(null);
     try {
       await this.ordersFacade.updateClosingActContent(act.id, content);
-    } catch (error) {
-      this.actaError.set(messageFor(error, 'No se pudieron guardar los cambios del acta.'));
+    } catch {
+      this.actaError.set(this.transloco.translate('orders.toast.actSaveError'));
     } finally {
       this.savingActa.set(false);
     }
@@ -895,8 +1045,8 @@ export class OrderDetailModal {
     this.actaError.set(null);
     try {
       await this.ordersFacade.approveClosingAct(act.id, order.id);
-    } catch (error) {
-      this.actaError.set(messageFor(error, 'No se pudo aprobar el acta.'));
+    } catch {
+      this.actaError.set(this.transloco.translate('orders.toast.actApproveError'));
     } finally {
       this.approvingActa.set(false);
     }
@@ -913,8 +1063,8 @@ export class OrderDetailModal {
     try {
       const url = await this.ordersFacade.closeOrderWithPdf(order.id, act.id);
       this.pdfUrl.set(url);
-    } catch (error) {
-      this.actaError.set(messageFor(error, 'No se pudo cerrar la orden ni generar el PDF.'));
+    } catch {
+      this.actaError.set(this.transloco.translate('orders.toast.closeError'));
     } finally {
       this.closingOrder.set(false);
     }

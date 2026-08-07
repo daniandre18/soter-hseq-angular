@@ -1,0 +1,10 @@
+{
+  "title": "Notificaciones",
+  "markAllRead": "Marcar todo leído",
+  "empty": "Sin notificaciones.",
+  "dismiss": "Eliminar notificación",
+  "dismissWithTitle": "Eliminar notificación: {{title}}",
+  "viewOrder": "Ver orden →",
+  "viewQuote": "Ver cotización →",
+  "dismissAll": "Eliminar todas las notificaciones"
+}
