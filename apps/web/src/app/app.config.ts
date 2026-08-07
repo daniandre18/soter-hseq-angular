@@ -5,7 +5,8 @@ import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { provideQuillConfig } from 'ngx-quill/config';
 
 import { routes } from './app.routes';
-import { firebaseProviders } from './core/firebase/firebase.providers';
+import { firebaseProviders } from './infrastructure/firebase/firebase.providers';
+import { repositoryProviders } from './infrastructure/firebase/repository.providers';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,5 +21,6 @@ export const appConfig: ApplicationConfig = {
       defaultEmptyValue: '',
     }),
     ...firebaseProviders,
+    ...repositoryProviders,
   ],
 };

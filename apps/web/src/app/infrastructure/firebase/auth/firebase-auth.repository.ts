@@ -1,36 +1,37 @@
 import { Injectable, inject, signal } from '@angular/core';
 import {
-  Auth,
-  User,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth';
-import { FIREBASE_AUTH } from '../firebase/firebase.tokens';
+import type { AuthRepository, AuthSession } from '../../../core/repositories/auth.repository';
+import { FIREBASE_AUTH } from '../firebase.tokens';
 
 /**
- * Wrapper delgado sobre Firebase Authentication. No conoce roles ni el
- * documento de `users`: eso es responsabilidad de AuthFacade + UsersRepository.
+ * Adapter de `AuthRepository` sobre Firebase Authentication. Junto con
+ * `FirebaseUsersRepository`, es el único código del proyecto que conoce
+ * tipos de `firebase/auth` (`User`, `UserCredential`) — el resto de la app
+ * solo ve `AuthSession`.
  */
 @Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly auth: Auth = inject(FIREBASE_AUTH);
+export class FirebaseAuthRepository implements AuthRepository {
+  private readonly auth = inject(FIREBASE_AUTH);
 
-  private readonly authUserSignal = signal<User | null>(null);
+  private readonly authSessionSignal = signal<AuthSession | null>(null);
   private readonly authReadySignal = signal(false);
 
-  readonly authUser = this.authUserSignal.asReadonly();
+  readonly authSession = this.authSessionSignal.asReadonly();
   readonly authReady = this.authReadySignal.asReadonly();
 
   constructor() {
     onAuthStateChanged(this.auth, (user) => {
-      this.authUserSignal.set(user);
+      this.authSessionSignal.set(user ? { uid: user.uid } : null);
       this.authReadySignal.set(true);
     });
   }
 
-  async login(email: string, password: string): Promise<User> {
+  async login(email: string, password: string): Promise<AuthSession> {
     const credential = await signInWithEmailAndPassword(this.auth, email, password);
     // Firestore sincroniza el token nuevo de forma asíncrona por su cuenta;
     // sin este await, el primer listener que se abre justo después de
@@ -39,7 +40,7 @@ export class AuthService {
     // permission-denied no se reintenta solo. Forzar el refresh aquí
     // garantiza que el SDK ya tiene el token nuevo antes de navegar.
     await credential.user.getIdToken(true);
-    return credential.user;
+    return { uid: credential.user.uid };
   }
 
   logout(): Promise<void> {
