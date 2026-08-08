@@ -192,17 +192,17 @@ export class QuoteDetailModal {
     });
   }
 
-  protected downloadPdf(): void {
+  protected async downloadPdf(): Promise<void> {
     const quote = this.quote();
-    const doc = this.buildPdf();
+    const doc = await this.buildPdf();
     if (!doc || !quote) {
       return;
     }
     doc.save(quotePdfFileName(quote));
   }
 
-  protected print(): void {
-    const doc = this.buildPdf();
+  protected async print(): Promise<void> {
+    const doc = await this.buildPdf();
     if (!doc) {
       return;
     }
