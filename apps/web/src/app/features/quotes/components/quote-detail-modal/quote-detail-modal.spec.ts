@@ -6,6 +6,9 @@ import { of } from 'rxjs';
 import { QuoteDetailModal } from './quote-detail-modal';
 import { QuotesFacade } from '../../facades/quotes.facade';
 import { OrdersFacade } from '../../../orders/facades/orders.facade';
+import { ClientsFacade } from '../../../clients/facades/clients.facade';
+
+const clientsFacadeStub = { clients: signal([]), init: () => undefined };
 
 describe('QuoteDetailModal', () => {
   let component: QuoteDetailModal;
@@ -26,6 +29,7 @@ describe('QuoteDetailModal', () => {
           useValue: { watchItems: () => of([]), canManageQuotes, updateStatus },
         },
         { provide: OrdersFacade, useValue: { orders: signal([]), init: () => undefined } },
+        { provide: ClientsFacade, useValue: clientsFacadeStub },
       ],
     }).compileComponents();
 
@@ -63,7 +67,7 @@ describe('QuoteDetailModal', () => {
     });
     await fixture.whenStable();
 
-    fixture.nativeElement.querySelector('[modalFooter] button').click();
+    fixture.nativeElement.querySelector('[modalFooter] app-button button').click();
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
@@ -101,6 +105,7 @@ describe('QuoteDetailModal', () => {
               init: () => undefined,
             },
           },
+          { provide: ClientsFacade, useValue: clientsFacadeStub },
         ],
       })
       .compileComponents();

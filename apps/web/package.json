@@ -23,6 +23,8 @@
     "@jsverse/transloco": "^8.4.0",
     "chart.js": "^4.5.1",
     "firebase": "^12.16.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "libphonenumber-js": "^1.13.10",
     "ng2-charts": "^10.0.0",
     "ngx-quill": "^31.0.1",

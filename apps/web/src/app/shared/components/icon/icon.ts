@@ -41,7 +41,9 @@ export type IconName =
   | 'flag'
   | 'phone'
   | 'mail'
-  | 'external-link';
+  | 'external-link'
+  | 'download'
+  | 'printer';
 
 @Component({
   selector: 'app-icon',

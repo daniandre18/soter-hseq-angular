@@ -1,50 +1,126 @@
 @if (quote(); as q) {
-  <app-modal [open]="true" [title]="q.quoteNumber" size="lg" (closeRequested)="close()">
+  <app-modal [open]="true" [title]="q.quoteNumber" size="xl" (closeRequested)="close()">
     <div class="detail-sections">
-      <div class="detail-header">
-        <div>
-          <p class="client-name">{{ q.clientBusinessName }}</p>
-          @if (q.validUntil) {
-            <p class="valid-until">{{ 'quotes.validUntil' | transloco }} {{ q.validUntil | localizedDate }}</p>
+      <div class="quote-hero">
+        <div class="hero-issuer">
+          <p class="hero-issuer-name">{{ company.businessName }}</p>
+          <p class="hero-issuer-line">{{ company.address }}</p>
+          <p class="hero-issuer-line">{{ company.email }}</p>
+        </div>
+
+        <div class="hero-meta">
+          <h4>{{ 'quotes.detail.pdfTitle' | transloco }}</h4>
+          <dl>
+            <div class="hero-meta-row">
+              <dt>{{ 'quotes.number' | transloco }}</dt>
+              <dd>{{ q.quoteNumber }}</dd>
+            </div>
+            <div class="hero-meta-row">
+              <dt>{{ 'quotes.detail.issueDate' | transloco }}</dt>
+              <dd>{{ q.issueDate | localizedDate }}</dd>
+            </div>
+            @if (q.validUntil) {
+              <div class="hero-meta-row">
+                <dt>{{ 'quotes.validUntil' | transloco }}</dt>
+                <dd>{{ q.validUntil | localizedDate }}</dd>
+              </div>
+            }
+            <div class="hero-meta-row">
+              <dt>{{ 'quotes.detail.status' | transloco }}</dt>
+              <dd><app-status-badge [label]="statusLabel()" [color]="statusColor()" /></dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="parties">
+        <div class="party">
+          <p class="party-label">{{ 'quotes.detail.from' | transloco }}</p>
+          <p class="party-name">{{ company.businessName }}</p>
+          <p class="party-line">{{ company.address }}</p>
+          <p class="party-line">{{ company.email }}</p>
+        </div>
+        <div class="party">
+          <p class="party-label">{{ 'quotes.detail.to' | transloco }}</p>
+          <p class="party-name">{{ q.clientBusinessName }}</p>
+          @if (client(); as c) {
+            @if (clientLocation(c); as location) {
+              <p class="party-line">{{ location }}</p>
+            }
+            @if (c.phone) {
+              <p class="party-line">{{ c.phone }}</p>
+            }
+            @if (c.email) {
+              <p class="party-line">{{ c.email }}</p>
+            }
           }
         </div>
-        <app-status-badge [label]="statusLabel()" [color]="statusColor()" />
       </div>
 
       <div>
-        <h4>{{ 'quotes.detail.services' | transloco }}</h4>
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>{{ 'quotes.detail.service' | transloco }}</th>
-              <th class="align-right">{{ 'quotes.detail.quantity' | transloco }}</th>
-              <th class="align-right">{{ 'quotes.detail.unitPrice' | transloco }}</th>
-              <th class="align-right">{{ 'common.total' | transloco }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of items(); track item.id) {
+        <div class="table-scroll">
+          <table class="items-table">
+            <thead>
               <tr>
-                <td>{{ item.description }}</td>
-                <td class="align-right">{{ item.quantity }}</td>
-                <td class="align-right">{{ item.unitPrice | localizedCurrency }}</td>
-                <td class="align-right total-cell">{{ item.total | localizedCurrency }}</td>
+                <th>#</th>
+                <th>{{ 'quotes.detail.service' | transloco }}</th>
+                <th class="align-right">{{ 'quotes.detail.quantity' | transloco }}</th>
+                <th class="align-right">{{ 'quotes.detail.unitPrice' | transloco }}</th>
+                <th class="align-right">{{ 'quotes.detail.tax' | transloco }}</th>
+                <th class="align-right">{{ 'common.total' | transloco }}</th>
               </tr>
-            }
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="3" class="total-label">{{ 'common.total' | transloco }}</td>
-              <td class="align-right total-cell">{{ q.total | localizedCurrency }}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of items(); track item.id; let i = $index) {
+                <tr>
+                  <td class="index-cell">{{ (i + 1).toString().padStart(2, '0') }}</td>
+                  <td>{{ item.description }}</td>
+                  <td class="align-right">{{ item.quantity }}</td>
+                  <td class="align-right">{{ item.unitPrice | localizedCurrency: q.currency }}</td>
+                  <td class="align-right">{{ item.taxRate }}%</td>
+                  <td class="align-right total-cell">{{ item.total | localizedCurrency: q.currency }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="totals-panel">
+          <div class="totals-row">
+            <span>{{ 'quotes.detail.subtotal' | transloco }}</span>
+            <span>{{ q.subtotal | localizedCurrency: q.currency }}</span>
+          </div>
+          <div class="totals-row">
+            <span>{{ 'quotes.detail.tax' | transloco }}</span>
+            <span>{{ q.tax | localizedCurrency: q.currency }}</span>
+          </div>
+          @if (q.discount > 0) {
+            <div class="totals-row">
+              <span>{{ 'quotes.detail.discount' | transloco }}</span>
+              <span>-{{ q.discount | localizedCurrency: q.currency }}</span>
+            </div>
+          }
+          <div class="totals-row totals-row--total">
+            <span>{{ 'common.total' | transloco }}</span>
+            <span>{{ q.total | localizedCurrency: q.currency }}</span>
+          </div>
+        </div>
       </div>
 
-      @if (q.notes) {
+      @if (q.notes || q.terms) {
         <div class="notes-box">
-          <p class="notes-label">{{ 'quotes.detail.notes' | transloco }}</p>
-          <p>{{ q.notes }}</p>
+          @if (q.notes) {
+            <div class="notes-block">
+              <p class="notes-label">{{ 'quotes.detail.notes' | transloco }}</p>
+              <p class="notes-content">{{ q.notes }}</p>
+            </div>
+          }
+          @if (q.terms) {
+            <div class="notes-block">
+              <p class="notes-label">{{ 'quotes.detail.terms' | transloco }}</p>
+              <p class="notes-content">{{ q.terms }}</p>
+            </div>
+          }
         </div>
       }
 
@@ -72,20 +148,47 @@
       }
     </div>
 
-    <div modalFooter>
-      @if (canManageQuotes() && q.status === 'APPROVED') {
-        <app-button (click)="convertToOrder()" [disabled]="saving()">
-          {{ (saving() ? 'quotes.detail.converting' : 'quotes.detail.convert') | transloco }}
-        </app-button>
-      }
-      @for (status of nextStatuses(); track status) {
-        <app-button
-          [variant]="status === 'REJECTED' ? 'danger' : 'primary'"
-          (click)="setStatus(status)"
-          [disabled]="saving()"
+    <div modalFooter class="quote-footer">
+      <div class="footer-utilities">
+        <button
+          type="button"
+          class="icon-action-btn"
+          [attr.aria-label]="'quotes.detail.downloadPdf' | transloco"
+          [title]="'quotes.detail.downloadPdf' | transloco"
+          (click)="downloadPdf()"
         >
-          {{ 'quotes.detail.markAs' | transloco: { status: statusButtonLabel(status) } }}
-        </app-button>
+          <app-icon name="download" />
+          <span class="icon-action-label">{{ 'quotes.detail.downloadPdf' | transloco }}</span>
+        </button>
+        <button
+          type="button"
+          class="icon-action-btn"
+          [attr.aria-label]="'quotes.detail.print' | transloco"
+          [title]="'quotes.detail.print' | transloco"
+          (click)="print()"
+        >
+          <app-icon name="printer" />
+          <span class="icon-action-label">{{ 'quotes.detail.print' | transloco }}</span>
+        </button>
+      </div>
+
+      @if ((canManageQuotes() && q.status === 'APPROVED') || nextStatuses().length > 0) {
+        <div class="footer-primary-actions">
+          @if (canManageQuotes() && q.status === 'APPROVED') {
+            <app-button (click)="convertToOrder()" [disabled]="saving()">
+              {{ (saving() ? 'quotes.detail.converting' : 'quotes.detail.convert') | transloco }}
+            </app-button>
+          }
+          @for (status of nextStatuses(); track status) {
+            <app-button
+              [variant]="status === 'REJECTED' ? 'danger' : 'primary'"
+              (click)="setStatus(status)"
+              [disabled]="saving()"
+            >
+              {{ 'quotes.detail.markAs' | transloco: { status: statusButtonLabel(status) } }}
+            </app-button>
+          }
+        </div>
       }
     </div>
   </app-modal>
