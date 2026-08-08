@@ -1,5 +1,4 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 import type { Quote, QuoteItem } from '../models/quote.model';
 import { COMPANY_PROFILE } from '../../../shared/data/company-profile';
 
@@ -67,12 +66,18 @@ function formatDate(value: Date, locale: string): string {
 }
 
 /** Construye el PDF de una cotización (texto vectorial, no captura de pantalla)
- *  con jsPDF + autoTable. No depende de Angular ni de la red: toda la
- *  información ya viene resuelta por el caller (componente), así que la
- *  generación es síncrona y no puede fallar por un fetch. */
-export function generateQuotePdf(params: GenerateQuotePdfParams): jsPDF {
+ *  con jsPDF + autoTable. Ambas se importan dinámicamente para que no
+ *  engorden el bundle inicial (jsPDF arrastra html2canvas/canvg como
+ *  dependencias internas) — solo se cargan cuando el usuario realmente pide
+ *  el PDF. No depende de la red para los datos: toda la información ya
+ *  viene resuelta por el caller (componente). */
+export async function generateQuotePdf(params: GenerateQuotePdfParams): Promise<jsPDF> {
   const { quote, items, client, clientName, locale, statusLabel, labels } = params;
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const [{ jsPDF: JsPdfCtor }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+  const doc = new JsPdfCtor({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - PAGE_MARGIN * 2;
   const rightEdge = pageWidth - PAGE_MARGIN;
