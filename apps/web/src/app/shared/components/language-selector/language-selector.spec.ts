@@ -18,13 +18,28 @@ describe('LanguageSelector', () => {
   });
 
   it('switches the UI language without recreating the page', () => {
-    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
-    select.value = 'en';
-    select.dispatchEvent(new Event('change'));
+    const toggleButton = fixture.nativeElement.querySelector('.language-button') as HTMLButtonElement;
+    toggleButton.click();
+    fixture.detectChanges();
+
+    const options = fixture.nativeElement.querySelectorAll('.language-option') as NodeListOf<HTMLButtonElement>;
+    const englishOption = Array.from(options).find((option) => option.textContent?.includes('English'));
+    englishOption?.click();
     fixture.detectChanges();
 
     expect(language.currentLanguage()).toBe('en');
-    expect(select.value).toBe('en');
     expect(document.documentElement.lang).toBe('en');
+  });
+
+  it('closes the panel after selecting a language', () => {
+    const toggleButton = fixture.nativeElement.querySelector('.language-button') as HTMLButtonElement;
+    toggleButton.click();
+    fixture.detectChanges();
+
+    const options = fixture.nativeElement.querySelectorAll('.language-option') as NodeListOf<HTMLButtonElement>;
+    options[0].click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.language-panel')).toBeNull();
   });
 });

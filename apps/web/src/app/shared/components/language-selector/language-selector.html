@@ -1,12 +1,33 @@
-<label class="language-selector">
-  <span class="visually-hidden">{{ 'languages.selectorLabel' | transloco }}</span>
-  <select
-    [value]="language.currentLanguage()"
-    (change)="changeLanguage($event)"
+<div class="language-selector">
+  <button
+    type="button"
+    class="language-button"
+    aria-haspopup="true"
+    [attr.aria-expanded]="open()"
     [attr.aria-label]="'languages.selectorLabel' | transloco"
+    (click)="toggle()"
   >
-    @for (option of language.supportedLanguages; track option.code) {
-      <option [value]="option.code">{{ option.translationKey | transloco }}</option>
-    }
-  </select>
-</label>
+    <app-icon name="globe" />
+  </button>
+
+  @if (open()) {
+    <ul class="language-panel" role="menu">
+      @for (option of language.supportedLanguages; track option.code) {
+        <li>
+          <button
+            type="button"
+            class="language-option"
+            [class.language-option--active]="option.code === language.currentLanguage()"
+            (click)="selectLanguage(option.code)"
+          >
+            <span class="language-option-flag" aria-hidden="true">{{ option.flag }}</span>
+            <span class="language-option-name">{{ option.translationKey | transloco }}</span>
+            @if (option.code === language.currentLanguage()) {
+              <app-icon name="circle-check-big" />
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

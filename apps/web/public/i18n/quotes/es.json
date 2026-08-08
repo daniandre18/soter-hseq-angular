@@ -30,7 +30,19 @@
     "convert": "Convertir a orden",
     "markAs": "Marcar como {{status}}",
     "statusError": "No fue posible cambiar el estado. Verifica los permisos del perfil e inténtalo nuevamente.",
-    "convertError": "No fue posible convertir la cotización. Verifica su estado e inténtalo nuevamente."
+    "convertError": "No fue posible convertir la cotización. Verifica su estado e inténtalo nuevamente.",
+    "pdfTitle": "Cotización",
+    "issueDate": "Fecha",
+    "status": "Estado",
+    "from": "Cotización de",
+    "to": "Cotización para",
+    "tax": "Impuesto",
+    "subtotal": "Subtotal",
+    "discount": "Descuento",
+    "terms": "Términos y condiciones",
+    "downloadPdf": "Descargar PDF",
+    "print": "Imprimir",
+    "generatedOn": "Generado el"
   },
   "status": {
     "draft": "Borrador",

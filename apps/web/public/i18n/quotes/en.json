@@ -30,7 +30,19 @@
     "convert": "Convert to order",
     "markAs": "Mark as {{status}}",
     "statusError": "The status could not be changed. Check the profile permissions and try again.",
-    "convertError": "The quote could not be converted. Check its status and try again."
+    "convertError": "The quote could not be converted. Check its status and try again.",
+    "pdfTitle": "Quote",
+    "issueDate": "Date",
+    "status": "Status",
+    "from": "Quote from",
+    "to": "Quote to",
+    "tax": "Tax",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "terms": "Terms and conditions",
+    "downloadPdf": "Download PDF",
+    "print": "Print",
+    "generatedOn": "Generated on"
   },
   "status": {
     "draft": "Draft",

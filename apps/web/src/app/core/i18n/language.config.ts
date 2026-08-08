@@ -4,14 +4,15 @@ export interface LanguageConfig {
   code: AppLanguage;
   locale: 'es-CO' | 'en-US';
   translationKey: 'languages.spanish' | 'languages.english';
+  flag: string;
 }
 
 export const DEFAULT_LANGUAGE: AppLanguage = 'es';
 export const LANGUAGE_STORAGE_KEY = 'app_language';
 
 export const SUPPORTED_LANGUAGES: readonly LanguageConfig[] = [
-  { code: 'es', locale: 'es-CO', translationKey: 'languages.spanish' },
-  { code: 'en', locale: 'en-US', translationKey: 'languages.english' },
+  { code: 'es', locale: 'es-CO', translationKey: 'languages.spanish', flag: '🇨🇴' },
+  { code: 'en', locale: 'en-US', translationKey: 'languages.english', flag: '🇺🇸' },
 ] as const;
 
 export function isAppLanguage(value: unknown): value is AppLanguage {
