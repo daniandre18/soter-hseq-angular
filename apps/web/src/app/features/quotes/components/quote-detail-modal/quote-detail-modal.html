@@ -73,12 +73,22 @@
             <tbody>
               @for (item of items(); track item.id; let i = $index) {
                 <tr>
-                  <td class="index-cell">{{ (i + 1).toString().padStart(2, '0') }}</td>
-                  <td>{{ item.description }}</td>
-                  <td class="align-right">{{ item.quantity }}</td>
-                  <td class="align-right">{{ item.unitPrice | localizedCurrency: q.currency }}</td>
-                  <td class="align-right">{{ item.taxRate }}%</td>
-                  <td class="align-right total-cell">{{ item.total | localizedCurrency: q.currency }}</td>
+                  <td class="index-cell" aria-label="#">{{ (i + 1).toString().padStart(2, '0') }}</td>
+                  <td class="service-cell" [attr.data-label]="'quotes.detail.service' | transloco">
+                    {{ item.description }}
+                  </td>
+                  <td class="align-right" [attr.data-label]="'quotes.detail.quantity' | transloco">
+                    {{ item.quantity }}
+                  </td>
+                  <td class="align-right" [attr.data-label]="'quotes.detail.unitPrice' | transloco">
+                    {{ item.unitPrice | localizedCurrency: q.currency }}
+                  </td>
+                  <td class="align-right" [attr.data-label]="'quotes.detail.tax' | transloco">
+                    {{ item.taxRate }}%
+                  </td>
+                  <td class="align-right total-cell" [attr.data-label]="'common.total' | transloco">
+                    {{ item.total | localizedCurrency: q.currency }}
+                  </td>
                 </tr>
               }
             </tbody>

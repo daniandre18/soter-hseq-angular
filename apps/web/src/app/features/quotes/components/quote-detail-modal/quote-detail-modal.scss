@@ -32,6 +32,7 @@ h4 {
   margin: 0.125rem 0 0;
   font-size: 0.8125rem;
   color: rgba(255, 255, 255, 0.8);
+  overflow-wrap: anywhere;
 }
 
 .hero-meta {
@@ -91,6 +92,7 @@ h4 {
   margin: 0.1875rem 0 0;
   font-size: 0.8125rem;
   color: var(--color-gray-600);
+  overflow-wrap: anywhere;
 }
 
 .table-scroll {
@@ -282,6 +284,122 @@ h4 {
 }
 
 @media (max-width: 640px) {
+  .detail-sections {
+    gap: 1.25rem;
+  }
+
+  .quote-hero {
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .hero-meta {
+    width: 100%;
+    text-align: left;
+
+    h4 {
+      margin-bottom: 0.625rem;
+    }
+  }
+
+  .hero-meta-row {
+    display: grid;
+    grid-template-columns: minmax(4.5rem, auto) minmax(0, 1fr);
+    justify-content: initial;
+    align-items: center;
+    gap: 0.75rem;
+
+    dd {
+      min-width: 0;
+      text-align: left;
+    }
+  }
+
+  .parties {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .table-scroll {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .items-table {
+    min-width: 0;
+
+    thead {
+      display: none;
+    }
+
+    tbody {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    tr {
+      position: relative;
+      display: grid;
+      gap: 0.625rem;
+      padding: 1rem;
+      border: 1px solid var(--color-gray-100);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+    }
+
+    td {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0;
+      border: 0;
+      text-align: right;
+
+      &::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        color: var(--color-gray-500);
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+    }
+
+    .index-cell {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: block;
+      color: var(--color-gray-400);
+      font-size: 0.75rem;
+    }
+
+    .service-cell {
+      display: block;
+      padding-right: 2rem;
+      text-align: left;
+      color: var(--color-gray-900);
+      font-weight: 600;
+      line-height: 1.4;
+
+      &::before {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+    }
+  }
+
+  .totals-panel {
+    align-items: stretch;
+  }
+
+  .totals-row {
+    max-width: none;
+  }
+
   .quote-footer {
     flex-direction: column;
     align-items: stretch;
