@@ -61,7 +61,7 @@
   }
 }
 
-.alerts-card,
+.operational-alert,
 .dashboard-card {
   animation: dashboard-fade-in-up 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -81,7 +81,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alerts-card,
+  .operational-alert,
   .dashboard-card {
     animation: none;
   }
@@ -260,45 +260,81 @@
   }
 }
 
-.alerts-card {
+.operational-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-height: 3.5rem;
   margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-red-200) 60%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--color-red-50) 80%, transparent);
   animation-delay: 150ms;
 }
 
-.alert-row {
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
+.operational-alert__message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+
+  p {
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-gray-800);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
-@keyframes alert-icon-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-
-.alert-icon {
+.operational-alert__icon {
   flex-shrink: 0;
+  color: var(--color-red-600);
+}
 
-  &--red {
-    color: var(--color-red-600);
-    // Mismo pulso lento en opacidad que el badge "N Vencidas" de la KPI
-    // card — la vencida real y su resumen usan la misma señal visual.
-    animation: alert-icon-pulse 2.4s ease-in-out infinite;
+.operational-alert__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  color: var(--color-red-700);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 150ms ease;
+
+  &:hover {
+    color: var(--color-red-900, var(--color-red-700));
   }
 
-  &--orange {
-    color: var(--color-orange-600, var(--color-red-600));
+  &:focus-visible {
+    border-radius: 0.25rem;
+    outline: 2px solid var(--color-red-600);
+    outline-offset: 3px;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .alert-icon--red {
-    animation: none;
+@media (max-width: 480px) {
+  .operational-alert {
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+
+  .operational-alert__message {
+    gap: 0.5rem;
+  }
+
+  .operational-alert__action {
+    font-size: 0;
+
+    span {
+      font-size: 1rem;
+    }
   }
 }
 

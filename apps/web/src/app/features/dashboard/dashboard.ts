@@ -87,6 +87,14 @@ export class Dashboard {
     );
   });
 
+  /** Total visible en el banner compacto; reúne ambos tipos de alerta que
+   * requieren una acción desde el listado de órdenes. */
+  protected readonly operationalAlertsCount = computed(
+    () =>
+      this.ordersFacade.overdueOrders().length +
+      this.ordersFacade.correctionRequiredOrders().length,
+  );
+
   /** KPI 2 — Recursos en Campo: técnicos con una orden EN_PROGRESO hoy, de
    *  todos los registrados con rol TECHNICIAN. */
   protected readonly fieldResourcesSubtitle = computed(() => {
