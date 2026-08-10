@@ -125,6 +125,13 @@ const NAV_SECTIONS: NavSection[] = [
     entries: [
       {
         kind: 'link',
+        path: '/usuarios',
+        translationKey: 'layout.navigation.users',
+        icon: 'users',
+        roles: ['ADMIN'],
+      },
+      {
+        kind: 'link',
         path: '/tecnicos',
         translationKey: 'layout.navigation.technicians',
         icon: 'hard-hat',

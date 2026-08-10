@@ -41,6 +41,7 @@ function toClient(id: string, data: DocumentData): Client {
     city: data['city'],
     notes: data['notes'],
     status: data['status'],
+    portalUserId: data['portalUserId'],
     tags: data['tags'] ?? [],
     createdAt: toDateOrDefault(data['createdAt']),
     createdBy: data['createdBy'],
@@ -93,7 +94,9 @@ export class FirebaseClientRepository implements ClientRepository {
       return onSnapshot(
         collection(this.firestore, 'clients'),
         (snapshot) => {
-          subscriber.next(snapshot.docs.map((docSnapshot) => toClient(docSnapshot.id, docSnapshot.data())));
+          subscriber.next(
+            snapshot.docs.map((docSnapshot) => toClient(docSnapshot.id, docSnapshot.data())),
+          );
         },
         (error) => subscriber.error(error),
       );

@@ -31,6 +31,10 @@
         </div>
       </div>
 
+      @if (canManageSites()) {
+        <app-client-portal-access [client]="c" />
+      }
+
       <section class="detail-section sites-section">
         <div class="sites-heading">
           <div class="sites-title">

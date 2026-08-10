@@ -1,5 +1,8 @@
 import { InjectionToken } from '@angular/core';
 import type { UserRole } from '../../../core/models/user-role.model';
+import type { UserStatus } from '../../../core/models/app-user.model';
+
+export type InternalUserRole = Extract<UserRole, 'ADMIN' | 'COMMERCIAL' | 'COORDINATOR'>;
 
 export interface CreateUserInput {
   displayName: string;
@@ -8,6 +11,39 @@ export interface CreateUserInput {
   phone?: string;
   specialty?: string;
   role: UserRole;
+}
+
+export interface InviteInternalUserInput {
+  displayName: string;
+  email: string;
+  phone?: string;
+  jobTitle?: string;
+  role: InternalUserRole;
+}
+
+export interface UpdateInternalUserInput {
+  uid: string;
+  displayName: string;
+  phone?: string;
+  jobTitle?: string;
+  role: InternalUserRole;
+}
+
+export interface InviteClientUserInput {
+  clientId: string;
+  displayName: string;
+  email: string;
+  phone?: string;
+}
+
+export interface ReplaceClientUserInput extends InviteClientUserInput {
+  currentUid: string;
+}
+
+export interface SetClientUserStatusInput {
+  clientId: string;
+  uid: string;
+  status: UserStatus;
 }
 
 /**
@@ -24,6 +60,25 @@ export interface UserManagementGateway {
    *  se actualiza solo cuando el listener de `UsersRepository` reciba el
    *  nuevo documento, no de forma optimista aquí. */
   createUser(data: CreateUserInput): Promise<string>;
+
+  /** Crea la cuenta con clave aleatoria y envía el correo para definirla. */
+  inviteInternalUser(data: InviteInternalUserInput): Promise<string>;
+
+  updateInternalUser(data: UpdateInternalUserInput): Promise<void>;
+
+  /** Crea el acceso VIEWER de una empresa sin exponer credenciales. */
+  inviteClientUser(data: InviteClientUserInput): Promise<string>;
+
+  /** Retira inmediatamente el acceso anterior y crea una nueva invitación. */
+  replaceClientUser(data: ReplaceClientUserInput): Promise<string>;
+
+  /** Activa o bloquea exclusivamente una cuenta VIEWER vinculada al cliente. */
+  setClientUserStatus(data: SetClientUserStatusInput): Promise<void>;
+
+  /** Sincroniza Firestore con el bloqueo real de Firebase Authentication. */
+  setUserStatus(uid: string, status: UserStatus): Promise<void>;
+
+  sendAccessEmail(email: string): Promise<void>;
 
   /** Borra la cuenta de Auth Y el documento de Firestore — no alcanza con
    *  borrar solo el documento (dejaría una cuenta de Auth "huérfana" que

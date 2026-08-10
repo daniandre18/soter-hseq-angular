@@ -1,6 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import type { Observable } from 'rxjs';
-import type { AppUser, UserStatus } from '../models/app-user.model';
+import type { AppUser } from '../models/app-user.model';
 import type { UserRole } from '../models/user-role.model';
 
 /**
@@ -28,8 +28,6 @@ export interface UsersRepository {
     changes: Partial<Pick<AppUser, 'displayName' | 'phone' | 'specialty'>>,
     updatedBy: string,
   ): Promise<void>;
-
-  setStatus(uid: string, status: UserStatus, updatedBy: string): Promise<void>;
 }
 
 export const USERS_REPOSITORY = new InjectionToken<UsersRepository>('USERS_REPOSITORY');

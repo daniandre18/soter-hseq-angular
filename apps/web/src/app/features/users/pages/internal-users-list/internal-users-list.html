@@ -1,0 +1,157 @@
+<section class="internal-users-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">{{ 'users.internal.eyebrow' | transloco }}</span>
+      <h2>{{ 'users.internal.title' | transloco }}</h2>
+      <p>{{ 'users.internal.subtitle' | transloco }}</p>
+    </div>
+    <app-button size="sm" (click)="openCreate()">
+      <app-icon name="plus" />
+      {{ 'users.internal.inviteAction' | transloco }}
+    </app-button>
+  </header>
+
+  <div class="stats-grid">
+    <app-stat-card [label]="'users.internal.metrics.active' | transloco" [value]="activeCount()" icon="users" color="green" [compact]="true" />
+    <app-stat-card [label]="'users.internal.metrics.admins' | transloco" [value]="adminCount()" icon="shield-check" color="purple" [compact]="true" />
+    <app-stat-card [label]="'users.internal.metrics.coordinators' | transloco" [value]="coordinatorCount()" icon="clipboard-list" color="blue" [compact]="true" />
+    <app-stat-card [label]="'users.internal.metrics.commercial' | transloco" [value]="commercialCount()" icon="chart-pie" color="brand" [compact]="true" />
+  </div>
+
+  <app-card class="filter-card" padding="sm">
+    <div class="filters">
+      <label class="search-field">
+        <span class="sr-only">{{ 'users.internal.filters.searchLabel' | transloco }}</span>
+        <app-icon name="search" />
+        <input
+          type="search"
+          [placeholder]="'users.internal.filters.searchPlaceholder' | transloco"
+          [value]="search()"
+          (input)="onSearch($event)"
+        />
+      </label>
+      <label>
+        <span class="sr-only">{{ 'users.internal.filters.role' | transloco }}</span>
+        <select [value]="roleFilter()" (change)="onRoleFilter($event)">
+          <option value="ALL">{{ 'users.internal.filters.allRoles' | transloco }}</option>
+          @for (role of roles; track role) {
+            <option [value]="role">{{ roleKey(role) | transloco }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span class="sr-only">{{ 'users.internal.filters.status' | transloco }}</span>
+        <select [value]="statusFilter()" (change)="onStatusFilter($event)">
+          <option value="ALL">{{ 'users.internal.filters.allStatuses' | transloco }}</option>
+          <option value="ACTIVE">{{ 'users.internal.status.active' | transloco }}</option>
+          <option value="INACTIVE">{{ 'users.internal.status.inactive' | transloco }}</option>
+        </select>
+      </label>
+      @if (hasFilters()) {
+        <button type="button" class="clear-button" (click)="clearFilters()">
+          {{ 'common.clearFilters' | transloco }}
+        </button>
+      }
+    </div>
+    <p class="result-count" aria-live="polite">
+      {{ 'users.internal.results' | transloco: { count: filteredUsers().length } }}
+    </p>
+  </app-card>
+
+  @if (usersFacade.loading()) {
+    <app-card class="state-card"><p>{{ 'users.internal.loading' | transloco }}</p></app-card>
+  } @else if (usersFacade.error()) {
+    <app-card class="state-card state-card--error"><p>{{ 'users.internal.loadError' | transloco }}</p></app-card>
+  } @else if (filteredUsers().length === 0) {
+    <app-card class="state-card">
+      <app-icon name="users" />
+      <h3>{{ 'users.internal.emptyTitle' | transloco }}</h3>
+      <p>{{ (hasFilters() ? 'users.internal.emptyFiltered' : 'users.internal.emptyDescription') | transloco }}</p>
+    </app-card>
+  } @else {
+    <app-card class="users-card" padding="none">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'users.internal.columns.user' | transloco }}</th>
+              <th>{{ 'users.internal.columns.role' | transloco }}</th>
+              <th>{{ 'users.internal.columns.contact' | transloco }}</th>
+              <th>{{ 'users.internal.columns.status' | transloco }}</th>
+              <th>{{ 'users.internal.columns.updated' | transloco }}</th>
+              <th><span class="sr-only">{{ 'common.actions' | transloco }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of filteredUsers(); track user.id) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <app-avatar [name]="user.displayName" size="sm" />
+                    <div>
+                      <strong>{{ user.displayName }}</strong>
+                      <span>{{ user.jobTitle || ('users.internal.noJobTitle' | transloco) }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td><app-status-badge [label]="roleKey(user.role) | transloco" [color]="roleColor(user.role)" /></td>
+                <td><div class="contact-cell"><span>{{ user.email }}</span><small>{{ user.phone || ('users.internal.noPhone' | transloco) }}</small></div></td>
+                <td><app-status-badge [dot]="true" [label]="(user.status === 'ACTIVE' ? 'users.internal.status.active' : 'users.internal.status.inactive') | transloco" [color]="user.status === 'ACTIVE' ? 'green' : 'gray'" /></td>
+                <td class="date-cell">{{ user.updatedAt | localizedDate }}</td>
+                <td class="action-cell">
+                  <button type="button" class="table-action" (click)="openEdit(user)" [attr.aria-label]="'common.edit' | transloco" [title]="'common.edit' | transloco">
+                    <app-icon name="square-pen" />
+                  </button>
+                  <button type="button" class="table-action" [disabled]="sendingEmailId() === user.id" (click)="sendAccessEmail(user)" [attr.aria-label]="'users.internal.actions.sendAccess' | transloco" [title]="'users.internal.actions.sendAccess' | transloco">
+                    <app-icon name="key-round" />
+                  </button>
+                  <button type="button" class="table-action table-action--danger" [disabled]="user.id === currentUserId()" (click)="confirmStatusChange(user)" [attr.aria-label]="(user.status === 'ACTIVE' ? 'users.internal.actions.deactivate' : 'users.internal.actions.activate') | transloco" [title]="(user.status === 'ACTIVE' ? 'users.internal.actions.deactivate' : 'users.internal.actions.activate') | transloco">
+                    <app-icon [name]="user.status === 'ACTIVE' ? 'x' : 'circle-check-big'" />
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mobile-list">
+        @for (user of filteredUsers(); track user.id) {
+          <article class="mobile-user-card">
+            <div class="mobile-user-header">
+              <app-avatar [name]="user.displayName" size="sm" />
+              <div class="mobile-user-title"><strong>{{ user.displayName }}</strong><span>{{ user.jobTitle || ('users.internal.noJobTitle' | transloco) }}</span></div>
+              <div class="mobile-menu-wrap">
+                <button type="button" class="menu-trigger" aria-haspopup="menu" (click)="toggleMenu(user.id, $event)" [attr.aria-expanded]="openMenuId() === user.id" [attr.aria-label]="'users.internal.actions.open' | transloco"><app-icon name="ellipsis-vertical" /></button>
+                @if (openMenuId() === user.id) {
+                  <div class="action-menu" role="menu">
+                    <button type="button" role="menuitem" (click)="openEdit(user)"><app-icon name="square-pen" />{{ 'common.edit' | transloco }}</button>
+                    <button type="button" role="menuitem" (click)="sendAccessEmail(user)"><app-icon name="key-round" />{{ 'users.internal.actions.sendAccess' | transloco }}</button>
+                    <button type="button" role="menuitem" class="danger-action" [disabled]="user.id === currentUserId()" (click)="confirmStatusChange(user)"><app-icon [name]="user.status === 'ACTIVE' ? 'x' : 'circle-check-big'" />{{ (user.status === 'ACTIVE' ? 'users.internal.actions.deactivate' : 'users.internal.actions.activate') | transloco }}</button>
+                  </div>
+                }
+              </div>
+            </div>
+            <p class="mobile-email">{{ user.email }}</p>
+            <div class="mobile-user-footer">
+              <app-status-badge [label]="roleKey(user.role) | transloco" [color]="roleColor(user.role)" />
+              <app-status-badge [dot]="true" [label]="(user.status === 'ACTIVE' ? 'users.internal.status.active' : 'users.internal.status.inactive') | transloco" [color]="user.status === 'ACTIVE' ? 'green' : 'gray'" />
+            </div>
+          </article>
+        }
+      </div>
+    </app-card>
+  }
+</section>
+
+<app-internal-user-form-modal [open]="formOpen()" [editingUser]="editingUser()" [currentUserId]="currentUserId()" (closeRequested)="closeForm()" />
+
+<app-modal [open]="!!statusTarget()" [title]="(statusTarget()?.status === 'ACTIVE' ? 'users.internal.confirm.deactivateTitle' : 'users.internal.confirm.activateTitle') | transloco" size="sm" (closeRequested)="statusTarget.set(null)">
+  <p class="confirmation-copy">{{ (statusTarget()?.status === 'ACTIVE' ? 'users.internal.confirm.deactivateDescription' : 'users.internal.confirm.activateDescription') | transloco: { name: statusTarget()?.displayName } }}</p>
+  <div modalFooter>
+    <app-button variant="outline" (click)="statusTarget.set(null)">{{ 'common.cancel' | transloco }}</app-button>
+    <app-button [variant]="statusTarget()?.status === 'ACTIVE' ? 'danger' : 'primary'" [disabled]="changingStatus()" (click)="changeStatus()">
+      {{ (changingStatus() ? 'users.internal.confirm.processing' : statusTarget()?.status === 'ACTIVE' ? 'users.internal.actions.deactivate' : 'users.internal.actions.activate') | transloco }}
+    </app-button>
+  </div>
+</app-modal>

@@ -21,6 +21,7 @@
     "services": "Servicios",
     "catalog": "Catálogo",
     "categories": "Categorías",
+    "users": "Usuarios",
     "technicians": "Técnicos",
     "settings": "Configuración"
   },
@@ -32,6 +33,7 @@
     "agenda": "Agenda de visitas",
     "categories": "Categorías de servicios",
     "services": "Servicios",
+    "users": "Usuarios",
     "technicians": "Técnicos",
     "myOrders": "Mis órdenes",
     "settings": "Configuración"

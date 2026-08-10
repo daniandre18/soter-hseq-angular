@@ -88,12 +88,23 @@ describe('Sidebar', () => {
     const commercialSection: HTMLElement | null = authorizedFixture.nativeElement.querySelector(
       '[aria-labelledby="sidebar-section-commercial"]',
     );
+    const primarySection: HTMLElement | null = authorizedFixture.nativeElement.querySelector(
+      '[aria-labelledby="sidebar-section-primary"]',
+    );
+    const operationsSection: HTMLElement | null = authorizedFixture.nativeElement.querySelector(
+      '[aria-labelledby="sidebar-section-operations"]',
+    );
 
     expect(sectionTitles).toEqual(['Principal', 'Gestión comercial', 'Gestión operativa']);
     expect(commercialSection?.textContent).toContain('Clientes');
     expect(commercialSection?.textContent).toContain('Cotizaciones');
     expect(commercialSection?.textContent).toContain('Servicios');
     expect(commercialSection?.textContent).not.toContain('Órdenes de trabajo');
+    expect(primarySection?.querySelector('a[href="/usuarios"]')).toBeNull();
+    expect(
+      operationsSection?.querySelector<HTMLElement>('a[href="/usuarios"]')?.textContent?.trim(),
+    ).toBe('Usuarios');
+    expect(operationsSection?.textContent).toContain('Técnicos');
 
     const toggle = authorizedFixture.nativeElement.querySelector('.sidebar-group-toggle');
     toggle.click();

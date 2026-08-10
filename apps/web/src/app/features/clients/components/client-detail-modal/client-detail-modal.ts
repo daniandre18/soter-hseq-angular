@@ -7,6 +7,7 @@ import { Button } from '../../../../shared/components/button/button';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { LocationSelect } from '../location-select/location-select';
+import { ClientPortalAccess } from '../client-portal-access/client-portal-access';
 import { ClientsFacade } from '../../facades/clients.facade';
 import { OrdersFacade } from '../../../orders/facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
@@ -38,7 +39,7 @@ const EMPTY_SITE_MODEL: SiteFormModel = {
 
 @Component({
   selector: 'app-client-detail-modal',
-  imports: [Modal, Button, Icon, StatusBadge, FormField, LocationSelect],
+  imports: [Modal, Button, Icon, StatusBadge, FormField, LocationSelect, ClientPortalAccess],
   templateUrl: './client-detail-modal.html',
   styleUrl: './client-detail-modal.scss',
 })

@@ -35,8 +35,7 @@ export class TechniciansFacade {
   }
 
   async setStatus(uid: string, status: UserStatus): Promise<void> {
-    const userId = this.authFacade.currentUser()?.id ?? 'unknown';
-    await this.service.setStatus(uid, status, userId);
+    await this.service.setStatus(uid, status);
   }
 
   async deleteTechnician(uid: string): Promise<void> {

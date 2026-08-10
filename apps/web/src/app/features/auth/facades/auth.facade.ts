@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { Observable, filter, of, switchMap, take } from 'rxjs';
+import { Observable, filter, map, of, switchMap, take } from 'rxjs';
 import { AUTH_REPOSITORY } from '../../../core/repositories/auth.repository';
 import { USERS_REPOSITORY } from '../../../core/repositories/users.repository';
 import type { AppUser } from '../../../core/models/app-user.model';
@@ -24,6 +24,7 @@ export class AuthFacade {
   readonly currentUser = toSignal(
     toObservable(this.authRepository.authSession).pipe(
       switchMap((session) => (session ? this.usersRepository.watchById(session.uid) : of(null))),
+      map((user) => (user?.status === 'ACTIVE' ? user : null)),
     ),
     { initialValue: null },
   );
@@ -48,6 +49,7 @@ export class AuthFacade {
         const session = this.authRepository.authSession();
         return session ? this.usersRepository.watchById(session.uid) : of(null);
       }),
+      map((user) => (user?.status === 'ACTIVE' ? user : null)),
       take(1),
     );
   }
@@ -78,6 +80,9 @@ export class AuthFacade {
         const profile = await this.usersRepository.getById(uid);
         if (!profile) {
           throw new Error('El usuario no tiene un perfil asociado en Firestore.');
+        }
+        if (profile.status !== 'ACTIVE') {
+          throw new Error('El acceso de este usuario está desactivado.');
         }
         return;
       } catch (error) {

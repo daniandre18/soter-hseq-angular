@@ -1,0 +1,61 @@
+<app-modal [open]="open()" [title]="title() | transloco" size="md" (closeRequested)="close()">
+  <form class="internal-user-form" (submit)="onSubmit(); $event.preventDefault()">
+    <div class="form-intro">
+      <strong>{{ 'users.internal.form.accessTitle' | transloco }}</strong>
+      <span>{{ 'users.internal.form.accessDescription' | transloco }}</span>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="form-error field--full" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <label class="field field--full">
+      <span>{{ 'users.internal.form.fullName' | transloco }} *</span>
+      <input [formField]="userForm.displayName" [placeholder]="'users.internal.form.fullNamePlaceholder' | transloco" />
+      @if (userForm.displayName().touched() && userForm.displayName().errors().length) {
+        <small class="field-error">{{ userForm.displayName().errors()[0].message | transloco }}</small>
+      }
+    </label>
+
+    <label class="field field--full">
+      <span>{{ 'users.internal.form.email' | transloco }} *</span>
+      <input type="email" [formField]="userForm.email" placeholder="nombre@soterhseq.com" />
+      @if (editingUser()) {
+        <small>{{ 'users.internal.form.emailImmutable' | transloco }}</small>
+      }
+      @if (userForm.email().touched() && userForm.email().errors().length) {
+        <small class="field-error">{{ userForm.email().errors()[0].message | transloco }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>{{ 'users.internal.form.jobTitle' | transloco }} *</span>
+      <input [formField]="userForm.jobTitle" [placeholder]="'users.internal.form.jobTitlePlaceholder' | transloco" />
+      @if (userForm.jobTitle().touched() && userForm.jobTitle().errors().length) {
+        <small class="field-error">{{ userForm.jobTitle().errors()[0].message | transloco }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>{{ 'users.internal.form.phone' | transloco }}</span>
+      <input type="tel" [formField]="userForm.phone" placeholder="+57 300 000 0000" />
+    </label>
+
+    <label class="field field--full">
+      <span>{{ 'users.internal.form.role' | transloco }} *</span>
+      <select [formField]="userForm.role">
+        @for (role of roles; track role) {
+          <option [value]="role">{{ roleKey(role) | transloco }}</option>
+        }
+      </select>
+      <small>{{ (editingUser()?.id === currentUserId() ? 'users.internal.form.selfRoleHint' : 'users.internal.form.roleHint') | transloco }}</small>
+    </label>
+  </form>
+
+  <div modalFooter>
+    <app-button variant="outline" (click)="close()">{{ 'common.cancel' | transloco }}</app-button>
+    <app-button (click)="onSubmit()" [disabled]="userForm().invalid() || saving()">
+      {{ (saving() ? 'users.internal.form.saving' : editingUser() ? 'users.internal.form.save' : 'users.internal.form.invite') | transloco }}
+    </app-button>
+  </div>
+</app-modal>

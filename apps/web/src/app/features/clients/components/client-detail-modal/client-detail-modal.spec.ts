@@ -6,6 +6,7 @@ import { ClientDetailModal } from './client-detail-modal';
 import { ClientsFacade } from '../../facades/clients.facade';
 import { OrdersFacade } from '../../../orders/facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
+import { ClientPortalAccessFacade } from '../../facades/client-portal-access-facade';
 import type { Client, ClientSite } from '../../models/client.model';
 
 const CLIENT: Client = {
@@ -60,6 +61,16 @@ describe('ClientDetailModal', () => {
         },
         { provide: OrdersFacade, useValue: { orders: signal([]) } },
         { provide: AuthFacade, useValue: { currentRole: signal('ADMIN') } },
+        {
+          provide: ClientPortalAccessFacade,
+          useValue: {
+            users: signal([]),
+            inviteUser: async () => ({ uid: 'viewer-1', invitationSent: true }),
+            replaceUser: async () => ({ uid: 'viewer-2', invitationSent: true }),
+            setStatus: async () => undefined,
+            sendAccessEmail: async () => undefined,
+          },
+        },
       ],
     }).compileComponents();
 
@@ -90,6 +101,14 @@ describe('ClientDetailModal', () => {
 
     expect(fixture.nativeElement.querySelector('.site-simple-form')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Agregar sede');
+  });
+
+  it('shows portal access management to authorized client managers', async () => {
+    fixture.componentRef.setInput('client', CLIENT);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-client-portal-access')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Acceso al portal');
   });
 
   it('renders a compact site row and opens it with its current values', async () => {

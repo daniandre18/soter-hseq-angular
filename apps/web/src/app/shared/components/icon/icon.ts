@@ -53,7 +53,11 @@ export type IconName =
   | 'align-center'
   | 'align-right'
   | 'arrow-left'
-  | 'arrow-right';
+  | 'arrow-right'
+  | 'users'
+  | 'shield-check'
+  | 'ellipsis-vertical'
+  | 'key-round';
 
 @Component({
   selector: 'app-icon',

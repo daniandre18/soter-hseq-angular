@@ -23,5 +23,94 @@
     "created": "Technician created successfully.",
     "updated": "Technician updated successfully.",
     "saveError": "The technician could not be saved."
+  },
+  "internal": {
+    "eyebrow": "Access administration",
+    "title": "Users",
+    "subtitle": "Manage the administrative team, their roles, and platform access.",
+    "inviteAction": "Invite user",
+    "metrics": {
+      "active": "Active users",
+      "admins": "Administrators",
+      "coordinators": "Coordinators",
+      "commercial": "Sales users"
+    },
+    "filters": {
+      "searchLabel": "Search users",
+      "searchPlaceholder": "Search by name, email, or job title...",
+      "role": "Role",
+      "status": "Status",
+      "allRoles": "All roles",
+      "allStatuses": "All statuses"
+    },
+    "results": "Showing {{count}} internal users",
+    "loading": "Loading users…",
+    "loadError": "Users could not be loaded.",
+    "emptyTitle": "No internal users",
+    "emptyDescription": "Invite the first member of the administrative team.",
+    "emptyFiltered": "No users match the selected filters.",
+    "noJobTitle": "No job title",
+    "noPhone": "No phone",
+    "columns": {
+      "user": "User",
+      "role": "Role",
+      "contact": "Contact",
+      "status": "Access",
+      "updated": "Updated"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "open": "Open user actions",
+      "sendAccess": "Send access email",
+      "activate": "Activate access",
+      "deactivate": "Deactivate access"
+    },
+    "form": {
+      "createTitle": "Invite internal user",
+      "editTitle": "Edit internal user",
+      "accessTitle": "Secure invitation access",
+      "accessDescription": "The person will receive a Firebase email to define their own password. The administrator never needs to know it.",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "E.g. Laura Ramirez",
+      "email": "Email address",
+      "emailImmutable": "To protect the account identity, email cannot be changed from this form.",
+      "jobTitle": "Job title",
+      "jobTitlePlaceholder": "E.g. HSEQ Lead",
+      "phone": "Phone (optional)",
+      "role": "Access role",
+      "roleHint": "The role defines the operations allowed throughout the application.",
+      "selfRoleHint": "You cannot change your own access role.",
+      "saving": "Saving…",
+      "save": "Save changes",
+      "invite": "Create and send invitation"
+    },
+    "validation": {
+      "nameRequired": "Name is required.",
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "jobTitleRequired": "Job title is required.",
+      "roleRequired": "Select a role."
+    },
+    "messages": {
+      "invited": "User created. We sent the email to set their password.",
+      "createdWithoutEmail": "The user was created, but the email could not be sent. Use “Send access email” to retry.",
+      "updated": "User updated successfully.",
+      "saveError": "The user could not be saved.",
+      "activated": "Access activated successfully.",
+      "deactivated": "Access deactivated successfully.",
+      "statusError": "The user's access could not be changed.",
+      "accessEmailSent": "Access email sent successfully.",
+      "accessEmailError": "The access email could not be sent."
+    },
+    "confirm": {
+      "activateTitle": "Activate this access?",
+      "activateDescription": "{{name}} will be able to sign in again and use the features available to their role.",
+      "deactivateTitle": "Deactivate this access?",
+      "deactivateDescription": "{{name}} will no longer be able to sign in. Their history and recorded actions will be preserved.",
+      "processing": "Processing…"
+    }
   }
 }

@@ -18,6 +18,7 @@ import { VisitsAgenda } from './features/orders/pages/visits-agenda/visits-agend
 import { ServicesList } from './features/services/pages/services-list/services-list';
 import { ServiceCategories } from './features/services/pages/service-categories/service-categories';
 import { TechniciansList } from './features/users/pages/technicians-list/technicians-list';
+import { InternalUsersList } from './features/users/pages/internal-users-list/internal-users-list';
 import { SettingsPage } from './features/settings/pages/settings-page/settings-page';
 import { environment } from '../environments/environment';
 
@@ -94,6 +95,13 @@ export const routes: Routes = [
         title: 'routes.services',
         data: { titleKey: 'layout.pageTitles.services' },
         canActivate: [roleGuard(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])],
+      },
+      {
+        path: 'usuarios',
+        component: InternalUsersList,
+        title: 'routes.users',
+        data: { titleKey: 'layout.pageTitles.users' },
+        canActivate: [roleGuard(['ADMIN'])],
       },
       {
         path: 'tecnicos',
