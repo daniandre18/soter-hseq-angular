@@ -316,12 +316,19 @@
   }
 
   .dashboard-actions-row {
-    flex-wrap: wrap;
+    // `app-button` es `display: contents` (ver button.scss) — no genera su
+    // propia caja, así que `app-button { flex: 1 }` no tenía ningún efecto:
+    // el ítem real del layout es el `<button class="btn">` de adentro, al
+    // que no se puede llegar con un selector normal por el encapsulamiento
+    // de vistas de Angular. Un grid sí resuelve esto sin tocar Button ni
+    // usar `::ng-deep`: `display: contents` also lo atraviesa para grid,
+    // y el `stretch` por defecto de Grid llena la celda igual — antes,
+    // los botones quedaban con ancho de contenido, descentrados y con
+    // huecos asimétricos a los lados.
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
     margin-bottom: 0.75rem;
-
-    app-button {
-      flex: 1;
-    }
   }
 
   .kpi-row {
