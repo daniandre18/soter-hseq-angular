@@ -5,6 +5,11 @@ import { Avatar } from '../../shared/components/avatar/avatar';
 import { Icon, type IconName } from '../../shared/components/icon/icon';
 import type { UserRole } from '../../core/models/user-role.model';
 import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { SettingsFacade } from '../../features/settings/facades/settings.facade';
+import { ThemeService } from '../../shared/services/theme.service';
+
+const DEFAULT_LOGO_DARK = 'soter-hseq-logo-menu.jpeg';
+const DEFAULT_LOGO_LIGHT = 'soter-hseq-logo-light.png';
 
 interface NavItem {
   kind: 'link';
@@ -125,6 +130,13 @@ const NAV_SECTIONS: NavSection[] = [
         icon: 'hard-hat',
         roles: ['ADMIN'],
       },
+      {
+        kind: 'link',
+        path: '/configuracion',
+        translationKey: 'layout.navigation.settings',
+        icon: 'settings',
+        roles: ['ADMIN'],
+      },
     ],
   },
 ];
@@ -139,6 +151,8 @@ const NAV_SECTIONS: NavSection[] = [
 export class Sidebar {
   private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
+  private readonly settingsFacade = inject(SettingsFacade);
+  private readonly theme = inject(ThemeService);
 
   readonly mobileOpen = input(false);
   readonly closeRequested = output<void>();
@@ -147,6 +161,46 @@ export class Sidebar {
   protected readonly servicesExpanded = signal(this.router.url.startsWith('/servicios'));
   protected readonly currentUser = this.authFacade.currentUser;
   protected readonly isCollapsed = computed(() => this.collapsed() && !this.mobileOpen());
+
+  protected readonly settings = this.settingsFacade.settings;
+  /** `object-position` del logo — reusa el mismo eje que ya usa
+   *  `object-fit: contain` en `.sidebar-logo-image` (ver sidebar.scss). */
+  protected readonly logoObjectPosition = computed(() => {
+    const alignment = this.settings().logoAlignment;
+    if (alignment === 'center') {
+      return 'center';
+    }
+    return alignment === 'right' ? 'right center' : 'left center';
+  });
+
+  /** El sidebar se ve oscuro (navy) en los temas "Oscuro" y "Semi Dark" —
+   *  ver `dark-sidebar-tokens` en `styles.scss`. */
+  protected readonly sidebarIsDark = computed(() => this.theme.effectiveTheme() !== 'light');
+
+  /** Sin logo subido por el usuario, el activo por defecto cambia según el
+   *  fondo del sidebar: `DEFAULT_LOGO_DARK` trae texto claro pensado para
+   *  navy (con blend "screen"); `DEFAULT_LOGO_LIGHT` ya es un PNG con fondo
+   *  transparente y tipografía oscura, pensado para un sidebar blanco. */
+  protected readonly logoSrc = computed(() => {
+    const custom = this.settings().logoUrl;
+    if (custom) {
+      return custom;
+    }
+    return this.sidebarIsDark() ? DEFAULT_LOGO_DARK : DEFAULT_LOGO_LIGHT;
+  });
+
+  /** El blend "screen" + chip oscuro (ver `.sidebar-logo`/`.sidebar-logo-image`
+   *  en sidebar.scss) solo tienen sentido para `DEFAULT_LOGO_DARK`: es el
+   *  único activo diseñado para "flotar" sobre un fondo navy. Cualquier logo
+   *  subido por el usuario o `DEFAULT_LOGO_LIGHT` ya trae su propio fondo
+   *  transparente correcto y debe pintarse normal. */
+  protected readonly logoNeedsDarkTreatment = computed(
+    () => !this.settings().logoUrl && this.sidebarIsDark(),
+  );
+
+  constructor() {
+    this.settingsFacade.init();
+  }
 
   protected readonly navSections = computed(() => {
     const role = this.authFacade.currentRole();

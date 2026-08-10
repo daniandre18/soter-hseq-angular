@@ -1,0 +1,66 @@
+{
+  "title": "Configuración",
+  "description": "Administra la información de la empresa y la apariencia de la plataforma.",
+  "loading": "Cargando configuración…",
+  "tabsAriaLabel": "Secciones de configuración",
+  "tabs": {
+    "general": "General",
+    "appearance": "Apariencia",
+    "aiPrompts": "Prompts de IA",
+    "connections": "Conexiones",
+    "webhooks": "Webhooks"
+  },
+  "comingSoon": {
+    "badge": "Próximamente",
+    "ai-prompts": "La redacción del acta con IA usa un prompt versionado en Cloud Functions (CLAUDE.md §12.4) y nunca se llama a Gemini desde el navegador. Editar el prompt desde aquí requiere primero definir un flujo de revisión seguro para ese cambio en el backend.",
+    "connections": "No hay integraciones externas configurables todavía — la plataforma solo se conecta con Firebase y Gemini, ambas fijas por entorno (.env), no por usuario.",
+    "webhooks": "Los webhooks salientes están fuera del alcance actual del MVP. Se documentan aquí como propuesta a futuro, no como funcionalidad activa."
+  },
+  "general": {
+    "cardTitle": "Información de la empresa",
+    "cardHelp": "Estos datos identifican a SOTER HSEQ ante tus clientes dentro de la plataforma.",
+    "businessName": "Nombre de la empresa",
+    "nameRequired": "El nombre de la empresa es obligatorio.",
+    "tagline": "Eslogan (opcional)",
+    "taglinePlaceholder": "Ej: Salud y Seguridad en el Trabajo",
+    "email": "Correo de contacto",
+    "phone": "Teléfono",
+    "address": "Dirección o cobertura",
+    "addressPlaceholder": "Ej: Cobertura Nacional, Colombia",
+    "save": "Guardar información",
+    "saving": "Guardando…",
+    "saveSuccess": "Información actualizada correctamente.",
+    "saveError": "No fue posible guardar la información. Inténtalo nuevamente."
+  },
+  "appearance": {
+    "active": "Activo",
+    "themeCardTitle": "Tema",
+    "themeCardHelp": "Elige el tema de la plataforma. Tu preferencia se guarda en este dispositivo y se aplica sin recargar la página.",
+    "logoCardTitle": "Logo de marca",
+    "logoCardHelp": "Se usa en el menú lateral de la plataforma. Formatos PNG, JPG o SVG — recomendado 200×50px.",
+    "sizeCardTitle": "Tamaño y posición del logo",
+    "sizeCardHelp": "Ajusta cómo se ve el logo en el menú lateral, con control independiente para escritorio y móvil.",
+    "sizeHelp": "Los cambios se aplican en todo el menú lateral al guardar.",
+    "desktopSize": "Tamaño en escritorio",
+    "mobileSize": "Tamaño en móvil",
+    "alignment": "Alineación horizontal",
+    "save": "Guardar apariencia",
+    "saving": "Guardando…",
+    "saveSuccess": "Apariencia actualizada correctamente.",
+    "saveError": "No fue posible guardar la apariencia. Inténtalo nuevamente.",
+    "logo": {
+      "demoModeHelp": "La carga de archivos está deshabilitada en este demo.",
+      "currentLabel": "Logo actual",
+      "currentAlt": "Logo actual de la empresa",
+      "dropzoneText": "Arrastra tu logo aquí o",
+      "dropzoneBrowse": "selecciona un archivo",
+      "removeFile": "Quitar archivo",
+      "uploadAction": "Subir logo",
+      "uploading": "Subiendo…",
+      "uploadSuccess": "Logo actualizado correctamente.",
+      "uploadError": "No fue posible subir el logo. Inténtalo nuevamente.",
+      "typeError": "Formato no permitido. Usa PNG, JPG o SVG.",
+      "sizeError": "El archivo supera el tamaño máximo ({{max}} MB)."
+    }
+  }
+}

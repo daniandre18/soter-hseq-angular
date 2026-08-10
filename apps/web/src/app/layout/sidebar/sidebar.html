@@ -13,23 +13,21 @@
   [class.sidebar--collapsed]="isCollapsed()"
 >
   <div class="sidebar-brand" [class.sidebar-brand--collapsed]="isCollapsed()">
-    <div class="sidebar-logo">
+    <div
+      class="sidebar-logo"
+      [class.sidebar-logo--chip]="logoNeedsDarkTreatment()"
+      [style.--logo-size-desktop.px]="settings().logoDesktopSize"
+      [style.--logo-size-mobile.px]="settings().logoMobileSize"
+    >
       <img
         class="sidebar-logo-image"
-        src="soter-hseq-logo-menu.jpeg"
+        [class.sidebar-logo-image--custom]="!logoNeedsDarkTreatment()"
+        [src]="logoSrc()"
+        [style.object-position]="logoObjectPosition()"
         alt="SOTER HSEQ — Salud y Seguridad en el Trabajo"
         decoding="async"
       />
     </div>
-    <button
-      type="button"
-      class="sidebar-icon-btn sidebar-collapse-btn"
-      (click)="toggleCollapsed()"
-      [attr.aria-label]="(isCollapsed() ? 'layout.expandMenu' : 'layout.collapseMenu') | transloco"
-      [title]="(isCollapsed() ? 'layout.expandMenu' : 'layout.collapseMenu') | transloco"
-    >
-      <app-icon [name]="isCollapsed() ? 'chevron-right' : 'chevron-left'" />
-    </button>
     <button
       type="button"
       class="sidebar-icon-btn sidebar-close-btn"
@@ -39,6 +37,21 @@
       <app-icon name="x" />
     </button>
   </div>
+
+  <!-- Flotante, anclado al borde del sidebar (mitad dentro/mitad fuera) en
+       vez de compartir la fila con el logo: dentro de esa fila, logo +
+       botón no cabían en el riel colapsado de 4rem y el botón terminaba
+       saliéndose del sidebar, quedando bajo el header sin poder hacerle
+       click (ver bounding boxes en la verificación con Playwright). -->
+  <button
+    type="button"
+    class="sidebar-collapse-btn"
+    (click)="toggleCollapsed()"
+    [attr.aria-label]="(isCollapsed() ? 'layout.expandMenu' : 'layout.collapseMenu') | transloco"
+    [title]="(isCollapsed() ? 'layout.expandMenu' : 'layout.collapseMenu') | transloco"
+  >
+    <app-icon [name]="isCollapsed() ? 'arrow-right' : 'arrow-left'" />
+  </button>
 
   <nav class="sidebar-nav" [attr.aria-label]="'layout.mainMenu' | transloco">
     @for (section of navSections(); track section.id) {

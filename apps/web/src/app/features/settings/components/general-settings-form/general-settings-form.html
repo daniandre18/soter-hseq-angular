@@ -1,0 +1,40 @@
+<app-card padding="lg">
+  <h3>{{ 'settings.general.cardTitle' | transloco }}</h3>
+  <p class="section-help">{{ 'settings.general.cardHelp' | transloco }}</p>
+
+  <form class="settings-form" [formGroup]="form" (ngSubmit)="save()">
+    <label class="field field--full">
+      {{ 'settings.general.businessName' | transloco }} *
+      <input formControlName="businessName" />
+      @if (form.controls.businessName.touched && form.controls.businessName.invalid) {
+        <span class="field-error">{{ 'settings.general.nameRequired' | transloco }}</span>
+      }
+    </label>
+
+    <label class="field field--full">
+      {{ 'settings.general.tagline' | transloco }}
+      <input formControlName="tagline" [placeholder]="'settings.general.taglinePlaceholder' | transloco" />
+    </label>
+
+    <label class="field">
+      {{ 'settings.general.email' | transloco }}
+      <input type="email" formControlName="email" placeholder="administracion@soterhseq.com" />
+    </label>
+
+    <label class="field">
+      {{ 'settings.general.phone' | transloco }}
+      <input type="tel" formControlName="phone" placeholder="+57 300 000 0000" />
+    </label>
+
+    <label class="field field--full">
+      {{ 'settings.general.address' | transloco }}
+      <input formControlName="address" [placeholder]="'settings.general.addressPlaceholder' | transloco" />
+    </label>
+
+    <div class="settings-form-actions">
+      <app-button type="submit" [disabled]="form.invalid || saving()">
+        {{ (saving() ? 'settings.general.saving' : 'settings.general.save') | transloco }}
+      </app-button>
+    </div>
+  </form>
+</app-card>

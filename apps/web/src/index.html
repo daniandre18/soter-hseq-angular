@@ -7,6 +7,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" sizes="256x256" href="favicon.png" />
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <script>
+      // Aplica el tema guardado antes del primer paint para evitar el
+      // parpadeo claro→oscuro (FOUC). Debe ser síncrono y vivir aquí, no en
+      // ThemeService (que corre después de que Angular ya pintó el DOM).
+      (function () {
+        try {
+          var stored = localStorage.getItem('app_theme');
+          if (stored === 'light' || stored === 'dark' || stored === 'semi-dark') {
+            document.documentElement.dataset.theme = stored;
+          }
+        } catch {
+          // localStorage no disponible (modo privado, etc.) — se queda en "system".
+        }
+      })();
+    </script>
     <style>
       .app-boot-loader {
         position: fixed;

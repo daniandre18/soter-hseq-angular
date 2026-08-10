@@ -53,6 +53,28 @@
   --color-gray-800: #1f2937;
   --color-gray-900: #111827;
 
+  // Superficie de tarjetas/modales — antes hardcodeado como `white` en cada
+  // componente; ahora es un token para poder redefinirlo en modo oscuro.
+  --color-surface: #ffffff;
+
+  // Sidebar — tokens independientes del contenido: por defecto (tema
+  // "Claro") el menú lateral es blanco con toques del color de marca; en
+  // "Oscuro" y "Semi Dark" (ver mixin `dark-sidebar-tokens` más abajo) pasa
+  // a un degradado navy con texto blanco translúcido.
+  --sidebar-bg: var(--color-surface);
+  --sidebar-text: var(--color-gray-600);
+  --sidebar-text-strong: var(--color-gray-900);
+  --sidebar-text-muted: var(--color-gray-400);
+  --sidebar-border: var(--color-gray-200);
+  --sidebar-hover-bg: var(--color-gray-100);
+  --sidebar-active-bg: var(--color-brand-50);
+  // Texto/ícono del ítem activo: en Claro toma el color de marca (el
+  // "toque de color" pedido); en Oscuro/Semi Dark se ve mejor en blanco
+  // sólido que en rojo sobre navy, así que se redefine aparte por tema.
+  --sidebar-active-text: var(--color-brand-700);
+  --sidebar-accent: var(--color-brand-600);
+  --sidebar-logo-chip-bg: var(--color-navy-900);
+
   // Colores auxiliares usados en StatCard/Badge del demo Next.js
   --color-green-50: #f0fdf4;
   --color-green-600: #16a34a;
@@ -97,6 +119,65 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+}
+
+/*
+ * Modo oscuro: misma paleta de marca (rojo/navy/amarillo/estados HSEQ sin
+ * cambios — ver arriba), solo se invierte la escala neutra (fondo/borde/
+ * texto) y `--color-surface`. `ThemeService` aplica `data-theme` en
+ * `<html>` con 4 valores posibles: "light" | "dark" | "semi-dark" | (sin
+ * atributo, para "system").
+ *
+ * El contenido (`dark-content-tokens`) y el sidebar (`dark-sidebar-tokens`)
+ * son mixins separados a propósito: "Semi Dark" es justamente la
+ * combinación contenido-claro + sidebar-oscuro, mientras "Oscuro" aplica
+ * ambos. "system" nunca resuelve a "semi-dark" (es una elección manual),
+ * por eso el guard de la media query excluye "light" y "semi-dark" pero no
+ * toca "dark" ni la ausencia de atributo.
+ */
+@mixin dark-content-tokens {
+  --color-gray-50: #100e1f;
+  --color-gray-100: #17152b;
+  --color-gray-200: #29253f;
+  --color-gray-300: #3c3856;
+  --color-gray-400: #8b87a8;
+  --color-gray-500: #a5a1c4;
+  --color-gray-600: #c3c0dc;
+  --color-gray-700: #dad8ee;
+  --color-gray-800: #ececf8;
+  --color-gray-900: #f6f5fc;
+  --color-surface: #1a1730;
+}
+
+@mixin dark-sidebar-tokens {
+  --sidebar-bg: linear-gradient(180deg, var(--color-navy-800), var(--color-navy-950));
+  --sidebar-text: rgb(255 255 255 / 70%);
+  --sidebar-text-strong: #ffffff;
+  --sidebar-text-muted: rgb(255 255 255 / 45%);
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-hover-bg: rgb(255 255 255 / 10%);
+  --sidebar-active-bg: rgb(255 255 255 / 10%);
+  --sidebar-active-text: #ffffff;
+  --sidebar-accent: var(--color-accent-500);
+  --sidebar-logo-chip-bg: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='semi-dark']) {
+    @include dark-content-tokens;
+    @include dark-sidebar-tokens;
+  }
+}
+
+:root[data-theme='dark'] {
+  @include dark-content-tokens;
+  @include dark-sidebar-tokens;
+}
+
+// Semi Dark: sidebar oscuro, contenido y cabecera permanecen claros — NO
+// se incluye `dark-content-tokens` a propósito.
+:root[data-theme='semi-dark'] {
+  @include dark-sidebar-tokens;
 }
 
 * {

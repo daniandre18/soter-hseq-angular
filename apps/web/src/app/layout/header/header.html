@@ -8,6 +8,7 @@
 
   @if (currentUser(); as user) {
     <div class="header-user">
+      <app-theme-toggle />
       <app-language-selector />
       @if (showNotifications()) {
         <app-notification-bell />

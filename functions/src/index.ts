@@ -786,3 +786,67 @@ export const uploadEvidence = onCall(
     return { evidenceId: evidenceRef.id, downloadUrl };
   },
 );
+
+const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
+const ACCEPTED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml']);
+
+interface UploadLogoRequest {
+  fileName: string;
+  contentType: string;
+  fileBase64: string;
+}
+
+/**
+ * Sube el logo de la empresa y actualiza `settings/general.logoUrl` en la
+ * misma función — mismo patrón que `uploadEvidence` (Admin SDK, Storage
+ * bloqueado para el cliente por `storage.rules`), pero solo ADMIN puede
+ * llamarla (CLAUDE.md §3.1).
+ */
+export const uploadLogo = onCall({ memory: '512MiB', timeoutSeconds: 60 }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para subir el logo.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN']);
+
+  const { fileName, contentType, fileBase64 } = (request.data ?? {}) as Partial<UploadLogoRequest>;
+  if (!fileName || !contentType || !fileBase64) {
+    throw new HttpsError('invalid-argument', 'Faltan datos para subir el logo.');
+  }
+  if (!ACCEPTED_LOGO_TYPES.has(contentType)) {
+    throw new HttpsError('invalid-argument', 'Formato no permitido. Usa PNG, JPG o SVG.');
+  }
+
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(fileBase64, 'base64');
+  } catch {
+    throw new HttpsError('invalid-argument', 'El archivo enviado no es válido.');
+  }
+  if (buffer.length === 0 || buffer.length > MAX_LOGO_SIZE_BYTES) {
+    throw new HttpsError(
+      'invalid-argument',
+      `El archivo supera el tamaño máximo (${Math.round(MAX_LOGO_SIZE_BYTES / 1024 / 1024)} MB).`,
+    );
+  }
+
+  const safeFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+  const storagePath = `settings/logo/${safeFileName}`;
+  const downloadToken = randomUUID();
+
+  const bucket = getStorage().bucket();
+  await bucket.file(storagePath).save(buffer, {
+    contentType,
+    metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+  });
+  const logoUrl = buildDownloadUrl(bucket.name, storagePath, downloadToken);
+
+  await getFirestore()
+    .collection('settings')
+    .doc('general')
+    .set(
+      { logoUrl, updatedAt: FieldValue.serverTimestamp(), updatedBy: request.auth.uid },
+      { merge: true },
+    );
+
+  return { logoUrl };
+});

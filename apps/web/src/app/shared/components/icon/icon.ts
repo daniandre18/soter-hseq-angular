@@ -43,7 +43,17 @@ export type IconName =
   | 'mail'
   | 'external-link'
   | 'download'
-  | 'printer';
+  | 'printer'
+  | 'sun'
+  | 'moon'
+  | 'monitor'
+  | 'contrast'
+  | 'settings'
+  | 'align-left'
+  | 'align-center'
+  | 'align-right'
+  | 'arrow-left'
+  | 'arrow-right';
 
 @Component({
   selector: 'app-icon',

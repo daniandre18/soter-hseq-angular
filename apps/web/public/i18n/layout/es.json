@@ -21,7 +21,8 @@
     "services": "Servicios",
     "catalog": "Catálogo",
     "categories": "Categorías",
-    "technicians": "Técnicos"
+    "technicians": "Técnicos",
+    "settings": "Configuración"
   },
   "pageTitles": {
     "dashboard": "Panel",
@@ -32,7 +33,8 @@
     "categories": "Categorías de servicios",
     "services": "Servicios",
     "technicians": "Técnicos",
-    "myOrders": "Mis órdenes"
+    "myOrders": "Mis órdenes",
+    "settings": "Configuración"
   },
   "roles": {
     "ADMIN": "Administrador",
