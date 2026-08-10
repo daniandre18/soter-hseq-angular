@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, HostListener, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
@@ -17,12 +17,33 @@ import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LocalizedCurrencyPipe } from '../../../../shared/pipes/localized-currency.pipe';
 import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
+import {
+  RowActionsMenu,
+  type RowMenuAction,
+  type RowMenuActionSelection,
+} from '../../../../shared/components/row-actions-menu/row-actions-menu';
 
 type StatusFilterOption = 'all' | QuoteStatus;
+const QUOTE_ROW_ACTIONS: readonly RowMenuAction[] = [
+  { id: 'edit', icon: 'square-pen', labelKey: 'quotes.edit' },
+  { id: 'delete', icon: 'trash-2', labelKey: 'quotes.delete', tone: 'danger' },
+];
 
 @Component({
   selector: 'app-quotes-list',
-  imports: [Button, Card, StatusBadge, Icon, Modal, QuoteFormModal, QuoteDetailModal, TranslocoPipe, LocalizedCurrencyPipe, LocalizedDatePipe],
+  imports: [
+    Button,
+    Card,
+    StatusBadge,
+    Icon,
+    Modal,
+    QuoteFormModal,
+    QuoteDetailModal,
+    TranslocoPipe,
+    LocalizedCurrencyPipe,
+    LocalizedDatePipe,
+    RowActionsMenu,
+  ],
   providers: [...provideTranslocoScope('quotes')],
   templateUrl: './quotes-list.html',
   styleUrl: './quotes-list.scss',
@@ -49,6 +70,8 @@ export class QuotesList {
   protected readonly editingQuote = signal<Quote | null>(null);
   protected readonly deletingQuote = signal<Quote | null>(null);
   protected readonly deleting = signal(false);
+  protected readonly openActionsId = signal<string | null>(null);
+  protected readonly rowActions = QUOTE_ROW_ACTIONS;
 
   protected readonly statusOptions = Object.entries(QUOTE_STATUS_CONFIG) as [
     QuoteStatus,
@@ -143,6 +166,7 @@ export class QuotesList {
 
   protected openEdit(quote: Quote, event: Event): void {
     event.stopPropagation();
+    this.openActionsId.set(null);
     if (!this.canEditDraftQuotes() || quote.status !== 'DRAFT') {
       return;
     }
@@ -157,6 +181,7 @@ export class QuotesList {
 
   protected confirmDelete(quote: Quote, event: Event): void {
     event.stopPropagation();
+    this.openActionsId.set(null);
     if (this.canEditDraftQuotes() && quote.status === 'DRAFT') {
       this.deletingQuote.set(quote);
     }
@@ -188,5 +213,24 @@ export class QuotesList {
 
   protected closeDetail(): void {
     this.detailQuoteId.set(null);
+  }
+
+  protected toggleActions(quoteId: string, event: Event): void {
+    event.stopPropagation();
+    this.openActionsId.update((current) => (current === quoteId ? null : quoteId));
+  }
+
+  protected handleRowAction(selection: RowMenuActionSelection, quote: Quote): void {
+    if (selection.id === 'edit') {
+      this.openEdit(quote, selection.event);
+    } else if (selection.id === 'delete') {
+      this.confirmDelete(quote, selection.event);
+    }
+  }
+
+  @HostListener('document:click')
+  @HostListener('document:keydown.escape')
+  protected closeActions(): void {
+    this.openActionsId.set(null);
   }
 }

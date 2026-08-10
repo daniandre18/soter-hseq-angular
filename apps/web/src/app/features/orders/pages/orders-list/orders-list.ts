@@ -17,6 +17,11 @@ import type { OrderPriority, OrderStatus, ServiceOrder } from '../../models/orde
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
+import {
+  RowActionsMenu,
+  type RowMenuAction,
+  type RowMenuActionSelection,
+} from '../../../../shared/components/row-actions-menu/row-actions-menu';
 
 type StatusFilterOption = 'all' | 'active' | 'closed' | OrderStatus;
 
@@ -25,10 +30,22 @@ const CLOSED_ORDER_STATUSES = new Set<OrderStatus>(['CLOSED', 'CANCELLED']);
 
 @Component({
   selector: 'app-orders-list',
-  imports: [Card, Button, StatusBadge, ProgressBar, Avatar, Modal, Icon, OrderFormModal, TranslocoPipe, LocalizedDatePipe],
+  imports: [
+    Card,
+    Button,
+    StatusBadge,
+    ProgressBar,
+    Avatar,
+    Modal,
+    Icon,
+    OrderFormModal,
+    TranslocoPipe,
+    LocalizedDatePipe,
+    RowActionsMenu,
+  ],
   providers: [...provideTranslocoScope('orders')],
   templateUrl: './orders-list.html',
-  styleUrl: './orders-list.scss',
+  styleUrls: ['./orders-list.scss', './orders-list-desktop.scss'],
 })
 export class OrdersList {
   protected readonly ordersFacade = inject(OrdersFacade);
@@ -47,6 +64,7 @@ export class OrdersList {
   protected readonly deletingOrder = signal<ServiceOrder | null>(null);
   protected readonly deleting = signal(false);
   protected readonly openMobileActionsId = signal<string | null>(null);
+  protected readonly openDesktopActionsId = signal<string | null>(null);
 
   protected readonly canManage = computed(() => {
     const role = this.authFacade.currentRole();
@@ -128,6 +146,33 @@ export class OrdersList {
       : order.assignedTechnicianIds.map((id) => this.ordersFacade.technicianName(id));
   }
 
+  protected shortScheduleDate(value: Date): string {
+    const locale = this.language.currentLocale();
+    const dateParts = new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'short',
+    }).formatToParts(value);
+    const day = dateParts.find((part) => part.type === 'day')?.value ?? '';
+    const rawMonth =
+      dateParts.find((part) => part.type === 'month')?.value.replace(/\.$/, '') ?? '';
+    const month = rawMonth ? rawMonth.charAt(0).toLocaleUpperCase(locale) + rawMonth.slice(1) : '';
+    const time = new Intl.DateTimeFormat(locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+      .formatToParts(value)
+      .map((part) =>
+        part.type === 'dayPeriod'
+          ? part.value.replace(/[.\s]/g, '').toLocaleUpperCase(locale)
+          : part.value,
+      )
+      .join('')
+      .trim();
+
+    return `${day} ${month}, ${time}`;
+  }
+
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
     this.visibleCount.set(PAGE_SIZE);
@@ -154,7 +199,8 @@ export class OrdersList {
     this.visibleCount.set(PAGE_SIZE);
   }
 
-  protected openDetail(order: ServiceOrder): void {
+  protected openDetail(order: ServiceOrder, event?: Event): void {
+    event?.stopPropagation();
     void this.router.navigate(['/ordenes', order.id]);
   }
 
@@ -163,9 +209,39 @@ export class OrdersList {
     this.openMobileActionsId.update((currentId) => (currentId === orderId ? null : orderId));
   }
 
+  protected toggleDesktopActions(orderId: string, event: Event): void {
+    event.stopPropagation();
+    this.openDesktopActionsId.update((currentId) => (currentId === orderId ? null : orderId));
+  }
+
+  protected rowActions(order: ServiceOrder): readonly RowMenuAction[] {
+    const actions: RowMenuAction[] = [];
+    if (this.canManage()) {
+      actions.push({ id: 'edit', icon: 'square-pen', labelKey: 'orders.actions.edit' });
+    }
+    if (this.canDelete() && order.status === 'DRAFT') {
+      actions.push({
+        id: 'delete',
+        icon: 'trash-2',
+        labelKey: 'orders.actions.delete',
+        tone: 'danger',
+      });
+    }
+    return actions;
+  }
+
+  protected handleRowAction(selection: RowMenuActionSelection, order: ServiceOrder): void {
+    if (selection.id === 'edit') {
+      this.openEditFromList(order, selection.event);
+    } else if (selection.id === 'delete') {
+      this.confirmDelete(order, selection.event);
+    }
+  }
+
   @HostListener('document:click')
   protected closeMobileActions(): void {
     this.openMobileActionsId.set(null);
+    this.openDesktopActionsId.set(null);
   }
 
   protected openCreate(): void {
@@ -182,12 +258,14 @@ export class OrdersList {
    *  botón "Editar" del detalle, sin pasar por él. */
   protected openEditFromList(order: ServiceOrder, event: Event): void {
     event.stopPropagation();
+    this.openDesktopActionsId.set(null);
     this.editingOrder.set(order);
     this.formOpen.set(true);
   }
 
   protected confirmDelete(order: ServiceOrder, event: Event): void {
     event.stopPropagation();
+    this.openDesktopActionsId.set(null);
     this.deletingOrder.set(order);
   }
 

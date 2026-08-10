@@ -65,7 +65,7 @@
               <th>{{ 'quotes.statusLabel' | transloco }}</th>
               <th>{{ 'quotes.validUntil' | transloco }}</th>
               @if (canEditDraftQuotes()) {
-                <th [attr.aria-label]="'common.actions' | transloco"></th>
+                <th class="actions-header">{{ 'common.actions' | transloco }}</th>
               }
             </tr>
           </thead>
@@ -91,24 +91,13 @@
                 @if (canEditDraftQuotes()) {
                   <td class="actions-cell">
                     @if (quote.status === 'DRAFT') {
-                      <button
-                        type="button"
-                        class="icon-btn"
-                        (click)="openEdit(quote, $event)"
-                        [attr.aria-label]="'quotes.edit' | transloco"
-                        [title]="'common.edit' | transloco"
-                      >
-                        <app-icon name="square-pen" />
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-btn icon-btn--danger"
-                        (click)="confirmDelete(quote, $event)"
-                        [attr.aria-label]="'quotes.delete' | transloco"
-                        [title]="'common.delete' | transloco"
-                      >
-                        <app-icon name="trash-2" />
-                      </button>
+                      <app-row-actions-menu
+                        [open]="openActionsId() === quote.id"
+                        [triggerLabel]="'common.actions' | transloco"
+                        [actions]="rowActions"
+                        (toggleRequested)="toggleActions(quote.id, $event)"
+                        (actionSelected)="handleRowAction($event, quote)"
+                      />
                     }
                   </td>
                 }

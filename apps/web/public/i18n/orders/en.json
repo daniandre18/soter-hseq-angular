@@ -28,7 +28,12 @@
     "priority": "Priority",
     "progress": "Progress",
     "visit": "Visit",
-    "due": "Due"
+    "due": "Due",
+    "orderAndTitle": "Order and title",
+    "assigned": "Assigned",
+    "statusAndPriority": "Status and priority",
+    "schedule": "Dates / schedule",
+    "progressAndActions": "Progress and actions"
   },
   "actions": {
     "view": "View order",

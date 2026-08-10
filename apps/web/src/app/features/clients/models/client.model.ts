@@ -13,6 +13,8 @@ export interface Client {
   city?: string;
   notes?: string;
   status: ClientStatus;
+  /** Cuenta VIEWER activa que puede ingresar al portal en nombre del cliente. */
+  portalUserId?: string;
   /** `id`s del catálogo administrable `clientTags` (ver `client-tag.model.ts`),
    *  no un enum cerrado — un `id` puede quedar "huérfano" si la etiqueta se
    *  borró después, así que cualquier render debe tolerar un `id` sin match. */

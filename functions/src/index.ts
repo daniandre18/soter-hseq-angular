@@ -42,7 +42,8 @@ function buildDownloadUrl(bucketName: string, path: string, token: string): stri
 async function requireRole(uid: string, allowedRoles: Role[]): Promise<Role> {
   const userDoc = await getFirestore().collection('users').doc(uid).get();
   const role = userDoc.data()?.['role'] as Role | undefined;
-  if (!role || !allowedRoles.includes(role)) {
+  const status = userDoc.data()?.['status'] as string | undefined;
+  if (!role || status !== 'ACTIVE' || !allowedRoles.includes(role)) {
     throw new HttpsError('permission-denied', 'Tu rol no tiene permiso para esta acción.');
   }
   return role;
@@ -186,7 +187,10 @@ export const onEvidenceCreated = onDocumentCreated(
         orderId,
         action: 'EVIDENCE_UPLOADED',
         description: `Evidencia cargada: ${data['fileName']}`,
-        metadata: { evidenceId: event.params.evidenceId, category: data['category'] ?? null },
+        metadata: {
+          evidenceId: event.params.evidenceId,
+          category: data['category'] ?? null,
+        },
         createdBy: data['uploadedBy'],
       }),
       notifyAdmins({
@@ -395,7 +399,10 @@ async function prepareClosingActContext(uid: string, orderId: string) {
   }
   const order = orderSnapshot.data() ?? {};
   if (order['status'] !== 'UNDER_REVIEW') {
-    throw new HttpsError('failed-precondition', 'La orden debe estar en revisión para crear el acta.');
+    throw new HttpsError(
+      'failed-precondition',
+      'La orden debe estar en revisión para crear el acta.',
+    );
   }
   if (
     role === 'TECHNICIAN' &&
@@ -416,9 +423,7 @@ async function prepareClosingActContext(uid: string, orderId: string) {
 }
 
 function cleanOptionalText(value: unknown, maxLength = 4000): string | null {
-  return typeof value === 'string' && value.trim()
-    ? value.trim().slice(0, maxLength)
-    : null;
+  return typeof value === 'string' && value.trim() ? value.trim().slice(0, maxLength) : null;
 }
 
 function cleanTextList(value: unknown): string[] {
@@ -582,10 +587,7 @@ export const createClosingAct = onCall(async (request) => {
     conclusions: cleanOptionalText(content.conclusions),
     limitations: cleanOptionalText(content.limitations),
     acceptanceNotes: cleanOptionalText(content.acceptanceNotes),
-    serviceProviderRepresentative: cleanOptionalText(
-      content.serviceProviderRepresentative,
-      200,
-    ),
+    serviceProviderRepresentative: cleanOptionalText(content.serviceProviderRepresentative, 200),
     serviceProviderRepresentativeRole: cleanOptionalText(
       content.serviceProviderRepresentativeRole,
       200,
@@ -692,7 +694,10 @@ function formatPdfDate(value: unknown): string {
         ? value
         : null;
   return date
-    ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+    ? new Intl.DateTimeFormat('es-CO', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(date)
     : '—';
 }
 
@@ -723,16 +728,10 @@ function buildClosingActPdf(
 
     const orderNumber = order['orderNumber'] ?? act['orderId'] ?? '—';
     doc.rect(0, 0, doc.page.width, 112).fill('#11047A');
-    doc
-      .fillColor('#FFFFFF')
-      .fontSize(9)
-      .font('Helvetica-Bold')
-      .text('SOTER HSEQ', 50, 30);
-    doc
-      .fontSize(20)
-      .text(act['title'] ?? `Acta de cierre - ${orderNumber}`, 50, 51, {
-        width: doc.page.width - 100,
-      });
+    doc.fillColor('#FFFFFF').fontSize(9).font('Helvetica-Bold').text('SOTER HSEQ', 50, 30);
+    doc.fontSize(20).text(act['title'] ?? `Acta de cierre - ${orderNumber}`, 50, 51, {
+      width: doc.page.width - 100,
+    });
     doc.fontSize(9).font('Helvetica').text(`Orden de trabajo ${orderNumber}`, 50, 83);
     doc.fillColor('#000000');
 
@@ -742,7 +741,9 @@ function buildClosingActPdf(
     doc.text(`Cliente: ${order['clientBusinessName'] ?? '—'}`);
     doc.text(`Servicio: ${order['serviceSummary'] ?? order['title'] ?? '—'}`);
     doc.text(`Visita programada: ${formatPdfDate(order['scheduledStart'])}`);
-    doc.text(`Técnicos responsables: ${((order['assignedTechnicianNames'] as string[] | undefined) ?? []).join(', ') || '—'}`);
+    doc.text(
+      `Técnicos responsables: ${((order['assignedTechnicianNames'] as string[] | undefined) ?? []).join(', ') || '—'}`,
+    );
 
     section('Objetivo y alcance', act['objective'] ?? '');
     section('Resumen ejecutivo', act['executiveSummary'] ?? '');
@@ -770,19 +771,34 @@ function buildClosingActPdf(
       width: signatureWidth,
       align: 'center',
     });
-    doc.text(act['clientRepresentative'] ?? 'Representante del cliente', 70 + signatureWidth, signatureY + 8, {
-      width: signatureWidth,
-      align: 'center',
-    });
+    doc.text(
+      act['clientRepresentative'] ?? 'Representante del cliente',
+      70 + signatureWidth,
+      signatureY + 8,
+      {
+        width: signatureWidth,
+        align: 'center',
+      },
+    );
     doc.font('Helvetica').fontSize(8).fillColor('#666666');
-    doc.text(act['serviceProviderRepresentativeRole'] ?? 'Nombre, cargo y firma', 50, signatureY + 22, {
-      width: signatureWidth,
-      align: 'center',
-    });
-    doc.text(act['clientRepresentativeRole'] ?? 'Nombre, cargo y firma', 70 + signatureWidth, signatureY + 22, {
-      width: signatureWidth,
-      align: 'center',
-    });
+    doc.text(
+      act['serviceProviderRepresentativeRole'] ?? 'Nombre, cargo y firma',
+      50,
+      signatureY + 22,
+      {
+        width: signatureWidth,
+        align: 'center',
+      },
+    );
+    doc.text(
+      act['clientRepresentativeRole'] ?? 'Nombre, cargo y firma',
+      70 + signatureWidth,
+      signatureY + 22,
+      {
+        width: signatureWidth,
+        align: 'center',
+      },
+    );
 
     if (act['clientDecision'] === 'ACCEPTED') {
       section('Constancia de aceptación digital', [
@@ -1011,7 +1027,10 @@ export const closeOrder = onCall(async (request) => {
   }
   // No cerrar sin acta aprobada (CLAUDE.md §10.2/§23.7).
   if (actSnapshot.data()?.['status'] !== 'APPROVED') {
-    throw new HttpsError('failed-precondition', 'El acta debe estar aprobada antes de cerrar la orden.');
+    throw new HttpsError(
+      'failed-precondition',
+      'El acta debe estar aprobada antes de cerrar la orden.',
+    );
   }
 
   const order = orderSnapshot.data() ?? {};
@@ -1047,7 +1066,11 @@ export const closeOrder = onCall(async (request) => {
     updatedAt: now,
     updatedBy: request.auth.uid,
   });
-  batch.update(orderRef, { status: 'CLOSED', updatedAt: now, updatedBy: request.auth.uid });
+  batch.update(orderRef, {
+    status: 'CLOSED',
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
   // Se escribe en ambas colecciones: `auditEvents` es la bitácora global
   // (CLAUDE.md §9.9, solo ADMIN/COORDINATOR), y `orders/{orderId}/events`
   // es lo que lee el feed de Actividad de la orden — mismo evento normalizado.
@@ -1077,6 +1100,104 @@ interface CreateUserRequest {
   role: Role;
 }
 
+const VALID_ROLES = new Set<Role>(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN', 'VIEWER']);
+const INTERNAL_ROLES = new Set<Role>(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+
+function isRole(value: unknown): value is Role {
+  return typeof value === 'string' && VALID_ROLES.has(value as Role);
+}
+
+function isInternalRole(value: unknown): value is Role {
+  return typeof value === 'string' && INTERNAL_ROLES.has(value as Role);
+}
+
+function normalizedOptionalText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function userAuditEvent(
+  uid: string,
+  action: string,
+  description: string,
+  actorUid: string,
+  metadata: Record<string, unknown> = {},
+): FirebaseFirestore.DocumentData {
+  return {
+    entityType: 'USER',
+    entityId: uid,
+    action,
+    description,
+    metadata,
+    createdAt: FieldValue.serverTimestamp(),
+    createdBy: actorUid,
+  };
+}
+
+interface ClientPortalUserRequest {
+  clientId: string;
+  displayName: string;
+  email: string;
+  phone?: string;
+}
+
+interface ReplaceClientPortalUserRequest extends ClientPortalUserRequest {
+  currentUid: string;
+}
+
+async function createInvitedAuthUser(email: string, displayName: string) {
+  try {
+    return await getAuth().createUser({
+      email,
+      password: `${randomUUID()}Aa1!`,
+      displayName,
+      emailVerified: false,
+    });
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === 'auth/email-already-exists') {
+      throw new HttpsError('already-exists', 'Ya existe una cuenta con ese correo.');
+    }
+    throw new HttpsError('invalid-argument', 'No se pudo crear la cuenta con esos datos.');
+  }
+}
+
+function clientPortalUserData(
+  uid: string,
+  data: {
+    displayName: string;
+    email: string;
+    phone?: string;
+    clientId: string;
+  },
+  actorUid: string,
+): FirebaseFirestore.DocumentData {
+  const now = FieldValue.serverTimestamp();
+  return {
+    uid,
+    displayName: data.displayName,
+    email: data.email,
+    phone: normalizedOptionalText(data.phone),
+    clientId: data.clientId,
+    role: 'VIEWER' as const,
+    status: 'ACTIVE' as const,
+    invitedAt: now,
+    createdAt: now,
+    createdBy: actorUid,
+    updatedAt: now,
+    updatedBy: actorUid,
+  };
+}
+
+function normalizeClientPortalUserRequest(data: Partial<ClientPortalUserRequest>) {
+  const clientId = data.clientId?.trim();
+  const displayName = data.displayName?.trim();
+  const email = data.email?.trim().toLowerCase();
+  if (!clientId || !displayName || !email) {
+    throw new HttpsError('invalid-argument', 'Revisa el cliente, nombre y correo del usuario.');
+  }
+  return { clientId, displayName, email, phone: data.phone };
+}
+
 /**
  * Crea una cuenta de Firebase Auth + su documento en `users` en el mismo
  * paso. No se puede crear un usuario de Auth para otra persona desde el
@@ -1099,10 +1220,21 @@ export const createUser = onCall(async (request) => {
   if (password.length < 6) {
     throw new HttpsError('invalid-argument', 'La contraseña debe tener al menos 6 caracteres.');
   }
+  if (!isRole(role) || role !== 'TECHNICIAN') {
+    throw new HttpsError(
+      'invalid-argument',
+      'Esta operación solo permite crear cuentas de técnicos.',
+    );
+  }
 
   let authUser;
   try {
-    authUser = await getAuth().createUser({ email, password, displayName, emailVerified: true });
+    authUser = await getAuth().createUser({
+      email,
+      password,
+      displayName,
+      emailVerified: true,
+    });
   } catch (error) {
     const code = (error as { code?: string }).code;
     if (code === 'auth/email-already-exists') {
@@ -1130,6 +1262,567 @@ export const createUser = onCall(async (request) => {
     });
 
   return { uid: authUser.uid };
+});
+
+interface InviteInternalUserRequest {
+  email: string;
+  displayName: string;
+  phone?: string;
+  jobTitle?: string;
+  role: Role;
+}
+
+/**
+ * Crea un usuario administrativo sin compartir contraseñas. La cuenta nace
+ * con una clave aleatoria imposible de conocer desde el navegador y el
+ * frontend solicita inmediatamente el correo oficial de restablecimiento de
+ * Firebase, que funciona como invitación para definir la contraseña.
+ */
+export const inviteInternalUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para invitar usuarios.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN']);
+
+  const { email, displayName, phone, jobTitle, role } = (request.data ??
+    {}) as Partial<InviteInternalUserRequest>;
+  const normalizedEmail = email?.trim().toLowerCase();
+  const normalizedName = displayName?.trim();
+  if (!normalizedEmail || !normalizedName || !isInternalRole(role)) {
+    throw new HttpsError('invalid-argument', 'Revisa el nombre, correo y perfil del usuario.');
+  }
+
+  let authUser;
+  try {
+    authUser = await getAuth().createUser({
+      email: normalizedEmail,
+      password: `${randomUUID()}Aa1!`,
+      displayName: normalizedName,
+      emailVerified: false,
+    });
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === 'auth/email-already-exists') {
+      throw new HttpsError('already-exists', 'Ya existe una cuenta con ese correo.');
+    }
+    throw new HttpsError('invalid-argument', 'No se pudo crear la cuenta con esos datos.');
+  }
+
+  const now = FieldValue.serverTimestamp();
+  const firestore = getFirestore();
+  const batch = firestore.batch();
+  batch.set(firestore.collection('users').doc(authUser.uid), {
+    uid: authUser.uid,
+    displayName: normalizedName,
+    email: normalizedEmail,
+    phone: normalizedOptionalText(phone),
+    jobTitle: normalizedOptionalText(jobTitle),
+    role,
+    status: 'ACTIVE',
+    invitedAt: now,
+    createdAt: now,
+    createdBy: request.auth.uid,
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
+  batch.set(
+    firestore.collection('auditEvents').doc(),
+    userAuditEvent(
+      authUser.uid,
+      'USER_INVITED',
+      `Usuario interno ${normalizedName} invitado`,
+      request.auth.uid,
+      { role },
+    ),
+  );
+
+  try {
+    await batch.commit();
+  } catch (error) {
+    await getAuth()
+      .deleteUser(authUser.uid)
+      .catch(() => undefined);
+    throw error;
+  }
+
+  return { uid: authUser.uid };
+});
+
+/**
+ * Invita la primera cuenta VIEWER de una empresa. La relación se guarda en
+ * ambos sentidos (`users.clientId` y `clients.portalUserId`) para que Rules
+ * acoten el portal y para serializar invitaciones concurrentes.
+ */
+export const inviteClientUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para invitar usuarios.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN', 'COMMERCIAL']);
+
+  const input = normalizeClientPortalUserRequest(
+    (request.data ?? {}) as Partial<ClientPortalUserRequest>,
+  );
+  const firestore = getFirestore();
+  const clientRef = firestore.collection('clients').doc(input.clientId);
+  const [clientSnapshot, linkedUsers] = await Promise.all([
+    clientRef.get(),
+    firestore.collection('users').where('clientId', '==', input.clientId).get(),
+  ]);
+  if (!clientSnapshot.exists) {
+    throw new HttpsError('not-found', 'El cliente no existe.');
+  }
+  if (clientSnapshot.data()?.['status'] !== 'ACTIVE') {
+    throw new HttpsError('failed-precondition', 'Activa el cliente antes de habilitar su portal.');
+  }
+  const hasActiveViewer = linkedUsers.docs.some(
+    (snapshot) => snapshot.data()['role'] === 'VIEWER' && snapshot.data()['status'] === 'ACTIVE',
+  );
+  if (clientSnapshot.data()?.['portalUserId'] || hasActiveViewer) {
+    throw new HttpsError('already-exists', 'Este cliente ya tiene un usuario con acceso activo.');
+  }
+
+  const authUser = await createInvitedAuthUser(input.email, input.displayName);
+  const userRef = firestore.collection('users').doc(authUser.uid);
+  try {
+    await firestore.runTransaction(async (transaction) => {
+      const freshClient = await transaction.get(clientRef);
+      if (!freshClient.exists || freshClient.data()?.['status'] !== 'ACTIVE') {
+        throw new HttpsError('failed-precondition', 'El cliente ya no está disponible.');
+      }
+      if (freshClient.data()?.['portalUserId']) {
+        throw new HttpsError(
+          'already-exists',
+          'Este cliente ya tiene un usuario con acceso activo.',
+        );
+      }
+      transaction.set(userRef, clientPortalUserData(authUser.uid, input, request.auth!.uid));
+      transaction.update(clientRef, {
+        portalUserId: authUser.uid,
+        portalAccessUpdatedAt: FieldValue.serverTimestamp(),
+        portalAccessUpdatedBy: request.auth!.uid,
+      });
+      transaction.set(
+        firestore.collection('auditEvents').doc(),
+        userAuditEvent(
+          authUser.uid,
+          'CLIENT_USER_INVITED',
+          `Acceso al portal de ${clientSnapshot.data()?.['businessName'] ?? 'cliente'} invitado`,
+          request.auth!.uid,
+          { clientId: input.clientId, role: 'VIEWER' },
+        ),
+      );
+    });
+  } catch (error) {
+    await getAuth()
+      .deleteUser(authUser.uid)
+      .catch(() => undefined);
+    throw error;
+  }
+
+  return { uid: authUser.uid };
+});
+
+/**
+ * Reemplaza al empleado que tenía acceso. La cuenta anterior se deshabilita
+ * y conserva en Firestore para auditoría; una cuenta y uid nuevos reciben la
+ * invitación. Mover el correo anterior a una dirección archivada permite
+ * reutilizar incluso el mismo correo sin dejar viva la sesión previa.
+ */
+export const replaceClientUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para reemplazar usuarios.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN', 'COMMERCIAL']);
+
+  const requestData = (request.data ?? {}) as Partial<ReplaceClientPortalUserRequest>;
+  const input = normalizeClientPortalUserRequest(requestData);
+  const currentUid = requestData.currentUid?.trim();
+  if (!currentUid) {
+    throw new HttpsError('invalid-argument', 'Falta el usuario que será reemplazado.');
+  }
+
+  const firestore = getFirestore();
+  const clientRef = firestore.collection('clients').doc(input.clientId);
+  const currentUserRef = firestore.collection('users').doc(currentUid);
+  const [clientSnapshot, currentUserSnapshot] = await Promise.all([
+    clientRef.get(),
+    currentUserRef.get(),
+  ]);
+  const currentUserData = currentUserSnapshot.data();
+  const originalStatus = currentUserData?.['status'];
+  if (!clientSnapshot.exists) {
+    throw new HttpsError('not-found', 'El cliente no existe.');
+  }
+  if (
+    !currentUserSnapshot.exists ||
+    currentUserData?.['role'] !== 'VIEWER' ||
+    currentUserData?.['clientId'] !== input.clientId ||
+    (originalStatus !== 'ACTIVE' && originalStatus !== 'INACTIVE')
+  ) {
+    throw new HttpsError('failed-precondition', 'El acceso actual del cliente ya no está activo.');
+  }
+  const portalUserId = clientSnapshot.data()?.['portalUserId'];
+  if (portalUserId && portalUserId !== currentUid) {
+    throw new HttpsError(
+      'failed-precondition',
+      'El acceso del cliente cambió. Actualiza la página.',
+    );
+  }
+
+  const auth = getAuth();
+  let currentAuthUser;
+  try {
+    currentAuthUser = await auth.getUser(currentUid);
+  } catch {
+    throw new HttpsError('failed-precondition', 'La cuenta actual no existe en Firebase Auth.');
+  }
+  const archivedEmail = `disabled.${currentUid}.${Date.now()}@access.soter-hseq.co`;
+  await auth.updateUser(currentUid, { email: archivedEmail, disabled: true });
+
+  const restoreCurrentAuthIfStillCurrent = async (): Promise<void> => {
+    const [freshCurrentUser, freshClient] = await Promise.all([
+      currentUserRef.get().catch(() => null),
+      clientRef.get().catch(() => null),
+    ]);
+    if (
+      freshCurrentUser?.data()?.['status'] !== originalStatus ||
+      (freshClient?.data()?.['portalUserId'] && freshClient.data()?.['portalUserId'] !== currentUid)
+    ) {
+      return;
+    }
+    await auth
+      .updateUser(currentUid, {
+        email: currentAuthUser.email,
+        disabled: currentAuthUser.disabled,
+      })
+      .catch(() => undefined);
+  };
+
+  let replacementAuthUser;
+  try {
+    replacementAuthUser = await createInvitedAuthUser(input.email, input.displayName);
+  } catch (error) {
+    await restoreCurrentAuthIfStillCurrent();
+    throw error;
+  }
+
+  const replacementUserRef = firestore.collection('users').doc(replacementAuthUser.uid);
+  try {
+    await firestore.runTransaction(async (transaction) => {
+      const [freshClient, freshCurrentUser] = await Promise.all([
+        transaction.get(clientRef),
+        transaction.get(currentUserRef),
+      ]);
+      if (
+        !freshClient.exists ||
+        !freshCurrentUser.exists ||
+        freshCurrentUser.data()?.['role'] !== 'VIEWER' ||
+        freshCurrentUser.data()?.['clientId'] !== input.clientId ||
+        freshCurrentUser.data()?.['status'] !== originalStatus
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'El acceso del cliente cambió. Intenta de nuevo.',
+        );
+      }
+      const freshPortalUserId = freshClient.data()?.['portalUserId'];
+      if (freshPortalUserId && freshPortalUserId !== currentUid) {
+        throw new HttpsError(
+          'failed-precondition',
+          'El acceso del cliente cambió. Actualiza la página.',
+        );
+      }
+
+      transaction.update(currentUserRef, {
+        status: 'INACTIVE',
+        replacedByUid: replacementAuthUser.uid,
+        replacedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: request.auth!.uid,
+      });
+      transaction.set(
+        replacementUserRef,
+        clientPortalUserData(replacementAuthUser.uid, input, request.auth!.uid),
+      );
+      transaction.update(clientRef, {
+        portalUserId: replacementAuthUser.uid,
+        portalAccessUpdatedAt: FieldValue.serverTimestamp(),
+        portalAccessUpdatedBy: request.auth!.uid,
+      });
+      transaction.set(
+        firestore.collection('auditEvents').doc(),
+        userAuditEvent(
+          currentUid,
+          'CLIENT_USER_REPLACED',
+          `Acceso al portal de ${clientSnapshot.data()?.['businessName'] ?? 'cliente'} reemplazado`,
+          request.auth!.uid,
+          { clientId: input.clientId, replacementUid: replacementAuthUser.uid },
+        ),
+      );
+      transaction.set(
+        firestore.collection('auditEvents').doc(),
+        userAuditEvent(
+          replacementAuthUser.uid,
+          'CLIENT_USER_INVITED',
+          `Nuevo acceso al portal de ${clientSnapshot.data()?.['businessName'] ?? 'cliente'} invitado`,
+          request.auth!.uid,
+          { clientId: input.clientId, replacedUid: currentUid, role: 'VIEWER' },
+        ),
+      );
+    });
+  } catch (error) {
+    await auth.deleteUser(replacementAuthUser.uid).catch(() => undefined);
+    await restoreCurrentAuthIfStillCurrent();
+    throw error;
+  }
+  // El documento INACTIVE ya corta el acceso en Rules. La revocación es
+  // defensa adicional y no debe deshacer una transacción ya confirmada si
+  // Auth presenta un fallo transitorio después del commit.
+  await auth.revokeRefreshTokens(currentUid).catch(() => undefined);
+
+  return { uid: replacementAuthUser.uid };
+});
+
+interface SetClientUserStatusRequest {
+  clientId: string;
+  uid: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+/**
+ * Activa o bloquea el acceso VIEWER de un cliente. A diferencia del cambio
+ * de estado general de usuarios, COMMERCIAL puede ejecutar esta operación,
+ * pero el backend comprueba que la cuenta pertenezca realmente al cliente.
+ */
+export const setClientUserStatus = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para cambiar este acceso.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN', 'COMMERCIAL']);
+
+  const { clientId, uid, status } = (request.data ?? {}) as Partial<SetClientUserStatusRequest>;
+  if (!clientId || !uid || (status !== 'ACTIVE' && status !== 'INACTIVE')) {
+    throw new HttpsError('invalid-argument', 'El cliente, usuario o estado no son válidos.');
+  }
+
+  const firestore = getFirestore();
+  const clientRef = firestore.collection('clients').doc(clientId);
+  const userRef = firestore.collection('users').doc(uid);
+  const [clientSnapshot, userSnapshot, linkedUsers] = await Promise.all([
+    clientRef.get(),
+    userRef.get(),
+    firestore.collection('users').where('clientId', '==', clientId).get(),
+  ]);
+  if (!clientSnapshot.exists) {
+    throw new HttpsError('not-found', 'El cliente no existe.');
+  }
+  const userData = userSnapshot.data();
+  if (
+    !userSnapshot.exists ||
+    userData?.['role'] !== 'VIEWER' ||
+    userData?.['clientId'] !== clientId
+  ) {
+    throw new HttpsError('failed-precondition', 'El usuario no pertenece a este cliente.');
+  }
+  const portalUserId = clientSnapshot.data()?.['portalUserId'];
+  if (portalUserId && portalUserId !== uid) {
+    throw new HttpsError(
+      'failed-precondition',
+      'El acceso del cliente cambió. Actualiza la página.',
+    );
+  }
+  if (status === 'ACTIVE') {
+    if (clientSnapshot.data()?.['status'] !== 'ACTIVE') {
+      throw new HttpsError(
+        'failed-precondition',
+        'Activa el cliente antes de habilitar su portal.',
+      );
+    }
+    const anotherActiveUser = linkedUsers.docs.some(
+      (snapshot) =>
+        snapshot.id !== uid &&
+        snapshot.data()['role'] === 'VIEWER' &&
+        snapshot.data()['status'] === 'ACTIVE',
+    );
+    if (anotherActiveUser) {
+      throw new HttpsError(
+        'already-exists',
+        'Este cliente ya tiene otro usuario con acceso activo.',
+      );
+    }
+  }
+
+  const previousStatus = userData?.['status'] === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  try {
+    await getAuth().updateUser(uid, { disabled: status === 'INACTIVE' });
+  } catch {
+    throw new HttpsError('failed-precondition', 'La cuenta no existe en Firebase Auth.');
+  }
+
+  const batch = firestore.batch();
+  batch.update(userRef, {
+    status,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: request.auth.uid,
+  });
+  batch.update(clientRef, {
+    portalUserId: uid,
+    portalAccessUpdatedAt: FieldValue.serverTimestamp(),
+    portalAccessUpdatedBy: request.auth.uid,
+  });
+  batch.set(
+    firestore.collection('auditEvents').doc(),
+    userAuditEvent(
+      uid,
+      status === 'ACTIVE' ? 'CLIENT_ACCESS_ACTIVATED' : 'CLIENT_ACCESS_DEACTIVATED',
+      `Acceso al portal de ${clientSnapshot.data()?.['businessName'] ?? 'cliente'} ${status === 'ACTIVE' ? 'activado' : 'desactivado'}`,
+      request.auth.uid,
+      { clientId, previousStatus, status },
+    ),
+  );
+  try {
+    await batch.commit();
+  } catch (error) {
+    await getAuth()
+      .updateUser(uid, { disabled: previousStatus === 'INACTIVE' })
+      .catch(() => undefined);
+    throw error;
+  }
+  if (status === 'INACTIVE') {
+    await getAuth()
+      .revokeRefreshTokens(uid)
+      .catch(() => undefined);
+  }
+
+  return { uid, status };
+});
+
+interface UpdateInternalUserRequest {
+  uid: string;
+  displayName: string;
+  phone?: string;
+  jobTitle?: string;
+  role: Role;
+}
+
+/** Actualiza perfil y rol interno desde una única frontera privilegiada. */
+export const updateInternalUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para editar usuarios.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN']);
+
+  const { uid, displayName, phone, jobTitle, role } = (request.data ??
+    {}) as Partial<UpdateInternalUserRequest>;
+  const normalizedName = displayName?.trim();
+  if (!uid || !normalizedName || !isInternalRole(role)) {
+    throw new HttpsError('invalid-argument', 'Revisa los datos del usuario.');
+  }
+
+  const firestore = getFirestore();
+  const userRef = firestore.collection('users').doc(uid);
+  const snapshot = await userRef.get();
+  if (!snapshot.exists || !isInternalRole(snapshot.data()?.['role'])) {
+    throw new HttpsError('not-found', 'El usuario interno no existe.');
+  }
+  if (uid === request.auth.uid && role !== snapshot.data()?.['role']) {
+    throw new HttpsError('failed-precondition', 'No puedes cambiar tu propio perfil de acceso.');
+  }
+
+  const previousDisplayName = snapshot.data()?.['displayName'] as string | undefined;
+  await getAuth().updateUser(uid, { displayName: normalizedName });
+  const batch = firestore.batch();
+  batch.update(userRef, {
+    displayName: normalizedName,
+    phone: normalizedOptionalText(phone),
+    jobTitle: normalizedOptionalText(jobTitle),
+    role,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: request.auth.uid,
+  });
+  batch.set(
+    firestore.collection('auditEvents').doc(),
+    userAuditEvent(
+      uid,
+      'USER_UPDATED',
+      `Usuario interno ${normalizedName} actualizado`,
+      request.auth.uid,
+      {
+        previousRole: snapshot.data()?.['role'],
+        role,
+      },
+    ),
+  );
+  try {
+    await batch.commit();
+  } catch (error) {
+    await getAuth()
+      .updateUser(uid, { displayName: previousDisplayName })
+      .catch(() => undefined);
+    throw error;
+  }
+
+  return { uid };
+});
+
+interface SetUserStatusRequest {
+  uid: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+/**
+ * Sincroniza el estado de Firestore con `disabled` de Firebase Auth. Así la
+ * desactivación corta el acceso real y no queda como una etiqueta cosmética.
+ */
+export const setUserStatus = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para cambiar accesos.');
+  }
+  await requireRole(request.auth.uid, ['ADMIN']);
+
+  const { uid, status } = (request.data ?? {}) as Partial<SetUserStatusRequest>;
+  if (!uid || (status !== 'ACTIVE' && status !== 'INACTIVE')) {
+    throw new HttpsError('invalid-argument', 'El usuario o el estado no son válidos.');
+  }
+  if (uid === request.auth.uid) {
+    throw new HttpsError('failed-precondition', 'No puedes desactivar tu propia cuenta.');
+  }
+
+  const firestore = getFirestore();
+  const userRef = firestore.collection('users').doc(uid);
+  const snapshot = await userRef.get();
+  if (!snapshot.exists) {
+    throw new HttpsError('not-found', 'El usuario no existe.');
+  }
+
+  const previousStatus = snapshot.data()?.['status'] === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  await getAuth().updateUser(uid, { disabled: status === 'INACTIVE' });
+  const batch = firestore.batch();
+  batch.update(userRef, {
+    status,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: request.auth.uid,
+  });
+  batch.set(
+    firestore.collection('auditEvents').doc(),
+    userAuditEvent(
+      uid,
+      status === 'ACTIVE' ? 'USER_ACTIVATED' : 'USER_DEACTIVATED',
+      `Acceso de ${snapshot.data()?.['displayName'] ?? 'usuario'} ${status === 'ACTIVE' ? 'activado' : 'desactivado'}`,
+      request.auth.uid,
+      { previousStatus, status },
+    ),
+  );
+  try {
+    await batch.commit();
+  } catch (error) {
+    await getAuth()
+      .updateUser(uid, { disabled: previousStatus === 'INACTIVE' })
+      .catch(() => undefined);
+    throw error;
+  }
+
+  return { uid, status };
 });
 
 interface DeleteUserRequest {
@@ -1161,7 +1854,16 @@ export const deleteUser = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'No puedes eliminar tu propia cuenta.');
   }
 
-  await getFirestore().collection('users').doc(uid).delete();
+  const userRef = getFirestore().collection('users').doc(uid);
+  const userSnapshot = await userRef.get();
+  if (!userSnapshot.exists || userSnapshot.data()?.['role'] !== 'TECHNICIAN') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Los usuarios internos se desactivan y conservan su historial; no se eliminan.',
+    );
+  }
+
+  await userRef.delete();
   await getAuth()
     .deleteUser(uid)
     .catch((error) => {
@@ -1204,102 +1906,96 @@ function evidenceTypeFor(contentType: string): 'PHOTO' | 'PDF' | 'OTHER' {
  * `canUploadEvidence` de `storage.rules`— se hace acá, leyendo Firestore
  * directo con el Admin SDK (sin Rules de por medio, siempre funciona).
  */
-export const uploadEvidence = onCall(
-  { memory: '512MiB', timeoutSeconds: 120 },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Debes iniciar sesión para subir evidencias.');
-    }
-    const { orderId, fileName, contentType, fileBase64, category, description } =
-      (request.data ?? {}) as Partial<UploadEvidenceRequest>;
-    if (!orderId || !fileName || !contentType || !fileBase64) {
-      throw new HttpsError('invalid-argument', 'Faltan datos para subir la evidencia.');
-    }
+export const uploadEvidence = onCall({ memory: '512MiB', timeoutSeconds: 120 }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para subir evidencias.');
+  }
+  const { orderId, fileName, contentType, fileBase64, category, description } = (request.data ??
+    {}) as Partial<UploadEvidenceRequest>;
+  if (!orderId || !fileName || !contentType || !fileBase64) {
+    throw new HttpsError('invalid-argument', 'Faltan datos para subir la evidencia.');
+  }
 
-    const firestore = getFirestore();
-    const userSnapshot = await firestore.collection('users').doc(request.auth.uid).get();
-    const role = userSnapshot.data()?.['role'] as Role | undefined;
-    if (!role || !(['ADMIN', 'COORDINATOR', 'TECHNICIAN'] as Role[]).includes(role)) {
-      throw new HttpsError('permission-denied', 'Tu rol no tiene permiso para subir evidencias.');
-    }
+  const firestore = getFirestore();
+  const userSnapshot = await firestore.collection('users').doc(request.auth.uid).get();
+  const role = userSnapshot.data()?.['role'] as Role | undefined;
+  if (!role || !(['ADMIN', 'COORDINATOR', 'TECHNICIAN'] as Role[]).includes(role)) {
+    throw new HttpsError('permission-denied', 'Tu rol no tiene permiso para subir evidencias.');
+  }
 
-    const orderRef = firestore.collection('orders').doc(orderId);
-    const orderSnapshot = await orderRef.get();
-    if (!orderSnapshot.exists) {
-      throw new HttpsError('not-found', 'La orden no existe.');
+  const orderRef = firestore.collection('orders').doc(orderId);
+  const orderSnapshot = await orderRef.get();
+  if (!orderSnapshot.exists) {
+    throw new HttpsError('not-found', 'La orden no existe.');
+  }
+  const orderData = orderSnapshot.data() ?? {};
+  if (orderData['status'] === 'CLOSED') {
+    throw new HttpsError('failed-precondition', 'No se puede subir evidencia a una orden cerrada.');
+  }
+  if (role === 'TECHNICIAN') {
+    const assignedIds = (orderData['assignedTechnicianIds'] as string[] | undefined) ?? [];
+    if (!assignedIds.includes(request.auth.uid)) {
+      throw new HttpsError('permission-denied', 'No estás asignado a esta orden.');
     }
-    const orderData = orderSnapshot.data() ?? {};
-    if (orderData['status'] === 'CLOSED') {
-      throw new HttpsError(
-        'failed-precondition',
-        'No se puede subir evidencia a una orden cerrada.',
-      );
-    }
-    if (role === 'TECHNICIAN') {
-      const assignedIds = (orderData['assignedTechnicianIds'] as string[] | undefined) ?? [];
-      if (!assignedIds.includes(request.auth.uid)) {
-        throw new HttpsError('permission-denied', 'No estás asignado a esta orden.');
-      }
-    }
+  }
 
-    const isImage = ACCEPTED_IMAGE_TYPES.has(contentType);
-    const isPdf = contentType === ACCEPTED_PDF_TYPE;
-    if (!isImage && !isPdf) {
-      throw new HttpsError('invalid-argument', 'Formato no permitido. Usa JPEG, PNG, WEBP o PDF.');
-    }
+  const isImage = ACCEPTED_IMAGE_TYPES.has(contentType);
+  const isPdf = contentType === ACCEPTED_PDF_TYPE;
+  if (!isImage && !isPdf) {
+    throw new HttpsError('invalid-argument', 'Formato no permitido. Usa JPEG, PNG, WEBP o PDF.');
+  }
 
-    let buffer: Buffer;
-    try {
-      buffer = Buffer.from(fileBase64, 'base64');
-    } catch {
-      throw new HttpsError('invalid-argument', 'El archivo enviado no es válido.');
-    }
-    const maxSize = isPdf ? MAX_PDF_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
-    if (buffer.length === 0 || buffer.length > maxSize) {
-      throw new HttpsError(
-        'invalid-argument',
-        `El archivo supera el tamaño máximo (${Math.round(maxSize / 1024 / 1024)} MB).`,
-      );
-    }
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(fileBase64, 'base64');
+  } catch {
+    throw new HttpsError('invalid-argument', 'El archivo enviado no es válido.');
+  }
+  const maxSize = isPdf ? MAX_PDF_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
+  if (buffer.length === 0 || buffer.length > maxSize) {
+    throw new HttpsError(
+      'invalid-argument',
+      `El archivo supera el tamaño máximo (${Math.round(maxSize / 1024 / 1024)} MB).`,
+    );
+  }
 
-    const evidenceRef = orderRef.collection('evidence').doc();
-    const safeFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-    const storagePath = `orders/${orderId}/evidence/${evidenceRef.id}/${safeFileName}`;
-    const downloadToken = randomUUID();
+  const evidenceRef = orderRef.collection('evidence').doc();
+  const safeFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+  const storagePath = `orders/${orderId}/evidence/${evidenceRef.id}/${safeFileName}`;
+  const downloadToken = randomUUID();
 
-    const bucket = getStorage().bucket();
-    await bucket.file(storagePath).save(buffer, {
-      contentType,
-      metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
-    });
-    const downloadUrl = buildDownloadUrl(bucket.name, storagePath, downloadToken);
+  const bucket = getStorage().bucket();
+  await bucket.file(storagePath).save(buffer, {
+    contentType,
+    metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+  });
+  const downloadUrl = buildDownloadUrl(bucket.name, storagePath, downloadToken);
 
-    const now = FieldValue.serverTimestamp();
-    const batch = firestore.batch();
-    batch.set(evidenceRef, {
-      orderId,
-      type: evidenceTypeFor(contentType),
-      category: category ?? null,
-      fileName,
-      storagePath,
-      downloadUrl,
-      contentType,
-      size: buffer.length,
-      description: description || null,
-      uploadedAt: now,
-      uploadedBy: request.auth.uid,
-      status: 'ACTIVE',
-    });
-    batch.update(orderRef, {
-      evidenceCount: FieldValue.increment(1),
-      updatedAt: now,
-      updatedBy: request.auth.uid,
-    });
-    await batch.commit();
+  const now = FieldValue.serverTimestamp();
+  const batch = firestore.batch();
+  batch.set(evidenceRef, {
+    orderId,
+    type: evidenceTypeFor(contentType),
+    category: category ?? null,
+    fileName,
+    storagePath,
+    downloadUrl,
+    contentType,
+    size: buffer.length,
+    description: description || null,
+    uploadedAt: now,
+    uploadedBy: request.auth.uid,
+    status: 'ACTIVE',
+  });
+  batch.update(orderRef, {
+    evidenceCount: FieldValue.increment(1),
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
+  await batch.commit();
 
-    return { evidenceId: evidenceRef.id, downloadUrl };
-  },
-);
+  return { evidenceId: evidenceRef.id, downloadUrl };
+});
 
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml']);
@@ -1354,13 +2050,14 @@ export const uploadLogo = onCall({ memory: '512MiB', timeoutSeconds: 60 }, async
   });
   const logoUrl = buildDownloadUrl(bucket.name, storagePath, downloadToken);
 
-  await getFirestore()
-    .collection('settings')
-    .doc('general')
-    .set(
-      { logoUrl, updatedAt: FieldValue.serverTimestamp(), updatedBy: request.auth.uid },
-      { merge: true },
-    );
+  await getFirestore().collection('settings').doc('general').set(
+    {
+      logoUrl,
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: request.auth.uid,
+    },
+    { merge: true },
+  );
 
   return { logoUrl };
 });

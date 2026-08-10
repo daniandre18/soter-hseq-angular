@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { Observable, retry, throwError, timer } from 'rxjs';
 import type { UsersRepository } from '../../../core/repositories/users.repository';
-import type { AppUser, UserStatus } from '../../../core/models/app-user.model';
+import type { AppUser } from '../../../core/models/app-user.model';
 import type { UserRole } from '../../../core/models/user-role.model';
 import { FIREBASE_FIRESTORE } from '../firebase.tokens';
 import { toDateOrDefault } from '../mappers/firestore.mapper';
@@ -25,10 +25,13 @@ function toAppUser(id: string, data: DocumentData): AppUser {
     email: data['email'],
     phone: data['phone'],
     specialty: data['specialty'],
+    jobTitle: data['jobTitle'],
     clientId: data['clientId'],
     role: data['role'],
     status: data['status'],
     photoUrl: data['photoUrl'],
+    invitedAt: data['invitedAt'] ? toDateOrDefault(data['invitedAt']) : undefined,
+    lastLoginAt: data['lastLoginAt'] ? toDateOrDefault(data['lastLoginAt']) : undefined,
     createdAt: toDateOrDefault(data['createdAt']),
     createdBy: data['createdBy'],
     updatedAt: toDateOrDefault(data['updatedAt']),
@@ -123,14 +126,6 @@ export class FirebaseUsersRepository implements UsersRepository {
   ): Promise<void> {
     await updateDoc(doc(this.firestore, 'users', uid), {
       ...changes,
-      updatedAt: serverTimestamp(),
-      updatedBy,
-    });
-  }
-
-  async setStatus(uid: string, status: UserStatus, updatedBy: string): Promise<void> {
-    await updateDoc(doc(this.firestore, 'users', uid), {
-      status,
       updatedAt: serverTimestamp(),
       updatedBy,
     });

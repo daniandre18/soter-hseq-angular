@@ -60,4 +60,12 @@ describe('TechniciansList', () => {
     expect(mobileCard?.textContent).toContain('andres@soterhseq.com');
     expect(mobileCard?.textContent).toContain('315 444 2210');
   });
+
+  it('uses one domain action and the standardized desktop menu', () => {
+    const table: HTMLElement = fixture.nativeElement.querySelector('.technicians-table');
+
+    expect(table.querySelector('.actions-header')?.textContent).toContain('Acciones');
+    expect(table.querySelector('.actions-cell > .domain-action-btn')).toBeTruthy();
+    expect(table.querySelector('.actions-cell app-row-actions-menu')).toBeTruthy();
+  });
 });

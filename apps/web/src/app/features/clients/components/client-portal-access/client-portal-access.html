@@ -1,0 +1,187 @@
+<section class="portal-access">
+  <div class="portal-heading">
+    <span class="portal-heading-icon"><app-icon name="key-round" /></span>
+    <div>
+      <strong>{{ 'clients.portal.title' | transloco }}</strong>
+      <span>{{ 'clients.portal.description' | transloco }}</span>
+    </div>
+  </div>
+
+  @if (currentUser(); as user) {
+    <div class="portal-user">
+      <span class="portal-avatar">{{ user.displayName.charAt(0).toUpperCase() }}</span>
+      <div class="portal-user-copy">
+        <strong>{{ user.displayName }}</strong>
+        <span>{{ user.email }}</span>
+        @if (user.phone) {
+          <small>{{ user.phone }}</small>
+        }
+      </div>
+      <span class="portal-status" [class.portal-status--inactive]="user.status === 'INACTIVE'">
+        {{
+          (user.status === 'ACTIVE' ? 'clients.portal.active' : 'clients.portal.inactive')
+            | transloco
+        }}
+      </span>
+    </div>
+
+    @if (!mode() && !confirmingDeactivation()) {
+      <div class="portal-actions">
+        @if (user.status === 'ACTIVE') {
+          <app-button
+            variant="outline"
+            size="sm"
+            (click)="resendInvitation()"
+            [disabled]="sendingEmail() || changingStatus()"
+          >
+            {{
+              (sendingEmail() ? 'clients.portal.sending' : 'clients.portal.resendInvitation')
+                | transloco
+            }}
+          </app-button>
+          <app-button
+            variant="danger-outline"
+            size="sm"
+            (click)="requestDeactivation()"
+            [disabled]="changingStatus()"
+          >
+            {{ 'clients.portal.deactivateAccess' | transloco }}
+          </app-button>
+        } @else {
+          <app-button size="sm" (click)="setStatus('ACTIVE')" [disabled]="changingStatus()">
+            {{
+              (changingStatus() ? 'clients.portal.activating' : 'clients.portal.activateAccess')
+                | transloco
+            }}
+          </app-button>
+        }
+        <app-button variant="outline" size="sm" (click)="openReplacement()">
+          {{ 'clients.portal.replaceUser' | transloco }}
+        </app-button>
+      </div>
+    }
+
+    @if (confirmingDeactivation()) {
+      <div class="portal-deactivate-confirmation" role="alertdialog" aria-modal="false">
+        <div>
+          <strong>{{ 'clients.portal.deactivateTitle' | transloco }}</strong>
+          <p>{{ 'clients.portal.deactivateHelp' | transloco }}</p>
+        </div>
+        <div class="portal-confirmation-actions">
+          <app-button
+            variant="outline"
+            size="sm"
+            (click)="cancelDeactivation()"
+            [disabled]="changingStatus()"
+          >
+            {{ 'common.cancel' | transloco }}
+          </app-button>
+          <app-button
+            variant="danger"
+            size="sm"
+            (click)="setStatus('INACTIVE')"
+            [disabled]="changingStatus()"
+          >
+            {{
+              (changingStatus()
+                ? 'clients.portal.deactivating'
+                : 'clients.portal.confirmDeactivate'
+              ) | transloco
+            }}
+          </app-button>
+        </div>
+      </div>
+    }
+  } @else if (!mode()) {
+    <div class="portal-empty">
+      <p>{{ 'clients.portal.empty' | transloco }}</p>
+      <app-button size="sm" (click)="openInvite()">
+        {{ 'clients.portal.inviteUser' | transloco }}
+      </app-button>
+    </div>
+  }
+
+  @if (mode()) {
+    <form class="portal-form" novalidate (submit)="submitAccess(); $event.preventDefault()">
+      <div class="portal-form-intro">
+        <strong>
+          {{
+            (mode() === 'replace' ? 'clients.portal.replaceTitle' : 'clients.portal.inviteTitle')
+              | transloco
+          }}
+        </strong>
+        <span>
+          {{
+            (mode() === 'replace' ? 'clients.portal.replaceHelp' : 'clients.portal.inviteHelp')
+              | transloco
+          }}
+        </span>
+      </div>
+
+      <div class="portal-form-grid">
+        <label class="portal-field portal-field--full">
+          <span>{{ 'clients.portal.fullName' | transloco }} *</span>
+          <input
+            [formField]="form.displayName"
+            [placeholder]="'clients.portal.fullNamePlaceholder' | transloco"
+            autocomplete="name"
+          />
+          @if (form.displayName().touched() && form.displayName().errors().length) {
+            <small class="portal-field-error">
+              {{ form.displayName().errors()[0].message | transloco }}
+            </small>
+          }
+        </label>
+
+        <label class="portal-field">
+          <span>{{ 'clients.portal.email' | transloco }} *</span>
+          <input
+            type="email"
+            [formField]="form.email"
+            placeholder="persona@empresa.com"
+            autocomplete="email"
+          />
+          @if (form.email().touched() && form.email().errors().length) {
+            <small class="portal-field-error">
+              {{ form.email().errors()[0].message | transloco }}
+            </small>
+          }
+        </label>
+
+        <label class="portal-field">
+          <span>{{ 'clients.portal.phone' | transloco }}</span>
+          <input
+            type="tel"
+            [formField]="form.phone"
+            placeholder="+57 300 000 0000"
+            autocomplete="tel"
+          />
+        </label>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="portal-error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <div class="portal-form-actions">
+        <app-button variant="outline" size="sm" (click)="cancel()">
+          {{ 'common.cancel' | transloco }}
+        </app-button>
+        <app-button type="submit" size="sm" [disabled]="form().invalid() || saving()">
+          {{
+            (saving()
+              ? 'clients.portal.saving'
+              : mode() === 'replace'
+                ? 'clients.portal.confirmReplace'
+                : 'clients.portal.sendInvitation'
+            ) | transloco
+          }}
+        </app-button>
+      </div>
+    </form>
+  }
+
+  @if (errorMessage() && !mode() && !confirmingDeactivation()) {
+    <p class="portal-error" role="alert">{{ errorMessage() }}</p>
+  }
+</section>

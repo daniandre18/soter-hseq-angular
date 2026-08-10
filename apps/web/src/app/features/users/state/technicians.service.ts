@@ -51,8 +51,8 @@ export class TechniciansService {
     await this.usersRepository.updateProfile(uid, changes, updatedBy);
   }
 
-  async setStatus(uid: string, status: UserStatus, updatedBy: string): Promise<void> {
-    await this.usersRepository.setStatus(uid, status, updatedBy);
+  async setStatus(uid: string, status: UserStatus): Promise<void> {
+    await this.userManagementGateway.setUserStatus(uid, status);
   }
 
   /** Borra la cuenta de Auth Y el documento de Firestore — no alcanza con

@@ -71,7 +71,7 @@
               <th>Precio</th>
               <th>Unidad</th>
               <th>Estado</th>
-              <th></th>
+              <th class="actions-header">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -99,24 +99,13 @@
                   />
                 </td>
                 <td class="actions-cell">
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    (click)="openEdit(service)"
-                    aria-label="Editar servicio"
-                    title="Editar"
-                  >
-                    <app-icon name="square-pen" />
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-btn icon-btn--danger"
-                    (click)="confirmDelete(service, $event)"
-                    aria-label="Eliminar servicio"
-                    title="Eliminar"
-                  >
-                    <app-icon name="trash-2" />
-                  </button>
+                  <app-row-actions-menu
+                    [open]="openActionsId() === service.id"
+                    [triggerLabel]="'Más acciones para ' + service.name"
+                    [actions]="rowActions"
+                    (toggleRequested)="toggleActions(service.id, $event)"
+                    (actionSelected)="handleRowAction($event, service)"
+                  />
                 </td>
               </tr>
             }

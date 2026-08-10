@@ -28,7 +28,12 @@
     "priority": "Prioridad",
     "progress": "Avance",
     "visit": "Visita",
-    "due": "Vence"
+    "due": "Vence",
+    "orderAndTitle": "Orden y título",
+    "assigned": "Asignado",
+    "statusAndPriority": "Estado y prioridad",
+    "schedule": "Fechas / cronograma",
+    "progressAndActions": "Avance y acciones"
   },
   "actions": {
     "view": "Ver orden",

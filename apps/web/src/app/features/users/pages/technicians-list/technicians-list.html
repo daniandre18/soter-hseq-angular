@@ -50,7 +50,7 @@
               <th>Correo</th>
               <th>Teléfono</th>
               <th>Estado</th>
-              <th>Acciones</th>
+              <th class="actions-header">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -78,31 +78,19 @@
                 <td class="actions-cell">
                   <button
                     type="button"
-                    class="icon-btn"
-                    (click)="openEdit(technician)"
-                    aria-label="Editar técnico"
-                    title="Editar"
-                  >
-                    <app-icon name="square-pen" />
-                  </button>
-                  <button
-                    type="button"
-                    class="toggle-link"
-                    [class.toggle-link--danger]="technician.status === 'ACTIVE'"
+                    class="domain-action-btn"
                     [disabled]="togglingId() === technician.id"
                     (click)="toggleStatus(technician)"
                   >
                     {{ technician.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
                   </button>
-                  <button
-                    type="button"
-                    class="icon-btn icon-btn--danger"
-                    (click)="confirmDelete(technician)"
-                    aria-label="Eliminar técnico"
-                    title="Eliminar"
-                  >
-                    <app-icon name="trash-2" />
-                  </button>
+                  <app-row-actions-menu
+                    [open]="openActionsId() === technician.id"
+                    [triggerLabel]="'Más acciones para ' + technician.displayName"
+                    [actions]="rowActions"
+                    (toggleRequested)="toggleActions(technician.id, $event)"
+                    (actionSelected)="handleRowAction($event, technician)"
+                  />
                 </td>
               </tr>
             }

@@ -74,6 +74,7 @@ Puede:
 Puede:
 
 - Crear y actualizar clientes.
+- Invitar, activar, desactivar y reemplazar el usuario de consulta vinculado a un cliente.
 - Crear cotizaciones.
 - Enviar cotizaciones.
 - Marcar cotizaciones como aprobadas o rechazadas.
@@ -82,7 +83,7 @@ Puede:
 
 No puede:
 
-- Administrar usuarios.
+- Administrar usuarios internos o sus roles.
 - Cerrar órdenes técnicamente.
 - Aprobar actas finales, salvo autorización explícita.
 
@@ -527,6 +528,7 @@ interface Client {
   contactIds?: string[];
   notes?: string;
   status: 'ACTIVE' | 'INACTIVE';
+  portalUserId?: string; // uid VIEWER activo, gestionado solo por backend
   createdAt: Timestamp;
   createdBy: string;
   updatedAt: Timestamp;
@@ -1344,6 +1346,9 @@ Una historia no se considera terminada hasta que:
 - Editar información.
 - Buscar por nombre o NIT.
 - Consultar historial asociado.
+- Invitar un usuario para que consulte el portal del cliente.
+- Activar o desactivar ese acceso sin eliminar su trazabilidad.
+- Reemplazar ese acceso conservando inactivo el usuario anterior para auditoría.
 - No eliminar físicamente clientes con historial.
 
 ### 23.3 Cotizaciones

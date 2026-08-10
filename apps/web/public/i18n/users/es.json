@@ -23,5 +23,94 @@
     "created": "Técnico creado correctamente.",
     "updated": "Técnico actualizado correctamente.",
     "saveError": "No se pudo guardar el técnico."
+  },
+  "internal": {
+    "eyebrow": "Administración de acceso",
+    "title": "Usuarios",
+    "subtitle": "Gestiona el equipo administrativo, sus perfiles y acceso a la plataforma.",
+    "inviteAction": "Invitar usuario",
+    "metrics": {
+      "active": "Usuarios activos",
+      "admins": "Administradores",
+      "coordinators": "Coordinadores",
+      "commercial": "Comerciales"
+    },
+    "filters": {
+      "searchLabel": "Buscar usuarios",
+      "searchPlaceholder": "Buscar por nombre, correo o cargo...",
+      "role": "Perfil",
+      "status": "Estado",
+      "allRoles": "Todos los perfiles",
+      "allStatuses": "Todos los estados"
+    },
+    "results": "Mostrando {{count}} usuarios internos",
+    "loading": "Cargando usuarios…",
+    "loadError": "No se pudieron cargar los usuarios.",
+    "emptyTitle": "No hay usuarios internos",
+    "emptyDescription": "Invita al primer integrante del equipo administrativo.",
+    "emptyFiltered": "No hay usuarios que coincidan con los filtros.",
+    "noJobTitle": "Cargo sin registrar",
+    "noPhone": "Sin teléfono",
+    "columns": {
+      "user": "Usuario",
+      "role": "Perfil",
+      "contact": "Contacto",
+      "status": "Acceso",
+      "updated": "Actualizado"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "actions": {
+      "open": "Abrir acciones del usuario",
+      "sendAccess": "Enviar acceso",
+      "activate": "Activar acceso",
+      "deactivate": "Desactivar acceso"
+    },
+    "form": {
+      "createTitle": "Invitar usuario interno",
+      "editTitle": "Editar usuario interno",
+      "accessTitle": "Acceso seguro por invitación",
+      "accessDescription": "La persona recibirá un correo de Firebase para definir su propia contraseña. El administrador nunca necesita conocerla.",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Ej. Laura Ramírez",
+      "email": "Correo electrónico",
+      "emailImmutable": "Para proteger la identidad de la cuenta, el correo no se modifica desde este formulario.",
+      "jobTitle": "Cargo",
+      "jobTitlePlaceholder": "Ej. Líder HSEQ",
+      "phone": "Teléfono (opcional)",
+      "role": "Perfil de acceso",
+      "roleHint": "El perfil define las operaciones permitidas en toda la aplicación.",
+      "selfRoleHint": "No puedes cambiar tu propio perfil de acceso.",
+      "saving": "Guardando…",
+      "save": "Guardar cambios",
+      "invite": "Crear y enviar invitación"
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio.",
+      "emailRequired": "El correo es obligatorio.",
+      "emailInvalid": "Ingresa un correo válido.",
+      "jobTitleRequired": "El cargo es obligatorio.",
+      "roleRequired": "Selecciona un perfil."
+    },
+    "messages": {
+      "invited": "Usuario creado. Enviamos el correo para establecer su contraseña.",
+      "createdWithoutEmail": "El usuario fue creado, pero el correo no pudo enviarse. Usa “Enviar acceso” para reintentarlo.",
+      "updated": "Usuario actualizado correctamente.",
+      "saveError": "No se pudo guardar el usuario.",
+      "activated": "Acceso activado correctamente.",
+      "deactivated": "Acceso desactivado correctamente.",
+      "statusError": "No se pudo cambiar el acceso del usuario.",
+      "accessEmailSent": "Correo de acceso enviado correctamente.",
+      "accessEmailError": "No se pudo enviar el correo de acceso."
+    },
+    "confirm": {
+      "activateTitle": "¿Activar este acceso?",
+      "activateDescription": "{{name}} podrá volver a iniciar sesión y usar las funciones de su perfil.",
+      "deactivateTitle": "¿Desactivar este acceso?",
+      "deactivateDescription": "{{name}} no podrá iniciar sesión. Su historial y las acciones registradas se conservarán.",
+      "processing": "Procesando…"
+    }
   }
 }

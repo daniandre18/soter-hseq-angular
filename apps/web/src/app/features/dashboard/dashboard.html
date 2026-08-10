@@ -1,9 +1,5 @@
 <section class="dashboard">
   <div class="dashboard-actions-row">
-    <!-- 'accent' (índigo), no 'primary' (rojo marca): el rojo se reserva
-         para alertas/vencidos/incidentes — ver el badge "N Vencidas" de la
-         primera KPI card. Una acción de creación no debe competir visualmente
-         con esa semántica de alerta. -->
     <app-button variant="accent" size="sm" (click)="goToCreateOrder()">
       <app-icon name="plus" />
       {{ 'dashboard.newOrderAction' | transloco }}

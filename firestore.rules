@@ -16,7 +16,9 @@ service cloud.firestore {
     }
 
     function hasRole(roles) {
-      return isSignedIn() && currentRole() in roles;
+      return isSignedIn()
+             && currentUserDoc().data.status == 'ACTIVE'
+             && currentRole() in roles;
     }
 
     function isAdmin() {
@@ -68,12 +70,17 @@ service cloud.firestore {
       // El cliente solo necesita su propio perfil; los usuarios internos sí
       // resuelven nombres/técnicos para la operación y pueden listar usuarios.
       allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR', 'TECHNICIAN'])
-                  || (hasRole(['VIEWER']) && request.auth.uid == userId);
+                  // Una sesión recién desactivada conserva lectura de su
+                  // propio estado para que el frontend pueda sacarla de la
+                  // aplicación sin exponer ningún otro documento.
+                  || (isSignedIn() && request.auth.uid == userId);
       allow create: if false; // los usuarios se crean desde Cloud Functions
       // Un usuario no puede cambiar su propio rol NI su propio estado (p.
       // ej. reactivarse tras ser desactivado) — antes solo se protegía el
       // rol, dejando `status` editable por el propio usuario sin querer.
-      allow update: if (isAdmin() && request.resource.data.role == resource.data.role)
+      allow update: if (isAdmin()
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.status == resource.data.status)
                     || (isSignedIn() && request.auth.uid == userId
                         && request.resource.data.role == resource.data.role
                         && request.resource.data.status == resource.data.status);
@@ -83,7 +90,17 @@ service cloud.firestore {
     match /clients/{clientId} {
       allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR'])
                   || viewerOwnsClient(clientId);
-      allow create, update: if hasRole(['ADMIN', 'COMMERCIAL']);
+      // La vinculación con Firebase Auth solo la escriben las Cloud
+      // Functions de invitación/reemplazo. Ni siquiera ADMIN debe poder
+      // apuntar `portalUserId` a mano desde el navegador.
+      allow create: if hasRole(['ADMIN', 'COMMERCIAL'])
+                    && !request.resource.data.keys().hasAny([
+                      'portalUserId', 'portalAccessUpdatedAt', 'portalAccessUpdatedBy'
+                    ]);
+      allow update: if hasRole(['ADMIN', 'COMMERCIAL'])
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                      'portalUserId', 'portalAccessUpdatedAt', 'portalAccessUpdatedBy'
+                    ]);
       // Solo ADMIN, y solo un aviso en la UI (no un bloqueo aquí) de que
       // las cotizaciones/órdenes ya creadas conservan `clientBusinessName`
       // denormalizado — no se rompen visualmente aunque el cliente se borre.
