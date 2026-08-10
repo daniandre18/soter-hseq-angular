@@ -72,6 +72,18 @@
   // componente; ahora es un token para poder redefinirlo en modo oscuro.
   --color-surface: #ffffff;
 
+  // Superficies semánticas que necesitan conservar contraste al invertir
+  // los neutros en modo oscuro.
+  --operational-alert-bg: rgb(254 242 242 / 80%);
+  --operational-alert-border: rgb(254 202 202 / 60%);
+  --operational-alert-text: var(--color-gray-800);
+  --operational-alert-action: var(--color-red-700);
+  --notification-panel-bg: var(--color-surface);
+  --notification-panel-border: var(--color-gray-200);
+  --notification-panel-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  --notification-empty-text: var(--color-gray-500);
+  --notification-unread-bg: var(--color-brand-50);
+
   // Sidebar — tokens independientes del contenido: por defecto (tema
   // "Claro") el menú lateral es blanco con toques del color de marca; en
   // "Oscuro" y "Semi Dark" (ver mixin `dark-sidebar-tokens` más abajo) pasa
@@ -163,6 +175,15 @@
   --color-gray-800: #ececf8;
   --color-gray-900: #f6f5fc;
   --color-surface: #1a1730;
+  --operational-alert-bg: rgb(220 38 38 / 12%);
+  --operational-alert-border: rgb(248 113 113 / 32%);
+  --operational-alert-text: #f6f5fc;
+  --operational-alert-action: #f87171;
+  --notification-panel-bg: #211d3a;
+  --notification-panel-border: #3c3856;
+  --notification-panel-shadow: 0 16px 40px rgb(3 2 15 / 55%);
+  --notification-empty-text: #c3c0dc;
+  --notification-unread-bg: rgb(93 95 239 / 14%);
 }
 
 @mixin dark-sidebar-tokens {
