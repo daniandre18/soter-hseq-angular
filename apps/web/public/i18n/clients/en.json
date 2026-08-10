@@ -6,7 +6,8 @@
   "stats": { "total": "Total clients", "active": "Active clients", "rate": "Activity rate", "cities": "Cities covered" },
   "filters": {
     "title": "Search and filter clients", "help": "Combine filters to find specific results.",
-    "clear": "Clear filters ({{count}})", "search": "Search", "searchPlaceholder": "Name, tax ID, email, phone, or city…",
+    "clear": "Clear filters ({{count}})", "search": "Search", "searchPlaceholder": "Name, tax ID, email, phone, or city…", "mobileSearchPlaceholder": "Search by name, tax ID…",
+    "advanced": "Filters", "advancedTitle": "Client filters", "clearAdvanced": "Clear", "apply": "Apply filters",
     "status": "Status", "allStatuses": "All statuses", "active": "Active", "inactive": "Inactive",
     "city": "City", "allCities": "All cities", "tag": "Tag", "allTags": "All tags"
   },
@@ -22,6 +23,8 @@
   "manageSites": "Manage {{name}} sites", "tagClient": "Tag client",
   "tagSearch": "Search or create a tag…", "createTag": "Create “{{name}}”", "noTagsYet": "No tags yet.",
   "manage": "Manage", "view": "View client", "edit": "Edit client", "delete": "Delete client",
+  "moreActions": "More actions for {{name}}",
+  "taxIdShort": "Tax ID", "viewSites": "View sites",
   "showLess": "Show less", "showMore": "Show {{count}} more", "showAll": "Show all ({{count}})",
   "deleteTitleOne": "Delete this client?", "deleteTitleOther": "Delete {{count}} clients?",
   "deleteConfirmationOne": "This action cannot be undone. Existing quotes and orders keep this client's name, but you will no longer be able to open the client record.",
