@@ -1,0 +1,78 @@
+.segmented-bar-empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--color-gray-400);
+  font-size: 0.875rem;
+}
+
+.segmented-bar-track {
+  display: flex;
+  overflow: hidden;
+  height: 0.875rem;
+  border-radius: 9999px;
+  background: var(--color-gray-100);
+}
+
+.segmented-bar-segment {
+  height: 100%;
+  transition: width 300ms ease;
+
+  &:not(:last-child) {
+    border-right: 2px solid var(--color-surface);
+  }
+}
+
+.segmented-bar-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.625rem 1rem;
+  margin-top: 1.125rem;
+}
+
+.segmented-bar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+.segmented-bar-legend-dot {
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+}
+
+.segmented-bar-legend-label {
+  flex-shrink: 0;
+  color: var(--color-gray-600);
+  font-weight: 500;
+}
+
+.segmented-bar-legend-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: auto;
+  color: var(--color-gray-400);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 767px) {
+  .segmented-bar-track {
+    height: 0.75rem;
+  }
+
+  .segmented-bar-legend {
+    // A dos columnas el valor ("75% · 9 órdenes") no cabía y se recortaba
+    // con elipsis — una columna le da el ancho completo de la tarjeta.
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-top: 0.875rem;
+  }
+
+  .segmented-bar-legend-item {
+    font-size: 0.75rem;
+  }
+}

@@ -34,7 +34,9 @@ describe('Dashboard', () => {
             correctionRequiredOrders: signal([]),
             pendingCount: signal(0),
             todayVisitsCount: signal(0),
+            visitsThisWeekCount: signal(0),
             techniciansInFieldCount: signal(0),
+            technicians: signal([]),
             recentOrders: signal([]),
             upcomingVisits,
             statusBreakdown: signal([]),
@@ -58,6 +60,9 @@ describe('Dashboard', () => {
             loading: signal(false),
             error: signal(null),
             statusBreakdown: signal([]),
+            convertedCount: signal(0),
+            conversionRate: signal(0),
+            funnelCounts: signal({ sent: 0, approved: 0, converted: 0 }),
             init: () => undefined,
           },
         },
@@ -73,10 +78,10 @@ describe('Dashboard', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render all dashboard metrics using the compact card variant', () => {
+  it('should render the four synthetic KPI cards', () => {
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelectorAll('.stat-card--compact')).toHaveLength(9);
+    expect(fixture.nativeElement.querySelectorAll('app-kpi-card')).toHaveLength(4);
   });
 
   it('shows the scheduled visit time in upcoming visits', async () => {
@@ -102,8 +107,10 @@ describe('Dashboard', () => {
     ]);
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('.list-row-subtitle')?.textContent).toContain(
-      '09:30',
-    );
+    const subtitles = fixture.nativeElement.querySelectorAll('.timeline-subtitle');
+    const subtitleText = Array.from(subtitles as NodeListOf<HTMLElement>)
+      .map((el) => el.textContent)
+      .join(' ');
+    expect(subtitleText).toContain('09:30');
   });
 });

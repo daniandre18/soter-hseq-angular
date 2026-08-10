@@ -35,6 +35,24 @@ function isSameLocalDay(a: Date, b: Date): boolean {
   );
 }
 
+/** Lunes 00:00 de la semana calendario de `date` — `getDay()` es 0=domingo. */
+function startOfWeek(date: Date): Date {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  result.setDate(result.getDate() + diffToMonday);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+/** Domingo 23:59:59.999 de la misma semana calendario. */
+function endOfWeek(date: Date): Date {
+  const end = startOfWeek(date);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
 /**
  * Único punto de contacto entre la UI y el feature de órdenes.
  * Encapsula Akita (Store/Query) y Firestore (Service); los componentes
@@ -128,6 +146,20 @@ export class OrdersFacade {
       }
     }
     return technicianIds.size;
+  });
+
+  /** Para el KPI "Visitas de Hoy" del dashboard: programadas en la semana
+   *  calendario actual (lunes a domingo), no una ventana móvil de 7 días. */
+  readonly visitsThisWeekCount = computed(() => {
+    const now = new Date();
+    const start = startOfWeek(now);
+    const end = endOfWeek(now);
+    return this.orders().filter(
+      (order) =>
+        order.scheduledStart !== undefined &&
+        order.scheduledStart >= start &&
+        order.scheduledStart <= end,
+    ).length;
   });
 
   readonly recentOrders = computed(() =>
