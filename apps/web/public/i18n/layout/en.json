@@ -21,7 +21,8 @@
     "services": "Services",
     "catalog": "Catalog",
     "categories": "Categories",
-    "technicians": "Technicians"
+    "technicians": "Technicians",
+    "settings": "Settings"
   },
   "pageTitles": {
     "dashboard": "Dashboard",
@@ -32,7 +33,8 @@
     "categories": "Service categories",
     "services": "Services",
     "technicians": "Technicians",
-    "myOrders": "My orders"
+    "myOrders": "My orders",
+    "settings": "Settings"
   },
   "roles": {
     "ADMIN": "Administrator",

@@ -1,0 +1,66 @@
+{
+  "title": "Settings",
+  "description": "Manage company information and the platform's appearance.",
+  "loading": "Loading settings…",
+  "tabsAriaLabel": "Settings sections",
+  "tabs": {
+    "general": "General",
+    "appearance": "Appearance",
+    "aiPrompts": "AI Prompts",
+    "connections": "Connections",
+    "webhooks": "Webhooks"
+  },
+  "comingSoon": {
+    "badge": "Coming soon",
+    "ai-prompts": "The AI-assisted closing act uses a versioned prompt in Cloud Functions (CLAUDE.md §12.4) and Gemini is never called from the browser. Editing the prompt from here requires first defining a safe backend review flow for that change.",
+    "connections": "There are no configurable external integrations yet — the platform only connects to Firebase and Gemini, both fixed per environment (.env), not per user.",
+    "webhooks": "Outgoing webhooks are out of scope for the current MVP. Documented here as a future proposal, not as active functionality."
+  },
+  "general": {
+    "cardTitle": "Company information",
+    "cardHelp": "This information identifies SOTER HSEQ to your clients within the platform.",
+    "businessName": "Company name",
+    "nameRequired": "The company name is required.",
+    "tagline": "Tagline (optional)",
+    "taglinePlaceholder": "E.g.: Occupational Health and Safety",
+    "email": "Contact email",
+    "phone": "Phone",
+    "address": "Address or coverage",
+    "addressPlaceholder": "E.g.: Nationwide coverage, Colombia",
+    "save": "Save information",
+    "saving": "Saving…",
+    "saveSuccess": "Information updated successfully.",
+    "saveError": "The information could not be saved. Try again."
+  },
+  "appearance": {
+    "active": "Active",
+    "themeCardTitle": "Theme",
+    "themeCardHelp": "Choose the platform's theme. Your preference is saved on this device and applies without reloading the page.",
+    "logoCardTitle": "Brand logo",
+    "logoCardHelp": "Used in the platform's sidebar. PNG, JPG or SVG — 200×50px recommended.",
+    "sizeCardTitle": "Logo size and position",
+    "sizeCardHelp": "Adjust how the logo looks in the sidebar, with independent control for desktop and mobile.",
+    "sizeHelp": "Changes apply across the sidebar once saved.",
+    "desktopSize": "Desktop size",
+    "mobileSize": "Mobile size",
+    "alignment": "Horizontal alignment",
+    "save": "Save appearance",
+    "saving": "Saving…",
+    "saveSuccess": "Appearance updated successfully.",
+    "saveError": "The appearance could not be saved. Try again.",
+    "logo": {
+      "demoModeHelp": "File uploads are disabled in this demo.",
+      "currentLabel": "Current logo",
+      "currentAlt": "Current company logo",
+      "dropzoneText": "Drag your logo here or",
+      "dropzoneBrowse": "browse a file",
+      "removeFile": "Remove file",
+      "uploadAction": "Upload logo",
+      "uploading": "Uploading…",
+      "uploadSuccess": "Logo updated successfully.",
+      "uploadError": "The logo could not be uploaded. Try again.",
+      "typeError": "Format not allowed. Use PNG, JPG or SVG.",
+      "sizeError": "The file exceeds the maximum size ({{max}} MB)."
+    }
+  }
+}

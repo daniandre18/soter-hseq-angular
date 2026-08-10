@@ -233,6 +233,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Documento único `settings/general` (nombre de empresa, logo, tema del
+    // sidebar) — todo usuario autenticado lo lee (el sidebar lo necesita
+    // para cualquier rol), solo ADMIN lo escribe (CLAUDE.md §3.1
+    // "Configurar parámetros básicos"). El logo en sí se sube por Cloud
+    // Function (`uploadLogo`, Admin SDK) porque Storage exige el mismo
+    // patrón que `uploadEvidence`; este documento solo guarda su URL.
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
     // Denegar por defecto cualquier otra ruta (mismo criterio que storage.rules).
     match /{document=**} {
       allow read, write: if false;

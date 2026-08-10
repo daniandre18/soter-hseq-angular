@@ -1,0 +1,33 @@
+<div class="theme-toggle">
+  <button
+    type="button"
+    class="theme-button"
+    aria-haspopup="true"
+    [attr.aria-expanded]="open()"
+    [attr.aria-label]="'theme.toggleLabel' | transloco"
+    (click)="toggle()"
+  >
+    <app-icon [name]="toggleIcon()" />
+  </button>
+
+  @if (open()) {
+    <ul class="theme-panel" role="menu">
+      @for (option of options; track option.value) {
+        <li>
+          <button
+            type="button"
+            class="theme-option"
+            [class.theme-option--active]="option.value === theme.preference()"
+            (click)="select(option.value)"
+          >
+            <app-icon [name]="option.icon" class="theme-option-icon" />
+            <span class="theme-option-name">{{ option.translationKey | transloco }}</span>
+            @if (option.value === theme.preference()) {
+              <app-icon name="circle-check-big" class="theme-option-check" />
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -1,0 +1,150 @@
+<section class="settings-page">
+  <div class="settings-page-header">
+    <h2>{{ 'settings.title' | transloco }}</h2>
+    <p>{{ 'settings.description' | transloco }}</p>
+  </div>
+
+  <div class="settings-tabs" role="tablist" [attr.aria-label]="'settings.tabsAriaLabel' | transloco">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        role="tab"
+        [id]="'settings-tab-' + tab.id"
+        class="settings-tab"
+        [class.settings-tab--active]="activeTab() === tab.id"
+        [attr.aria-selected]="activeTab() === tab.id"
+        [attr.aria-controls]="'settings-tabpanel-' + tab.id"
+        [tabindex]="activeTab() === tab.id ? 0 : -1"
+        (click)="setTab(tab.id)"
+        (keydown)="onTabKeydown($event, tab.id)"
+      >
+        <app-icon [name]="tab.icon" />
+        {{ tab.translationKey | transloco }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <app-card class="empty-card">
+      <p>{{ 'settings.loading' | transloco }}</p>
+    </app-card>
+  } @else {
+    <div
+      class="settings-tabpanel"
+      [id]="'settings-tabpanel-' + activeTab()"
+      role="tabpanel"
+      [attr.aria-labelledby]="'settings-tab-' + activeTab()"
+    >
+      @if (activeTab() === 'general') {
+        <app-general-settings-form [seed]="generalFormSeed()" />
+      }
+
+      @if (activeTab() === 'appearance') {
+          <div class="appearance-cards">
+            <app-card padding="lg">
+              <h3>{{ 'settings.appearance.themeCardTitle' | transloco }}</h3>
+              <p class="section-help">{{ 'settings.appearance.themeCardHelp' | transloco }}</p>
+
+              <div class="theme-preview-grid">
+                @for (option of themeOptions; track option.value) {
+                  <button
+                    type="button"
+                    class="theme-preview-card"
+                    [class.theme-preview-card--active]="theme.preference() === option.value"
+                    (click)="theme.setPreference(option.value)"
+                  >
+                    <div class="theme-preview-card__header">
+                      <app-icon [name]="option.icon" />
+                      <span>{{ option.translationKey | transloco }}</span>
+                      @if (theme.preference() === option.value) {
+                        <span class="theme-preview-card__badge">{{ 'settings.appearance.active' | transloco }}</span>
+                      }
+                    </div>
+                    <div class="theme-preview-swatch" [class]="'theme-preview-swatch--' + option.value">
+                      <div class="theme-preview-swatch__sidebar"></div>
+                      <div class="theme-preview-swatch__content">
+                        <div class="theme-preview-swatch__bar"></div>
+                        <div class="theme-preview-swatch__row"></div>
+                        <div class="theme-preview-swatch__row theme-preview-swatch__row--short"></div>
+                      </div>
+                    </div>
+                  </button>
+                }
+              </div>
+            </app-card>
+
+            <app-card padding="lg">
+              <h3>{{ 'settings.appearance.logoCardTitle' | transloco }}</h3>
+              <p class="section-help">{{ 'settings.appearance.logoCardHelp' | transloco }}</p>
+              <app-logo-upload-field />
+            </app-card>
+
+            <app-card padding="lg">
+              <h3>{{ 'settings.appearance.sizeCardTitle' | transloco }}</h3>
+              <p class="section-help">{{ 'settings.appearance.sizeCardHelp' | transloco }}</p>
+
+              <div class="size-controls">
+                <label class="field field--full">
+                  {{ 'settings.appearance.desktopSize' | transloco }}
+                  <span class="size-value">{{ appearanceModel().logoDesktopSize }}px</span>
+                  <input
+                    type="range"
+                    [min]="logoSizeRange.min"
+                    [max]="logoSizeRange.max"
+                    [value]="appearanceModel().logoDesktopSize"
+                    (input)="setDesktopSize($event)"
+                  />
+                </label>
+                <label class="field field--full">
+                  {{ 'settings.appearance.mobileSize' | transloco }}
+                  <span class="size-value">{{ appearanceModel().logoMobileSize }}px</span>
+                  <input
+                    type="range"
+                    [min]="logoSizeRange.min"
+                    [max]="logoSizeRange.max"
+                    [value]="appearanceModel().logoMobileSize"
+                    (input)="setMobileSize($event)"
+                  />
+                </label>
+              </div>
+
+              <div class="field field--full">
+                <span>{{ 'settings.appearance.alignment' | transloco }}</span>
+                <div class="alignment-group">
+                  @for (option of alignmentOptions; track option.value) {
+                    <button
+                      type="button"
+                      class="alignment-btn"
+                      [class.alignment-btn--active]="appearanceModel().logoAlignment === option.value"
+                      (click)="setAlignment(option.value)"
+                    >
+                      <app-icon [name]="option.icon" />
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <p class="section-help">{{ 'settings.appearance.sizeHelp' | transloco }}</p>
+
+              <div class="settings-form-actions">
+                <app-button (click)="saveAppearance()" [disabled]="savingAppearance()">
+                  {{ (savingAppearance() ? 'settings.appearance.saving' : 'settings.appearance.save') | transloco }}
+                </app-button>
+              </div>
+            </app-card>
+          </div>
+      }
+
+      @if (comingSoonTab(); as tab) {
+        <app-card padding="lg" class="coming-soon-card">
+          <div class="coming-soon-body">
+            <app-icon [name]="tab.icon" />
+            <h3>{{ tab.translationKey | transloco }}</h3>
+            <p>{{ 'settings.comingSoon.' + activeTab() | transloco }}</p>
+            <span class="coming-soon-badge">{{ 'settings.comingSoon.badge' | transloco }}</span>
+          </div>
+        </app-card>
+      }
+    </div>
+  }
+</section>

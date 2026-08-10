@@ -99,6 +99,26 @@ const SCOPES_ES: Record<string, Translation> = {
   },
 };
 
+// jsdom no implementa `window.matchMedia` — varios componentes lo usan para
+// breakpoints responsivos (order-detail) o `prefers-color-scheme`
+// (ThemeService). Sin este shim, cualquier spec que dispare su DI falla con
+// "matchMedia is not a function" aunque el test no verifique nada de tema/
+// responsive. `matches: false` es un default razonable (claro/desktop).
+if (typeof window !== 'undefined' && !window.matchMedia) {
+  const noop = (): undefined => undefined;
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: noop,
+      removeEventListener: noop,
+      addListener: noop,
+      removeListener: noop,
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}
+
 class TestTranslationLoader implements TranslocoLoader {
   getTranslation(lang: string): Observable<Translation> {
     const [scope, language] = lang.split('/');

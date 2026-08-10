@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { Shell } from './shell';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
+import { SettingsFacade } from '../../features/settings/facades/settings.facade';
 
 describe('Shell', () => {
   let component: Shell;
@@ -20,6 +21,22 @@ describe('Shell', () => {
             currentUser: signal(null),
             currentRole: signal(null),
             logout: async () => undefined,
+          },
+        },
+        {
+          provide: SettingsFacade,
+          useValue: {
+            settings: signal({
+              businessName: 'SOTER HSEQ',
+              logoUrl: undefined,
+              logoDesktopSize: 44,
+              logoMobileSize: 36,
+              logoAlignment: 'left',
+              updatedAt: new Date(0),
+              updatedBy: '',
+            }),
+            loading: signal(false),
+            init: () => undefined,
           },
         },
       ],

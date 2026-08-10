@@ -4,10 +4,11 @@ import { Avatar } from '../../shared/components/avatar/avatar';
 import { NotificationBell } from './notification-bell/notification-bell';
 import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 import { LanguageSelector } from '../../shared/components/language-selector/language-selector';
+import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 
 @Component({
   selector: 'app-header',
-  imports: [Avatar, NotificationBell, TranslocoPipe, LanguageSelector],
+  imports: [Avatar, NotificationBell, TranslocoPipe, LanguageSelector, ThemeToggle],
   providers: [...provideTranslocoScope('layout')],
   templateUrl: './header.html',
   styleUrl: './header.scss',

@@ -107,7 +107,7 @@
   font-size: 0.875rem;
   font-family: inherit;
   color: var(--color-gray-900);
-  background: white;
+  background: var(--color-surface);
 
   &:focus {
     outline: none;
@@ -299,7 +299,7 @@
   width: 13rem;
   padding: 0.375rem;
   border-radius: var(--radius-lg);
-  background: white;
+  background: var(--color-surface);
   border: 1px solid var(--color-gray-200);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   display: flex;

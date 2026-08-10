@@ -4,6 +4,13 @@
     "spanish": "Español",
     "english": "English"
   },
+  "theme": {
+    "toggleLabel": "Cambiar tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "semiDark": "Semi oscuro",
+    "system": "Sistema"
+  },
   "common": {
     "save": "Guardar",
     "cancel": "Cancelar",
@@ -82,6 +89,7 @@
     "services": "Servicios — SOTER HSEQ",
     "technicians": "Técnicos — SOTER HSEQ",
     "myOrders": "Mis órdenes — SOTER HSEQ",
+    "settings": "Configuración — SOTER HSEQ",
     "notFound": "Página no encontrada — SOTER HSEQ"
   },
   "validation": {

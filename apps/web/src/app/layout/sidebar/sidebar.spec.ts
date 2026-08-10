@@ -4,6 +4,21 @@ import { provideRouter } from '@angular/router';
 
 import { Sidebar } from './sidebar';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
+import { SettingsFacade } from '../../features/settings/facades/settings.facade';
+
+const settingsFacadeStub = {
+  settings: signal({
+    businessName: 'SOTER HSEQ',
+    logoUrl: undefined,
+    logoDesktopSize: 44,
+    logoMobileSize: 36,
+    logoAlignment: 'left' as const,
+    updatedAt: new Date(0),
+    updatedBy: '',
+  }),
+  loading: signal(false),
+  init: () => undefined,
+};
 
 describe('Sidebar', () => {
   let component: Sidebar;
@@ -22,6 +37,7 @@ describe('Sidebar', () => {
             logout: async () => undefined,
           },
         },
+        { provide: SettingsFacade, useValue: settingsFacadeStub },
       ],
     }).compileComponents();
 
@@ -38,7 +54,10 @@ describe('Sidebar', () => {
     const logo: HTMLImageElement | null =
       fixture.nativeElement.querySelector('.sidebar-logo-image');
 
-    expect(logo?.getAttribute('src')).toBe('soter-hseq-logo-menu.jpeg');
+    // Sin tema explícito en localStorage y sin preferencia de SO oscura
+    // (polyfill de `matchMedia` en test-providers.ts), `ThemeService`
+    // resuelve a 'light' — el logo por defecto en ese tema.
+    expect(logo?.getAttribute('src')).toBe('soter-hseq-logo-light.png');
     expect(logo?.getAttribute('alt')).toContain('SOTER HSEQ');
   });
 
@@ -56,6 +75,7 @@ describe('Sidebar', () => {
             logout: async () => undefined,
           },
         },
+        { provide: SettingsFacade, useValue: settingsFacadeStub },
       ],
     }).compileComponents();
 
@@ -96,6 +116,7 @@ describe('Sidebar', () => {
             logout: async () => undefined,
           },
         },
+        { provide: SettingsFacade, useValue: settingsFacadeStub },
       ],
     }).compileComponents();
 

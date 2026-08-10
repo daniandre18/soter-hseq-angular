@@ -18,6 +18,7 @@ import { VisitsAgenda } from './features/orders/pages/visits-agenda/visits-agend
 import { ServicesList } from './features/services/pages/services-list/services-list';
 import { ServiceCategories } from './features/services/pages/service-categories/service-categories';
 import { TechniciansList } from './features/users/pages/technicians-list/technicians-list';
+import { SettingsPage } from './features/settings/pages/settings-page/settings-page';
 import { environment } from '../environments/environment';
 
 const loginComponent = environment.demoQuickLoginEnabled ? DemoLogin : Login;
@@ -99,6 +100,13 @@ export const routes: Routes = [
         component: TechniciansList,
         title: 'routes.technicians',
         data: { titleKey: 'layout.pageTitles.technicians' },
+        canActivate: [roleGuard(['ADMIN'])],
+      },
+      {
+        path: 'configuracion',
+        component: SettingsPage,
+        title: 'routes.settings',
+        data: { titleKey: 'layout.pageTitles.settings' },
         canActivate: [roleGuard(['ADMIN'])],
       },
       {

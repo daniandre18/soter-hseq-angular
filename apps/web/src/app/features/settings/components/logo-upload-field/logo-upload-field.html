@@ -1,0 +1,67 @@
+<div class="logo-upload-field">
+  @if (!uploadsEnabled) {
+    <p class="field-help">{{ 'settings.appearance.logo.demoModeHelp' | transloco }}</p>
+  } @else {
+    @if (!selectedFile()) {
+      @if (currentLogoUrl(); as logoUrl) {
+        <div class="logo-current">
+          <img [src]="logoUrl" [alt]="'settings.appearance.logo.currentAlt' | transloco" />
+          <span>{{ 'settings.appearance.logo.currentLabel' | transloco }}</span>
+        </div>
+      }
+
+      <div
+        class="dropzone"
+        [class.dropzone--active]="dropzoneActive()"
+        (dragover)="onDropzoneDragOver($event)"
+        (dragleave)="onDropzoneDragLeave()"
+        (drop)="onDropzoneDrop($event)"
+      >
+        <app-icon name="upload-cloud" />
+        <p class="dropzone-text">
+          {{ 'settings.appearance.logo.dropzoneText' | transloco }}
+          <label class="dropzone-browse">
+            {{ 'settings.appearance.logo.dropzoneBrowse' | transloco }}
+            <input
+              type="file"
+              class="sr-only"
+              accept="image/png,image/jpeg,image/svg+xml"
+              (change)="onFileSelected($event)"
+            />
+          </label>
+        </p>
+        <p class="dropzone-help">{{ acceptedFilesHelp }}</p>
+      </div>
+    } @else {
+      <div class="attachment-card">
+        @if (selectedFilePreviewUrl(); as previewUrl) {
+          <img [src]="previewUrl" class="attachment-card__thumb" alt="" />
+        }
+        <div class="attachment-card__info">
+          <p class="attachment-card__name">{{ selectedFile()!.name }}</p>
+          @if (uploading()) {
+            <app-progress-bar [value]="uploadProgress() ?? 0" />
+          }
+        </div>
+        @if (!uploading()) {
+          <button
+            type="button"
+            class="attachment-card__remove"
+            [attr.aria-label]="'settings.appearance.logo.removeFile' | transloco"
+            (click)="clearSelectedFile()"
+          >
+            <app-icon name="x" />
+          </button>
+        }
+      </div>
+
+      <app-button variant="accent" size="sm" (click)="upload()" [disabled]="uploading()">
+        {{ (uploading() ? 'settings.appearance.logo.uploading' : 'settings.appearance.logo.uploadAction') | transloco }}
+      </app-button>
+    }
+
+    @if (fileError()) {
+      <p class="field-error">{{ fileError() }}</p>
+    }
+  }
+</div>

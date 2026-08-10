@@ -1,0 +1,363 @@
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.settings-page-header {
+  h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+  }
+}
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.375rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-gray-200);
+  // En vez de que las pestañas se envuelvan a varias líneas en móvil (que
+  // rompe el layout cuando se agregan más tabs), se desplazan en una sola
+  // fila con scroll horizontal — el patrón de iComfly.
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-gray-300);
+    border-radius: 999px;
+  }
+}
+
+.settings-tab {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-gray-500);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  app-icon {
+    --icon-size: 1rem;
+  }
+
+  &:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-800);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: -2px;
+  }
+
+  &--active {
+    background: var(--color-brand-50);
+    color: var(--color-brand-700);
+  }
+}
+
+.empty-card {
+  text-align: center;
+  color: var(--color-gray-500);
+}
+
+h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.section-help {
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.settings-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+// Apariencia
+
+.appearance-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.theme-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem;
+}
+
+.theme-preview-card {
+  padding: 0;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+
+  &--active {
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 1px var(--color-brand-500);
+  }
+}
+
+.theme-preview-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-gray-800);
+
+  app-icon {
+    --icon-size: 1rem;
+    color: var(--color-gray-400);
+  }
+}
+
+.theme-preview-card__badge {
+  margin-left: auto;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-brand-50);
+  color: var(--color-brand-700);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+// Cada tarjeta simula sidebar + contenido por separado (`__sidebar` /
+// `__content`) para que "Semi Dark" pueda mostrar visualmente la mezcla
+// (sidebar oscuro, contenido claro) — el resto de variantes simplemente
+// usan el mismo color en ambos, sin costura visible.
+.theme-preview-swatch {
+  display: flex;
+  overflow: hidden;
+
+  &__sidebar {
+    width: 22%;
+    flex-shrink: 0;
+  }
+
+  &__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.375rem;
+    min-width: 0;
+    padding: 0.75rem;
+  }
+
+  &__bar {
+    width: 55%;
+    height: 0.5rem;
+    border-radius: 999px;
+  }
+
+  &__row {
+    width: 100%;
+    height: 0.625rem;
+    border-radius: 999px;
+  }
+
+  &__row--short {
+    width: 65%;
+  }
+
+  &--light {
+    .theme-preview-swatch__sidebar,
+    .theme-preview-swatch__content {
+      background: #eef1f8;
+    }
+
+    .theme-preview-swatch__bar,
+    .theme-preview-swatch__row {
+      background: #c7cde0;
+    }
+  }
+
+  &--dark {
+    .theme-preview-swatch__sidebar,
+    .theme-preview-swatch__content {
+      background: #100e1f;
+    }
+
+    .theme-preview-swatch__bar,
+    .theme-preview-swatch__row {
+      background: #3c3856;
+    }
+  }
+
+  &--semi-dark {
+    .theme-preview-swatch__sidebar {
+      background: linear-gradient(180deg, #21195a, #0d0a2a);
+    }
+
+    .theme-preview-swatch__content {
+      background: #eef1f8;
+    }
+
+    .theme-preview-swatch__bar,
+    .theme-preview-swatch__row {
+      background: #c7cde0;
+    }
+  }
+
+  &--system {
+    .theme-preview-swatch__sidebar,
+    .theme-preview-swatch__content {
+      background: linear-gradient(135deg, #eef1f8 50%, #100e1f 50%);
+    }
+
+    .theme-preview-swatch__bar,
+    .theme-preview-swatch__row {
+      background: linear-gradient(135deg, #c7cde0 50%, #3c3856 50%);
+    }
+  }
+}
+
+.size-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.size-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-brand-600);
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--color-brand-600);
+}
+
+.alignment-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.alignment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-gray-500);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-gray-100);
+  }
+
+  &--active {
+    border-color: var(--color-brand-500);
+    background: var(--color-brand-50);
+    color: var(--color-brand-700);
+  }
+}
+
+// `app-card` proyecta su contenido dentro de un `<div class="card">` propio
+// (ver `shared/components/card/card.html`) que ya trae `text-align: left` y
+// `display: block` — estilos puestos directamente en el host `app-card`
+// (como `display: flex`/`align-items`/`gap`/`text-align` acá) NUNCA llegan
+// a ese div interno, así que no tenían ningún efecto visual: el `gap` no
+// separaba nada (el host solo tiene ese único hijo) y el texto seguía
+// alineado a la izquierda pese al `text-align: center`. Por eso se veía
+// todo "pegado" — sin el spacing real quedaban solo los `margin: 0`
+// puestos a propósito en h3/p. La solución es envolver el contenido en un
+// div propio (`.coming-soon-body`, ver settings-page.html) y aplicarle el
+// layout ahí, en vez de en el host de `app-card`.
+.coming-soon-card {
+  color: var(--color-gray-500);
+}
+
+.coming-soon-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+
+  app-icon {
+    --icon-size: 2rem;
+    color: var(--color-gray-300);
+  }
+
+  h3 {
+    margin: 0;
+    color: var(--color-gray-700);
+  }
+
+  p {
+    margin: 0;
+    max-width: 26rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+}
+
+.coming-soon-badge {
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
