@@ -33,7 +33,13 @@
   "actions": {
     "view": "Ver orden",
     "edit": "Editar orden",
-    "delete": "Eliminar orden"
+    "delete": "Eliminar orden",
+    "more": "Más acciones"
+  },
+  "mobileFilters": {
+    "all": "Todos",
+    "active": "Activas",
+    "closed": "Cerradas"
   },
   "status": {
     "draft": "Borrador",

@@ -32,39 +32,6 @@
   </div>
 
   <div class="orders-mobile-controls">
-    <div class="mobile-order-tabs" role="group" [attr.aria-label]="'orders.quickFilters' | transloco">
-      <button
-        type="button"
-        class="mobile-order-tab"
-        data-status-filter="all"
-        [class.mobile-order-tab--active]="statusFilter() === 'all'"
-        [attr.aria-pressed]="statusFilter() === 'all'"
-        (click)="selectStatusFilter('all')"
-      >
-        {{ 'orders.allCount' | transloco: { count: totalOrdersCount() } }}
-      </button>
-      <button
-        type="button"
-        class="mobile-order-tab"
-        data-status-filter="active"
-        [class.mobile-order-tab--active]="statusFilter() === 'active'"
-        [attr.aria-pressed]="statusFilter() === 'active'"
-        (click)="selectStatusFilter('active')"
-      >
-        {{ 'orders.activeCount' | transloco: { count: activeOrdersCount() } }}
-      </button>
-      <button
-        type="button"
-        class="mobile-order-tab"
-        data-status-filter="closed"
-        [class.mobile-order-tab--active]="statusFilter() === 'closed'"
-        [attr.aria-pressed]="statusFilter() === 'closed'"
-        (click)="selectStatusFilter('closed')"
-      >
-        {{ 'orders.closedCount' | transloco: { count: closedOrdersCount() } }}
-      </button>
-    </div>
-
     <div class="mobile-order-action-row">
       @if (canManage()) {
         <button type="button" class="mobile-create-order-btn" (click)="openCreate()">
@@ -94,9 +61,9 @@
         [value]="statusFilter()"
         (change)="onStatusChange($event)"
       >
-        <option value="all">Todos</option>
-        <option value="active">Activas</option>
-        <option value="closed">Cerradas</option>
+        <option value="all">{{ 'orders.mobileFilters.all' | transloco }}</option>
+        <option value="active">{{ 'orders.mobileFilters.active' | transloco }}</option>
+        <option value="closed">{{ 'orders.mobileFilters.closed' | transloco }}</option>
         @for (entry of statusOptions; track entry[0]) {
           <option [value]="entry[0]">{{ entry[1].translationKey | transloco }}</option>
         }
@@ -109,7 +76,7 @@
       <p>{{ 'orders.empty' | transloco }}</p>
     </app-card>
   } @else {
-    <app-card padding="none">
+    <app-card class="orders-results-card" padding="none">
       <div class="table-scroll">
         <table class="orders-table">
           <thead>
@@ -208,87 +175,95 @@
       </div>
       <div class="orders-mobile-list">
         @for (order of visibleOrders(); track order.id) {
-          <article class="mobile-order-row">
+          <article
+            class="mobile-order-row"
+            role="link"
+            tabindex="0"
+            (click)="openDetail(order)"
+            (keydown.enter)="openDetail(order)"
+          >
             <div class="mobile-order-header">
-              <button type="button" class="mobile-order-main" (click)="openDetail(order)">
+              <div class="mobile-order-heading">
                 <span class="mobile-order-number">{{ order.orderNumber }}</span>
-                <strong>{{ order.title || order.serviceSummary }}</strong>
-                <span class="mobile-order-client">{{ order.clientBusinessName }}</span>
-              </button>
-              <div class="mobile-order-actions">
+                <app-status-badge
+                  [label]="statusLabel(order.status)"
+                  [color]="statusColor(order.status)"
+                />
+                <app-status-badge
+                  [label]="priorityLabel(order.priority)"
+                  [color]="priorityColor(order.priority)"
+                />
+              </div>
+              <div class="mobile-order-menu" (click)="$event.stopPropagation()">
                 <button
                   type="button"
-                  class="icon-btn icon-btn--primary"
-                  (click)="openDetail(order)"
-                  aria-label="Ver orden"
-                  title="Ver"
+                  class="mobile-order-menu-trigger"
+                  aria-haspopup="menu"
+                  [attr.aria-expanded]="openMobileActionsId() === order.id"
+                  [attr.aria-label]="'orders.actions.more' | transloco"
+                  (click)="toggleMobileActions(order.id, $event)"
                 >
-                  <app-icon name="eye" />
+                  ⋮
                 </button>
-                @if (canManage()) {
+                @if (openMobileActionsId() === order.id) {
+                  <div class="mobile-order-menu-popover" role="menu">
                   <button
                     type="button"
-                    class="icon-btn"
-                    (click)="openEditFromList(order, $event)"
-                    aria-label="Editar orden"
-                    title="Editar"
+                    role="menuitem"
+                    (click)="openDetail(order)"
                   >
-                    <app-icon name="square-pen" />
+                    <app-icon name="eye" />
+                    {{ 'orders.actions.view' | transloco }}
                   </button>
-                }
-                @if (canDelete() && order.status === 'DRAFT') {
-                  <button
-                    type="button"
-                    class="icon-btn icon-btn--danger"
-                    (click)="confirmDelete(order, $event)"
-                    aria-label="Eliminar orden"
-                    title="Eliminar"
-                  >
-                    <app-icon name="trash-2" />
-                  </button>
+                  @if (canManage()) {
+                    <button
+                      type="button"
+                      role="menuitem"
+                      (click)="openEditFromList(order, $event)"
+                    >
+                      <app-icon name="square-pen" />
+                      {{ 'orders.actions.edit' | transloco }}
+                    </button>
+                  }
+                  @if (canDelete() && order.status === 'DRAFT') {
+                    <button
+                      type="button"
+                      class="mobile-order-menu-danger"
+                      role="menuitem"
+                      (click)="confirmDelete(order, $event)"
+                    >
+                      <app-icon name="trash-2" />
+                      {{ 'orders.actions.delete' | transloco }}
+                    </button>
+                  }
+                  </div>
                 }
               </div>
             </div>
 
-            <div class="mobile-order-badges">
-              <app-status-badge
-                [label]="statusLabel(order.status)"
-                [color]="statusColor(order.status)"
-              />
-              <app-status-badge
-                [label]="priorityLabel(order.priority)"
-                [color]="priorityColor(order.priority)"
-              />
-            </div>
-
-            <div class="mobile-order-technicians">
-              @if (technicianNames(order).length > 0) {
-                <div class="mobile-avatar-stack">
-                  @for (name of technicianNames(order); track name) {
-                    <app-avatar [name]="name" size="sm" />
-                  }
-                </div>
-                <span>{{ technicianNames(order).join(', ') }}</span>
-              } @else {
-                <span class="muted">Sin técnico asignado</span>
-              }
-            </div>
-
-            <div class="mobile-order-progress">
-              <app-progress-bar [value]="order.progress" />
-              <span>{{ order.progress }}%</span>
+            <div class="mobile-order-body">
+              <strong>{{ order.title || order.serviceSummary }}</strong>
+              <span>{{ order.clientBusinessName }}</span>
             </div>
 
             <div class="mobile-order-footer">
-              <div class="mobile-order-date">
-                <span>Visita</span>
-                <strong>
-                  {{ order.scheduledStart ? (order.scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' }) : ('orders.unscheduled' | transloco) }}
-                </strong>
+              <div class="mobile-order-technician">
+                @if (technicianNames(order).length > 0) {
+                  <app-avatar [name]="technicianNames(order)[0]" size="sm" />
+                  <span>{{ technicianNames(order)[0] }}</span>
+                  @if (technicianNames(order).length > 1) {
+                    <small>+{{ technicianNames(order).length - 1 }}</small>
+                  }
+                } @else {
+                  <span class="muted">{{ 'orders.unassignedTechnician' | transloco }}</span>
+                }
               </div>
-              <div class="mobile-order-date mobile-order-date--end">
-                <span>Vence</span>
-                <strong>{{ order.dueDate ? (order.dueDate | localizedDate: { year: 'numeric', month: '2-digit', day: '2-digit' }) : ('common.noDate' | transloco) }}</strong>
+              <div class="mobile-order-meta">
+                <span class="mobile-order-progress">{{ order.progress }}%</span>
+                <span>
+                  {{ 'orders.due' | transloco }}:
+                  <strong>{{ order.dueDate ? (order.dueDate | localizedDate: { day: 'numeric', month: 'short' }) : ('common.noDate' | transloco) }}</strong>
+                </span>
               </div>
             </div>
           </article>

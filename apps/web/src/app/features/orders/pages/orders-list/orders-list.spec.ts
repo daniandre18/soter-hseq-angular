@@ -85,29 +85,36 @@ describe('OrdersList', () => {
     expect(mobileCard?.textContent).toContain('45%');
   });
 
-  it('should expose the mobile tabs, compact action and filter row', () => {
-    const mobileTabs = fixture.nativeElement.querySelectorAll('.mobile-order-tab');
+  it('should expose compact action and filter rows on mobile', () => {
     const mobileAction = fixture.nativeElement.querySelector('.mobile-create-order-btn');
+    const mobileCount = fixture.nativeElement.querySelector('.mobile-orders-count');
     const mobileSearch = fixture.nativeElement.querySelector('.mobile-order-search input');
     const mobileStatus = fixture.nativeElement.querySelector('.mobile-order-status');
 
-    expect(mobileTabs).toHaveLength(3);
     expect(mobileAction?.textContent).toContain('Nueva orden');
+    expect(mobileCount?.textContent).toContain('1 orden');
     expect(mobileSearch).toBeTruthy();
     expect(mobileStatus).toBeTruthy();
   });
 
-  it('should apply the active orders quick filter', async () => {
-    const activeFilter: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '[data-status-filter="active"]',
+  it('should replace the inline actions with a single actions menu', () => {
+    const mobileCard = fixture.nativeElement.querySelector('.mobile-order-row');
+
+    expect(mobileCard?.querySelectorAll('.mobile-order-menu')).toHaveLength(1);
+    expect(mobileCard?.querySelectorAll('.mobile-order-actions')).toHaveLength(0);
+  });
+
+  it('should close the mobile actions menu when clicking outside', async () => {
+    const trigger: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '.mobile-order-menu-trigger',
     );
 
-    activeFilter.click();
+    trigger.click();
     await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.mobile-order-menu-popover')).toBeTruthy();
 
-    expect(activeFilter.getAttribute('aria-pressed')).toBe('true');
-    expect(fixture.nativeElement.querySelector('.mobile-orders-count')?.textContent).toContain(
-      '1 orden',
-    );
+    document.body.click();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.mobile-order-menu-popover')).toBeNull();
   });
 });

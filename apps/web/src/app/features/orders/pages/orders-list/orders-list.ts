@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
@@ -46,6 +46,7 @@ export class OrdersList {
   protected readonly editingOrder = signal<ServiceOrder | null>(null);
   protected readonly deletingOrder = signal<ServiceOrder | null>(null);
   protected readonly deleting = signal(false);
+  protected readonly openMobileActionsId = signal<string | null>(null);
 
   protected readonly canManage = computed(() => {
     const role = this.authFacade.currentRole();
@@ -60,17 +61,6 @@ export class OrdersList {
     OrderStatus,
     { translationKey: string; color: string },
   ][];
-
-  protected readonly totalOrdersCount = computed(() => this.ordersFacade.orders().length);
-  protected readonly activeOrdersCount = computed(
-    () =>
-      this.ordersFacade.orders().filter((order) => !CLOSED_ORDER_STATUSES.has(order.status)).length,
-  );
-  protected readonly closedOrdersCount = computed(
-    () =>
-      this.ordersFacade.orders().filter((order) => CLOSED_ORDER_STATUSES.has(order.status)).length,
-  );
-
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -164,6 +154,16 @@ export class OrdersList {
 
   protected openDetail(order: ServiceOrder): void {
     void this.router.navigate(['/ordenes', order.id]);
+  }
+
+  protected toggleMobileActions(orderId: string, event: Event): void {
+    event.stopPropagation();
+    this.openMobileActionsId.update((currentId) => (currentId === orderId ? null : orderId));
+  }
+
+  @HostListener('document:click')
+  protected closeMobileActions(): void {
+    this.openMobileActionsId.set(null);
   }
 
   protected openCreate(): void {
