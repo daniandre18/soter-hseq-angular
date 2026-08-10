@@ -104,6 +104,8 @@
     "evidenceUploaded": "Evidence uploaded.",
     "evidenceError": "The evidence could not be uploaded.",
     "draftError": "The AI draft could not be generated.",
+    "manualActError": "The closing record could not be created. Check the information and try again.",
+    "uploadActError": "The closing record could not be uploaded. Check the PDF and try again.",
     "actSaveError": "The closing record changes could not be saved.",
     "actApproveError": "The closing record could not be approved.",
     "closeError": "The order could not be closed or its PDF generated."
@@ -144,7 +146,14 @@
       "title": "Schedule visit",
       "start": "Start",
       "end": "End",
-      "schedule": "Schedule"
+      "schedule": "Schedule",
+      "success": "Visit scheduled successfully.",
+      "error": "The visit could not be scheduled. Check the dates and try again.",
+      "validation": {
+        "MISSING_DUE_DATE": "Set the order due date first.",
+        "END_BEFORE_START": "The visit end must be after its start.",
+        "AFTER_DUE_DATE": "The visit cannot exceed the order due date."
+      }
     },
     "assign": {
       "title": "Assign technicians",
@@ -187,10 +196,34 @@
     "empty": "No activity recorded."
   },
   "report": {
+    "cardHelp": "Formal document required to approve and close the order.",
+    "chooseMethod": "Record preparation",
+    "chooseTitle": "How would you like to add the closing record?",
+    "chooseHelp": "Select the appropriate method. No option will close the order without review and approval.",
+    "manualTitle": "Create guided record",
+    "manualHelp": "Complete a professional template and generate the corporate PDF upon closure.",
+    "recommended": "Recommended",
+    "aiTitle": "Draft with AI",
+    "aiHelp": "Use field notes to prepare an editable draft.",
+    "uploadTitle": "Upload signed record",
+    "uploadHelp": "Attach a previously prepared PDF for review and approval.",
+    "changeMethod": "Change method",
     "generateTitle": "Generate draft with AI",
     "generateHelp": "A summary of the field notes will be sent to the AI to draft the closing record. It's always subject to human review and approval before closing.",
     "generating": "Generating…",
     "generate": "Generate draft with AI",
+    "uploadPanelTitle": "Upload record as PDF",
+    "uploadPanelHelp": "The file will be preserved as the official document and will not be replaced when the order is closed.",
+    "selectPdf": "Select PDF file",
+    "pdfRequirements": "PDF only · 10 MB maximum",
+    "uploading": "Uploading…",
+    "uploadAction": "Upload record for review",
+    "uploadTypeError": "Select a valid PDF file.",
+    "uploadSizeError": "The record exceeds the 10 MB size limit.",
+    "manualEyebrow": "HSEQ record template",
+    "manualFormTitle": "Service execution and closure record",
+    "manualFormHelp": "Order identification is completed automatically. Include only verifiable execution facts.",
+    "objective": "Objective and scope",
     "notReady": "The closing record can be generated once the order is under review.",
     "executiveSummary": "Executive summary",
     "activitiesPerformed": "Activities performed (one per line)",
@@ -198,12 +231,36 @@
     "recommendations": "Recommendations (one per line)",
     "conclusions": "Conclusions",
     "limitations": "Limitations",
+    "acceptanceNotes": "Acceptance notes",
+    "responsiblePeople": "Responsible parties and signatures",
+    "soterRepresentative": "SOTER HSEQ representative",
+    "clientRepresentative": "Client representative",
+    "role": "Role",
+    "signatureHelp": "The generated PDF will include signature lines. If the document is already signed, use Upload signed record.",
+    "creating": "Creating record…",
+    "createDraft": "Create record for review",
     "saveChanges": "Save changes",
     "approve": "Approve record",
     "approving": "Approving…",
     "closeAndGeneratePdf": "Close order and generate PDF",
+    "closeWithUploadedAct": "Close order with this record",
     "generatingPdf": "Generating PDF…",
-    "downloadPdf": "Download PDF"
+    "downloadPdf": "Download PDF",
+    "uploadedDocument": "Uploaded record",
+    "viewDocument": "View document",
+    "uploadedNotice": "Verify that the document belongs to this order before approving it.",
+    "source": {
+      "MANUAL": "Record created in SOTER",
+      "AI_ASSISTED": "AI-assisted draft",
+      "UPLOADED": "Uploaded PDF document"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "AI_GENERATED": "AI generated",
+      "UNDER_REVIEW": "Under review",
+      "APPROVED": "Approved",
+      "FINAL": "Final"
+    }
   },
   "page": {
     "breadcrumbAriaLabel": "Breadcrumb",
@@ -351,6 +408,7 @@
     "selectService": "Select a service.",
     "dueDateRequired": "Due date is required.",
     "visitDateRequired": "Select a visit date.",
-    "visitTimeRequired": "Select a visit time."
+    "visitTimeRequired": "Select a visit time.",
+    "visitAfterDueDate": "The visit date cannot be later than the due date."
   }
 }

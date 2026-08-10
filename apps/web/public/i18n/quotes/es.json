@@ -54,6 +54,7 @@
     "generatedOrders": "Órdenes generadas",
     "converting": "Convirtiendo…",
     "convert": "Convertir a orden",
+    "approve": "Aprobar cotización",
     "markAs": "Marcar como {{status}}",
     "statusError": "No fue posible cambiar el estado. Verifica los permisos del perfil e inténtalo nuevamente.",
     "convertError": "No fue posible convertir la cotización. Verifica su estado e inténtalo nuevamente.",

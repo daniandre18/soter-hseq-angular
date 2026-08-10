@@ -39,12 +39,13 @@ function buildDownloadUrl(bucketName: string, path: string, token: string): stri
  * por el cliente" — aquí se resuelve siempre desde Firestore, no de
  * `request.data`).
  */
-async function requireRole(uid: string, allowedRoles: Role[]): Promise<void> {
+async function requireRole(uid: string, allowedRoles: Role[]): Promise<Role> {
   const userDoc = await getFirestore().collection('users').doc(uid).get();
   const role = userDoc.data()?.['role'] as Role | undefined;
   if (!role || !allowedRoles.includes(role)) {
     throw new HttpsError('permission-denied', 'Tu rol no tiene permiso para esta acción.');
   }
+  return role;
 }
 
 type OrderEventAction =
@@ -326,6 +327,82 @@ interface GenerateClosingActRequest {
   notes: string;
 }
 
+interface ClosingActContentInput {
+  objective?: string;
+  executiveSummary: string;
+  performedActivities: string[];
+  findings: string[];
+  recommendations: string[];
+  conclusions?: string;
+  limitations?: string;
+  acceptanceNotes?: string;
+  serviceProviderRepresentative?: string;
+  serviceProviderRepresentativeRole?: string;
+  clientRepresentative?: string;
+  clientRepresentativeRole?: string;
+}
+
+interface CreateClosingActRequest {
+  orderId: string;
+  content: ClosingActContentInput;
+}
+
+interface UploadClosingActRequest {
+  orderId: string;
+  fileName: string;
+  contentType: string;
+  fileBase64: string;
+}
+
+const MAX_CLOSING_ACT_PDF_SIZE = 10 * 1024 * 1024;
+
+async function prepareClosingActContext(uid: string, orderId: string) {
+  const role = await requireRole(uid, ['ADMIN', 'COORDINATOR', 'TECHNICIAN']);
+  const firestore = getFirestore();
+  const orderRef = firestore.collection('orders').doc(orderId);
+  const orderSnapshot = await orderRef.get();
+  if (!orderSnapshot.exists) {
+    throw new HttpsError('not-found', 'La orden no existe.');
+  }
+  const order = orderSnapshot.data() ?? {};
+  if (order['status'] !== 'UNDER_REVIEW') {
+    throw new HttpsError('failed-precondition', 'La orden debe estar en revisión para crear el acta.');
+  }
+  if (
+    role === 'TECHNICIAN' &&
+    !((order['assignedTechnicianIds'] as string[] | undefined) ?? []).includes(uid)
+  ) {
+    throw new HttpsError('permission-denied', 'La orden no está asignada a este técnico.');
+  }
+  const priorActsSnapshot = await firestore
+    .collection('closingActs')
+    .where('orderId', '==', orderId)
+    .get();
+  return {
+    firestore,
+    orderRef,
+    order,
+    nextVersion: priorActsSnapshot.size + 1,
+  };
+}
+
+function cleanOptionalText(value: unknown, maxLength = 4000): string | null {
+  return typeof value === 'string' && value.trim()
+    ? value.trim().slice(0, maxLength)
+    : null;
+}
+
+function cleanTextList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim().slice(0, 1000))
+    .filter(Boolean)
+    .slice(0, 100);
+}
+
 function parseClosingActDraft(rawText: string): ClosingActDraft {
   const jsonMatch = rawText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
@@ -363,9 +440,6 @@ export const generateClosingAct = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Debes iniciar sesión para generar el acta.');
   }
-  // CLAUDE.md §23.6 "solo usuarios autorizados generan"; el técnico debe
-  // poder solicitarlo (§3.4), no solo ADMIN/COORDINATOR.
-  await requireRole(request.auth.uid, ['ADMIN', 'COORDINATOR', 'TECHNICIAN']);
 
   const { orderId, notes } = (request.data ?? {}) as Partial<GenerateClosingActRequest>;
   if (!orderId || !notes || notes.trim().length < 10) {
@@ -375,18 +449,12 @@ export const generateClosingAct = onCall(async (request) => {
     );
   }
 
-  const firestore = getFirestore();
-  const orderRef = firestore.collection('orders').doc(orderId);
-  const orderSnapshot = await orderRef.get();
-  if (!orderSnapshot.exists) {
-    throw new HttpsError('not-found', 'La orden no existe.');
-  }
-
-  const priorActsSnapshot = await firestore
-    .collection('closingActs')
-    .where('orderId', '==', orderId)
-    .get();
-  const nextVersion = priorActsSnapshot.size + 1;
+  // Además del rol, el backend verifica estado y asignación del técnico;
+  // nunca confía únicamente en que la UI haya ocultado la acción.
+  const { firestore, orderRef, order, nextVersion } = await prepareClosingActContext(
+    request.auth.uid,
+    orderId,
+  );
 
   const apiKey = process.env['GEMINI_API_KEY'];
   if (!apiKey) {
@@ -415,7 +483,7 @@ export const generateClosingAct = onCall(async (request) => {
     version: nextVersion,
     status: 'AI_GENERATED',
     source: 'AI_ASSISTED',
-    title: `Acta de cierre - ${orderSnapshot.data()?.['orderNumber'] ?? orderId}`,
+    title: `Acta de cierre - ${order['orderNumber'] ?? orderId}`,
     executiveSummary: draft.executiveSummary,
     performedActivities: draft.performedActivities,
     findings: draft.findings,
@@ -433,7 +501,145 @@ export const generateClosingAct = onCall(async (request) => {
     updatedBy: request.auth.uid,
   });
 
+  await orderRef.update({
+    technicalNotes: notes,
+    closingActId: closingActRef.id,
+    status: 'UNDER_REVIEW',
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: request.auth.uid,
+  });
+
   return { closingActId: closingActRef.id };
+});
+
+/** Crea el modelo estructurado de acta diligenciado por una persona. El
+ * documento queda en revisión; la aprobación y el cierre son pasos humanos
+ * posteriores e independientes. */
+export const createClosingAct = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para crear el acta.');
+  }
+  const { orderId, content } = (request.data ?? {}) as Partial<CreateClosingActRequest>;
+  if (!orderId || !content) {
+    throw new HttpsError('invalid-argument', 'Falta la orden o el contenido del acta.');
+  }
+  const executiveSummary = cleanOptionalText(content.executiveSummary);
+  const performedActivities = cleanTextList(content.performedActivities);
+  if (!executiveSummary || executiveSummary.length < 10 || performedActivities.length === 0) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Registra un resumen y al menos una actividad realizada.',
+    );
+  }
+
+  const { firestore, orderRef, order, nextVersion } = await prepareClosingActContext(
+    request.auth.uid,
+    orderId,
+  );
+  const actRef = firestore.collection('closingActs').doc();
+  const now = FieldValue.serverTimestamp();
+  const batch = firestore.batch();
+  batch.set(actRef, {
+    orderId,
+    version: nextVersion,
+    status: 'UNDER_REVIEW',
+    source: 'MANUAL',
+    title: `Acta de cierre - ${order['orderNumber'] ?? orderId}`,
+    objective: cleanOptionalText(content.objective),
+    executiveSummary,
+    performedActivities,
+    findings: cleanTextList(content.findings),
+    recommendations: cleanTextList(content.recommendations),
+    conclusions: cleanOptionalText(content.conclusions),
+    limitations: cleanOptionalText(content.limitations),
+    acceptanceNotes: cleanOptionalText(content.acceptanceNotes),
+    serviceProviderRepresentative: cleanOptionalText(
+      content.serviceProviderRepresentative,
+      200,
+    ),
+    serviceProviderRepresentativeRole: cleanOptionalText(
+      content.serviceProviderRepresentativeRole,
+      200,
+    ),
+    clientRepresentative: cleanOptionalText(content.clientRepresentative, 200),
+    clientRepresentativeRole: cleanOptionalText(content.clientRepresentativeRole, 200),
+    createdAt: now,
+    createdBy: request.auth.uid,
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
+  batch.update(orderRef, {
+    closingActId: actRef.id,
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
+  await batch.commit();
+  return { closingActId: actRef.id };
+});
+
+/** Registra un PDF de acta ya elaborado o firmado. Storage continúa
+ * cerrado al navegador: el archivo entra por esta función autenticada y el
+ * documento queda sujeto al mismo paso de aprobación que un acta manual. */
+export const uploadClosingAct = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para subir el acta.');
+  }
+  const { orderId, fileName, contentType, fileBase64 } = (request.data ??
+    {}) as Partial<UploadClosingActRequest>;
+  if (!orderId || !fileName || !fileBase64 || contentType !== 'application/pdf') {
+    throw new HttpsError('invalid-argument', 'Selecciona un archivo PDF válido.');
+  }
+  const pdfBuffer = Buffer.from(fileBase64, 'base64');
+  if (
+    pdfBuffer.length === 0 ||
+    pdfBuffer.length > MAX_CLOSING_ACT_PDF_SIZE ||
+    pdfBuffer.subarray(0, 5).toString('ascii') !== '%PDF-'
+  ) {
+    throw new HttpsError('invalid-argument', 'El PDF es inválido o supera el máximo de 10 MB.');
+  }
+
+  const { firestore, orderRef, order, nextVersion } = await prepareClosingActContext(
+    request.auth.uid,
+    orderId,
+  );
+  const actRef = firestore.collection('closingActs').doc();
+  const orderNumber = order['orderNumber'] ?? orderId;
+  const pdfPath = `closing-acts/${actRef.id}/acta-cargada-${orderNumber}.pdf`;
+  const downloadToken = randomUUID();
+  const bucket = getStorage().bucket();
+  await bucket.file(pdfPath).save(pdfBuffer, {
+    contentType: 'application/pdf',
+    metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+  });
+  const pdfUrl = buildDownloadUrl(bucket.name, pdfPath, downloadToken);
+  const now = FieldValue.serverTimestamp();
+  const batch = firestore.batch();
+  batch.set(actRef, {
+    orderId,
+    version: nextVersion,
+    status: 'UNDER_REVIEW',
+    source: 'UPLOADED',
+    title: `Acta de cierre - ${orderNumber}`,
+    executiveSummary: 'Acta elaborada externamente y cargada en formato PDF.',
+    performedActivities: [],
+    findings: [],
+    recommendations: [],
+    uploadedFileName: fileName.trim().slice(0, 200),
+    uploadedFileSize: pdfBuffer.length,
+    pdfPath,
+    pdfUrl,
+    createdAt: now,
+    createdBy: request.auth.uid,
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
+  batch.update(orderRef, {
+    closingActId: actRef.id,
+    updatedAt: now,
+    updatedBy: request.auth.uid,
+  });
+  await batch.commit();
+  return { closingActId: actRef.id, pdfUrl };
 });
 
 interface CloseOrderRequest {
@@ -441,9 +647,24 @@ interface CloseOrderRequest {
   actId: string;
 }
 
-function buildClosingActPdf(act: FirebaseFirestore.DocumentData, orderNumber: string): Promise<Buffer> {
+function formatPdfDate(value: unknown): string {
+  const date =
+    value && typeof (value as { toDate?: unknown }).toDate === 'function'
+      ? (value as { toDate: () => Date }).toDate()
+      : value instanceof Date
+        ? value
+        : null;
+  return date
+    ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+    : '—';
+}
+
+function buildClosingActPdf(
+  act: FirebaseFirestore.DocumentData,
+  order: FirebaseFirestore.DocumentData,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50 });
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -463,16 +684,68 @@ function buildClosingActPdf(act: FirebaseFirestore.DocumentData, orderNumber: st
       }
     };
 
-    doc.fontSize(18).font('Helvetica-Bold').text(act['title'] ?? `Acta de cierre - ${orderNumber}`);
-    doc.fontSize(9).font('Helvetica').fillColor('#666666').text(`Orden ${orderNumber}`);
+    const orderNumber = order['orderNumber'] ?? act['orderId'] ?? '—';
+    doc.rect(0, 0, doc.page.width, 112).fill('#11047A');
+    doc
+      .fillColor('#FFFFFF')
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .text('SOTER HSEQ', 50, 30);
+    doc
+      .fontSize(20)
+      .text(act['title'] ?? `Acta de cierre - ${orderNumber}`, 50, 51, {
+        width: doc.page.width - 100,
+      });
+    doc.fontSize(9).font('Helvetica').text(`Orden de trabajo ${orderNumber}`, 50, 83);
     doc.fillColor('#000000');
 
+    doc.y = 138;
+    doc.fontSize(11).font('Helvetica-Bold').text('Identificación del servicio');
+    doc.moveDown(0.45).fontSize(9).font('Helvetica');
+    doc.text(`Cliente: ${order['clientBusinessName'] ?? '—'}`);
+    doc.text(`Servicio: ${order['serviceSummary'] ?? order['title'] ?? '—'}`);
+    doc.text(`Visita programada: ${formatPdfDate(order['scheduledStart'])}`);
+    doc.text(`Técnicos responsables: ${((order['assignedTechnicianNames'] as string[] | undefined) ?? []).join(', ') || '—'}`);
+
+    section('Objetivo y alcance', act['objective'] ?? '');
     section('Resumen ejecutivo', act['executiveSummary'] ?? '');
     section('Actividades realizadas', (act['performedActivities'] as string[]) ?? []);
     section('Hallazgos', (act['findings'] as string[]) ?? []);
     section('Recomendaciones', (act['recommendations'] as string[]) ?? []);
     section('Conclusiones', act['conclusions'] ?? '');
     section('Limitaciones', act['limitations'] ?? '');
+    section('Observaciones de aceptación', act['acceptanceNotes'] ?? '');
+
+    doc.moveDown(2);
+    const signatureY = doc.y;
+    const signatureWidth = (doc.page.width - 120) / 2;
+    doc
+      .moveTo(50, signatureY)
+      .lineTo(50 + signatureWidth, signatureY)
+      .strokeColor('#777777')
+      .stroke();
+    doc
+      .moveTo(70 + signatureWidth, signatureY)
+      .lineTo(70 + signatureWidth * 2, signatureY)
+      .stroke();
+    doc.fillColor('#000000').fontSize(9).font('Helvetica-Bold');
+    doc.text(act['serviceProviderRepresentative'] ?? 'Responsable SOTER HSEQ', 50, signatureY + 8, {
+      width: signatureWidth,
+      align: 'center',
+    });
+    doc.text(act['clientRepresentative'] ?? 'Representante del cliente', 70 + signatureWidth, signatureY + 8, {
+      width: signatureWidth,
+      align: 'center',
+    });
+    doc.font('Helvetica').fontSize(8).fillColor('#666666');
+    doc.text(act['serviceProviderRepresentativeRole'] ?? 'Nombre, cargo y firma', 50, signatureY + 22, {
+      width: signatureWidth,
+      align: 'center',
+    });
+    doc.text(act['clientRepresentativeRole'] ?? 'Nombre, cargo y firma', 70 + signatureWidth, signatureY + 22, {
+      width: signatureWidth,
+      align: 'center',
+    });
 
     doc.end();
   });
@@ -512,17 +785,29 @@ export const closeOrder = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'El acta debe estar aprobada antes de cerrar la orden.');
   }
 
-  const orderNumber = orderSnapshot.data()?.['orderNumber'] ?? orderId;
-  const pdfBuffer = await buildClosingActPdf(actSnapshot.data() ?? {}, orderNumber);
+  const order = orderSnapshot.data() ?? {};
+  const act = actSnapshot.data() ?? {};
+  const orderNumber = order['orderNumber'] ?? orderId;
+  let pdfPath = act['pdfPath'] as string | undefined;
+  let pdfUrl = act['pdfUrl'] as string | undefined;
 
-  const pdfPath = `closing-acts/${actId}/acta-${orderNumber}.pdf`;
-  const downloadToken = randomUUID();
-  const bucket = getStorage().bucket();
-  await bucket.file(pdfPath).save(pdfBuffer, {
-    contentType: 'application/pdf',
-    metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
-  });
-  const pdfUrl = buildDownloadUrl(bucket.name, pdfPath, downloadToken);
+  // Un acta cargada ya es el documento oficial; no se sustituye por un PDF
+  // vacío generado desde los campos estructurados. Las actas manuales o de
+  // IA sí se renderizan con el modelo corporativo de SOTER.
+  if (act['source'] !== 'UPLOADED') {
+    const pdfBuffer = await buildClosingActPdf(act, order);
+    pdfPath = `closing-acts/${actId}/acta-${orderNumber}.pdf`;
+    const downloadToken = randomUUID();
+    const bucket = getStorage().bucket();
+    await bucket.file(pdfPath).save(pdfBuffer, {
+      contentType: 'application/pdf',
+      metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+    });
+    pdfUrl = buildDownloadUrl(bucket.name, pdfPath, downloadToken);
+  }
+  if (!pdfPath || !pdfUrl) {
+    throw new HttpsError('failed-precondition', 'El acta cargada no tiene un PDF válido.');
+  }
 
   const now = FieldValue.serverTimestamp();
   const batch = firestore.batch();

@@ -7,6 +7,7 @@ import { fromDateTimeLocalValue, toDateTimeLocalValue } from '../../../../shared
 import { OrdersFacade } from '../../facades/orders.facade';
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import type { OrderStatus, ServiceOrder } from '../../models/order.model';
+import { dueDateKey, visitScheduleError } from '../../utils/order-schedule-validation';
 
 /** Estados que un cambio manual libre puede fijar. `APPROVED`/`CLOSED`
  *  quedan afuera a propósito: solo se alcanzan mediante el flujo de Acta
@@ -67,8 +68,31 @@ export class OrderManagementCard {
   protected readonly statusChangeTarget = linkedSignal<OrderStatus>(() => this.order().status);
   protected readonly changingStatus = signal(false);
 
+  protected readonly dueDateMax = computed(() => {
+    const dueDate = this.order().dueDate;
+    if (!dueDate) {
+      return undefined;
+    }
+    const key = dueDateKey(dueDate).toString();
+    return `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}T23:59`;
+  });
+
+  protected readonly scheduleErrorKey = computed(() => {
+    const start = fromDateTimeLocalValue(this.scheduledStartValue());
+    const end = fromDateTimeLocalValue(this.scheduledEndValue());
+    if (!start || !end) {
+      return null;
+    }
+    const error = visitScheduleError(start, end, this.order().dueDate);
+    return error ? `orders.detail.schedule.validation.${error}` : null;
+  });
+
   protected readonly canConfirmSchedule = computed(
-    () => !this.saving() && !!this.scheduledStartValue() && !!this.scheduledEndValue(),
+    () =>
+      !this.saving() &&
+      !!this.scheduledStartValue() &&
+      !!this.scheduledEndValue() &&
+      !this.scheduleErrorKey(),
   );
 
   protected onScheduledStartInput(event: Event): void {
@@ -88,6 +112,9 @@ export class OrderManagementCard {
     this.saving.set(true);
     try {
       await this.ordersFacade.schedule(this.order().id, start, end);
+      this.toast.success(this.transloco.translate('orders.detail.schedule.success'));
+    } catch {
+      this.toast.error(this.transloco.translate('orders.detail.schedule.error'));
     } finally {
       this.saving.set(false);
     }

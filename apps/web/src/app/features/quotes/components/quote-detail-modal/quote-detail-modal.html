@@ -195,7 +195,11 @@
               (click)="setStatus(status)"
               [disabled]="saving()"
             >
-              {{ 'quotes.detail.markAs' | transloco: { status: statusButtonLabel(status) } }}
+              @if (canClientApprove() && status === 'APPROVED') {
+                {{ 'quotes.detail.approve' | transloco }}
+              } @else {
+                {{ 'quotes.detail.markAs' | transloco: { status: statusButtonLabel(status) } }}
+              }
             </app-button>
           }
         </div>

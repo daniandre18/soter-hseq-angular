@@ -5,7 +5,7 @@ import { QuotesQuery } from '../state/quotes.query';
 import { QuotesService } from '../state/quotes.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
 import { QUOTE_STATUS_CONFIG } from '../models/quote-status-config';
-import type { NewQuote, NewQuoteItem, QuoteItem, QuoteStatus } from '../models/quote.model';
+import type { NewQuote, NewQuoteItem, Quote, QuoteItem, QuoteStatus } from '../models/quote.model';
 import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
 export interface QuoteFunnelCounts {
@@ -31,6 +31,19 @@ export class QuotesFacade {
     const role = this.authFacade.currentRole();
     return role === 'ADMIN' || role === 'COMMERCIAL';
   });
+
+  /** Permiso acotado del portal cliente: solo puede aprobar una cotización
+   *  enviada y asociada a su propia empresa. Las Rules repiten esta validación
+   *  para que no dependa únicamente de la interfaz. */
+  canApproveQuote(quote: Quote | null): boolean {
+    const user = this.authFacade.currentUser();
+    return (
+      user?.role === 'VIEWER' &&
+      !!user.clientId &&
+      quote?.status === 'SENT' &&
+      quote.clientId === user.clientId
+    );
+  }
 
   /** Para el widget "Cotizaciones por estado" del dashboard. */
   readonly statusBreakdown = computed<BarListItem[]>(() => {

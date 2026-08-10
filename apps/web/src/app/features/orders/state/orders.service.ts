@@ -14,6 +14,7 @@ import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory } from '../models/evidence.model';
 import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
 import type { OrderEvent } from '../models/order-event.model';
+import { assertValidVisitSchedule } from '../utils/order-schedule-validation';
 
 /**
  * Mantiene el OrdersStore de Akita sincronizado con `OrderRepository` y
@@ -76,6 +77,7 @@ export class OrdersService {
     updatedBy: string,
   ): Promise<void> {
     const current = this.store.getValue().entities?.[orderId];
+    assertValidVisitSchedule(scheduledStart, scheduledEnd, current?.dueDate);
     const status: OrderStatus | undefined = current?.status === 'DRAFT' ? 'SCHEDULED' : undefined;
     await this.repository.updateOrder(
       orderId,
@@ -154,6 +156,11 @@ export class OrdersService {
     rows: NewOrderServiceRow[],
     createdBy: string,
   ): Promise<string[]> {
+    for (const row of rows) {
+      if (row.scheduledStart) {
+        assertValidVisitSchedule(row.scheduledStart, row.scheduledEnd, row.dueDate);
+      }
+    }
     return this.repository.createOrders(clientId, clientBusinessName, rows, createdBy);
   }
 
@@ -165,6 +172,10 @@ export class OrdersService {
     changes: OrderDetailsUpdate,
     updatedBy: string,
   ): Promise<void> {
+    const current = this.store.getValue().entities?.[orderId];
+    if (changes.dueDate && current?.scheduledStart) {
+      assertValidVisitSchedule(current.scheduledStart, current.scheduledEnd, changes.dueDate);
+    }
     await this.repository.updateOrderDetails(orderId, changes, updatedBy);
   }
 
@@ -249,6 +260,18 @@ export class OrdersService {
    */
   async generateClosingActDraft(orderId: string, notes: string): Promise<void> {
     await this.closingActGateway.generateDraft(orderId, notes);
+  }
+
+  async createManualClosingAct(orderId: string, content: ClosingActContent): Promise<void> {
+    await this.closingActGateway.createManualDraft(orderId, content);
+  }
+
+  async uploadClosingAct(
+    orderId: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): Promise<void> {
+    await this.closingActGateway.uploadDraft(orderId, file, onProgress);
   }
 
   watchClosingAct(orderId: string): Observable<ClosingAct | null> {

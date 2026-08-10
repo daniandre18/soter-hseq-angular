@@ -54,6 +54,7 @@
     "generatedOrders": "Generated orders",
     "converting": "Converting…",
     "convert": "Convert to order",
+    "approve": "Approve quote",
     "markAs": "Mark as {{status}}",
     "statusError": "The status could not be changed. Check the profile permissions and try again.",
     "convertError": "The quote could not be converted. Check its status and try again.",

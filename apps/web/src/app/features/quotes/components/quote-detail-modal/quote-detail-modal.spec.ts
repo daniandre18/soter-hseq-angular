@@ -14,10 +14,12 @@ describe('QuoteDetailModal', () => {
   let component: QuoteDetailModal;
   let fixture: ComponentFixture<QuoteDetailModal>;
   let canManageQuotes: WritableSignal<boolean>;
+  let canApproveQuote: ReturnType<typeof vi.fn>;
   let updateStatus: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     canManageQuotes = signal(true);
+    canApproveQuote = vi.fn().mockReturnValue(false);
     updateStatus = vi.fn().mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
@@ -26,7 +28,7 @@ describe('QuoteDetailModal', () => {
         provideRouter([]),
         {
           provide: QuotesFacade,
-          useValue: { watchItems: () => of([]), canManageQuotes, updateStatus },
+          useValue: { watchItems: () => of([]), canManageQuotes, canApproveQuote, updateStatus },
         },
         { provide: OrdersFacade, useValue: { orders: signal([]), init: () => undefined } },
         { provide: ClientsFacade, useValue: clientsFacadeStub },
@@ -56,6 +58,30 @@ describe('QuoteDetailModal', () => {
     expect(fixture.nativeElement.querySelector('[modalFooter] app-button')).toBeFalsy();
   });
 
+  it('allows a client to approve a sent quote from its own company', async () => {
+    canManageQuotes.set(false);
+    canApproveQuote.mockReturnValue(true);
+    fixture.componentRef.setInput('quote', {
+      id: 'quote-1',
+      quoteNumber: 'COT-0001',
+      clientId: 'client-1',
+      clientBusinessName: 'Cliente Uno',
+      status: 'SENT',
+      total: 100,
+    });
+    await fixture.whenStable();
+
+    const approvalButton = fixture.nativeElement.querySelector(
+      '[modalFooter] .footer-primary-actions app-button button',
+    ) as HTMLButtonElement;
+    expect(approvalButton.textContent).toContain('quotes.detail.approve');
+
+    approvalButton.click();
+    await fixture.whenStable();
+
+    expect(updateStatus).toHaveBeenCalledWith('quote-1', 'APPROVED');
+  });
+
   it('shows an error instead of silently returning to draft when Firestore rejects the change', async () => {
     updateStatus.mockRejectedValueOnce(new Error('Missing or insufficient permissions.'));
     fixture.componentRef.setInput('quote', {
@@ -83,7 +109,11 @@ describe('QuoteDetailModal', () => {
           provideRouter([]),
           {
             provide: QuotesFacade,
-            useValue: { watchItems: () => of([]), canManageQuotes: signal(true) },
+            useValue: {
+              watchItems: () => of([]),
+              canManageQuotes: signal(true),
+              canApproveQuote: () => false,
+            },
           },
           {
             provide: OrdersFacade,
