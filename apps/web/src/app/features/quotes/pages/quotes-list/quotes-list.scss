@@ -119,6 +119,14 @@
   gap: 0.25rem;
 }
 
+.actions-cell {
+  justify-content: flex-end;
+}
+
+.quotes-table th.actions-header {
+  text-align: right;
+}
+
 .icon-btn {
   display: inline-flex;
   align-items: center;

@@ -71,6 +71,14 @@ describe('InternalUsersList', () => {
     expect(fixture.nativeElement.querySelectorAll('.mobile-user-card')).toHaveLength(2);
   });
 
+  it('uses one domain action and the standardized desktop menu', () => {
+    const table: HTMLElement = fixture.nativeElement.querySelector('.users-card table');
+
+    expect(table.querySelector('.actions-header')?.textContent).toContain('Acciones');
+    expect(table.querySelector('.action-cell > .domain-action-btn')).toBeTruthy();
+    expect(table.querySelector('.action-cell app-row-actions-menu')).toBeTruthy();
+  });
+
   it('combines search and role filters', async () => {
     const search: HTMLInputElement = fixture.nativeElement.querySelector('input[type="search"]');
     search.value = 'laura';

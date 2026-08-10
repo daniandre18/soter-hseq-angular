@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ServicesFacade } from '../../facades/services.facade';
 import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
@@ -10,12 +10,31 @@ import { Icon } from '../../../../shared/components/icon/icon';
 import { ServiceFormModal } from '../../components/service-form-modal/service-form-modal';
 import { LocalizedCurrencyPipe } from '../../../../shared/pipes/localized-currency.pipe';
 import type { Service } from '../../models/service.model';
+import {
+  RowActionsMenu,
+  type RowMenuAction,
+  type RowMenuActionSelection,
+} from '../../../../shared/components/row-actions-menu/row-actions-menu';
 
 const PAGE_SIZE = 10;
+const SERVICE_ROW_ACTIONS: readonly RowMenuAction[] = [
+  { id: 'edit', icon: 'square-pen', label: 'Editar servicio' },
+  { id: 'delete', icon: 'trash-2', label: 'Eliminar', tone: 'danger' },
+];
 
 @Component({
   selector: 'app-services-list',
-  imports: [RouterLink, Card, Button, StatusBadge, Modal, Icon, ServiceFormModal, LocalizedCurrencyPipe],
+  imports: [
+    RouterLink,
+    Card,
+    Button,
+    StatusBadge,
+    Modal,
+    Icon,
+    ServiceFormModal,
+    LocalizedCurrencyPipe,
+    RowActionsMenu,
+  ],
   templateUrl: './services-list.html',
   styleUrl: './services-list.scss',
 })
@@ -30,7 +49,8 @@ export class ServicesList {
   protected readonly formOpen = signal(false);
   protected readonly editingService = signal<Service | null>(null);
   protected readonly deletingId = signal<string | null>(null);
-
+  protected readonly openActionsId = signal<string | null>(null);
+  protected readonly rowActions = SERVICE_ROW_ACTIONS;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -96,6 +116,7 @@ export class ServicesList {
   }
 
   protected openEdit(service: Service): void {
+    this.openActionsId.set(null);
     this.editingService.set(service);
     this.formOpen.set(true);
   }
@@ -107,7 +128,27 @@ export class ServicesList {
 
   protected confirmDelete(service: Service, event: Event): void {
     event.stopPropagation();
+    this.openActionsId.set(null);
     this.deletingId.set(service.id);
+  }
+
+  protected toggleActions(serviceId: string, event: Event): void {
+    event.stopPropagation();
+    this.openActionsId.update((current) => (current === serviceId ? null : serviceId));
+  }
+
+  protected handleRowAction(selection: RowMenuActionSelection, service: Service): void {
+    if (selection.id === 'edit') {
+      this.openEdit(service);
+    } else if (selection.id === 'delete') {
+      this.confirmDelete(service, selection.event);
+    }
+  }
+
+  @HostListener('document:click')
+  @HostListener('document:keydown.escape')
+  protected closeActions(): void {
+    this.openActionsId.set(null);
   }
 
   protected cancelDelete(): void {

@@ -1,0 +1,95 @@
+:host {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.row-actions-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    color 150ms,
+    box-shadow 150ms;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    border-color: var(--color-brand-200);
+    background: var(--color-brand-50);
+    color: var(--color-brand-700);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-500) 20%, transparent);
+  }
+}
+
+.row-actions-popover {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  width: max-content;
+  min-width: 12rem;
+  overflow: hidden;
+  padding: 0.375rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 0 16px 32px rgb(15 23 42 / 18%);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.5625rem 0.625rem;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-gray-700);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      outline: none;
+      background: var(--color-brand-50);
+      color: var(--color-brand-700);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    &.row-actions-item--danger {
+      color: var(--color-red-600);
+
+      &:hover:not(:disabled),
+      &:focus-visible {
+        background: var(--color-red-50);
+        color: var(--color-red-700);
+      }
+    }
+  }
+
+  app-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+}

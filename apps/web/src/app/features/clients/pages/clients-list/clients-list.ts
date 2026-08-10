@@ -16,8 +16,14 @@ import type { Client } from '../../models/client.model';
 import { normalizeUniqueName } from '../../../../shared/utils/normalize-unique-value';
 import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import {
+  RowActionsMenu,
+  type RowMenuAction,
+  type RowMenuActionSelection,
+} from '../../../../shared/components/row-actions-menu/row-actions-menu';
 
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
+type BulkActionMenu = 'tag' | 'status';
 
 const PAGE_SIZE = 10;
 
@@ -33,11 +39,12 @@ const PAGE_SIZE = 10;
     ClientFormModal,
     ClientDetailModal,
     ClientTagsManagerModal,
+    RowActionsMenu,
     TranslocoPipe,
   ],
   providers: [...provideTranslocoScope('clients')],
   templateUrl: './clients-list.html',
-  styleUrl: './clients-list.scss',
+  styleUrls: ['./clients-list.scss', './clients-list-actions.scss'],
 })
 export class ClientsList {
   protected readonly clientsFacade = inject(ClientsFacade);
@@ -61,10 +68,28 @@ export class ClientsList {
   protected readonly creatingTag = signal(false);
   protected readonly managerOpen = signal(false);
   protected readonly selectedIds = signal<Set<string>>(new Set());
+  protected readonly openBulkActionMenu = signal<BulkActionMenu | null>(null);
+  protected readonly applyingBulkAction = signal(false);
+  protected readonly bulkActionFailed = signal(false);
   protected readonly deletingIds = signal<string[] | null>(null);
   protected readonly deleting = signal(false);
 
   protected readonly canDelete = computed(() => this.authFacade.currentRole() === 'ADMIN');
+  protected readonly clientRowActions = computed<readonly RowMenuAction[]>(() => [
+    { id: 'view', icon: 'eye', labelKey: 'clients.viewDetail' },
+    { id: 'edit', icon: 'square-pen', labelKey: 'clients.edit' },
+    { id: 'tags', icon: 'tag', labelKey: 'clients.manageTagsAction' },
+    ...(this.canDelete()
+      ? ([
+          {
+            id: 'delete',
+            icon: 'trash-2',
+            labelKey: 'common.delete',
+            tone: 'danger',
+          },
+        ] satisfies RowMenuAction[])
+      : []),
+  ]);
 
   /** Indicadores globales del directorio. Se calculan sobre todos los
    *  clientes, no sobre la búsqueda o filtro temporal de la tabla. */
@@ -261,7 +286,9 @@ export class ClientsList {
     this.editingClient.set(null);
   }
 
-  protected openDetail(client: Client): void {
+  protected openDetail(client: Client, event?: Event): void {
+    event?.stopPropagation();
+    this.openClientActionsId.set(null);
     this.detailClient.set(client);
   }
 
@@ -335,6 +362,8 @@ export class ClientsList {
   protected toggleSelect(clientId: string, event: Event): void {
     event.stopPropagation();
     this.openClientActionsId.set(null);
+    this.openBulkActionMenu.set(null);
+    this.bulkActionFailed.set(false);
     this.selectedIds.update((current) => {
       const next = new Set(current);
       if (next.has(clientId)) {
@@ -348,6 +377,8 @@ export class ClientsList {
 
   protected toggleSelectAll(): void {
     const visible = this.visibleClients();
+    this.openBulkActionMenu.set(null);
+    this.bulkActionFailed.set(false);
     this.selectedIds.set(
       this.allVisibleSelected() ? new Set() : new Set(visible.map((client) => client.id)),
     );
@@ -355,6 +386,38 @@ export class ClientsList {
 
   protected clearSelection(): void {
     this.selectedIds.set(new Set());
+    this.openBulkActionMenu.set(null);
+    this.bulkActionFailed.set(false);
+  }
+
+  protected toggleBulkActionMenu(menu: BulkActionMenu, event: Event): void {
+    event.stopPropagation();
+    this.bulkActionFailed.set(false);
+    this.openBulkActionMenu.update((current) => (current === menu ? null : menu));
+  }
+
+  protected async applyBulkTag(tagId: string, event: Event): Promise<void> {
+    event.stopPropagation();
+    await this.runBulkAction((clientId) => this.clientsFacade.setTag(clientId, tagId, true));
+  }
+
+  protected async applyBulkStatus(
+    status: Exclude<StatusFilter, 'all'>,
+    event: Event,
+  ): Promise<void> {
+    event.stopPropagation();
+    await this.runBulkAction((clientId) => this.clientsFacade.updateClient(clientId, { status }));
+  }
+
+  protected tagChipColor(label: string, fallbackColor: string): string {
+    const normalizedLabel = normalizeUniqueName(label);
+    if (normalizedLabel === 'vip') {
+      return '#db2777';
+    }
+    if (normalizedLabel === 'nuevo' || normalizedLabel === 'new') {
+      return '#059669';
+    }
+    return fallbackColor;
   }
 
   protected confirmDelete(client: Client, event: Event): void {
@@ -369,13 +432,44 @@ export class ClientsList {
     this.openClientActionsId.update((currentId) => (currentId === clientId ? null : clientId));
   }
 
-  @HostListener('document:click')
-  protected closeClientPopovers(): void {
+  protected handleClientAction(selection: RowMenuActionSelection, client: Client): void {
+    switch (selection.id) {
+      case 'view':
+        this.openDetail(client, selection.event);
+        break;
+      case 'edit':
+        this.openEdit(client, selection.event);
+        break;
+      case 'tags':
+        this.toggleTagPicker(client.id, selection.event);
+        break;
+      case 'delete':
+        this.confirmDelete(client, selection.event);
+        break;
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected closeClientPopovers(event?: Event): void {
+    const target = event?.target;
+    if (
+      target instanceof Element &&
+      target.closest('.client-actions-wrapper, .mobile-client-menu, .bulk-actions-bar')
+    ) {
+      return;
+    }
     this.openClientActionsId.set(null);
     this.openTagPickerId.set(null);
+    this.openBulkActionMenu.set(null);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeClientPopoversOnEscape(): void {
+    this.closeClientPopovers();
   }
 
   protected confirmBulkDelete(): void {
+    this.openBulkActionMenu.set(null);
     this.deletingIds.set(Array.from(this.selectedIds()));
   }
 
@@ -395,6 +489,24 @@ export class ClientsList {
       this.clearSelection();
     } finally {
       this.deleting.set(false);
+    }
+  }
+
+  private async runBulkAction(action: (clientId: string) => Promise<void>): Promise<void> {
+    const clientIds = Array.from(this.selectedIds());
+    if (clientIds.length === 0 || this.applyingBulkAction()) {
+      return;
+    }
+
+    this.applyingBulkAction.set(true);
+    this.bulkActionFailed.set(false);
+    try {
+      await Promise.all(clientIds.map(action));
+      this.clearSelection();
+    } catch {
+      this.bulkActionFailed.set(true);
+    } finally {
+      this.applyingBulkAction.set(false);
     }
   }
 }

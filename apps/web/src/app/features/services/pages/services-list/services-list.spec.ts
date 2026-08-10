@@ -80,4 +80,12 @@ describe('ServicesList', () => {
     expect(mobileCard?.textContent).toContain('Seguridad Industrial');
     expect(mobileCard?.textContent).toContain('850.000');
   });
+
+  it('uses the standardized desktop actions column', () => {
+    const table: HTMLElement = fixture.nativeElement.querySelector('.services-table');
+
+    expect(table.querySelector('.actions-header')?.textContent).toContain('Acciones');
+    expect(table.querySelector('.actions-cell app-row-actions-menu')).toBeTruthy();
+    expect(table.querySelector('.actions-cell > .icon-btn')).toBeNull();
+  });
 });

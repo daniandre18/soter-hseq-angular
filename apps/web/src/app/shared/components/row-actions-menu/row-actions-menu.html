@@ -1,0 +1,34 @@
+<button
+  type="button"
+  class="row-actions-trigger"
+  aria-haspopup="menu"
+  [attr.aria-expanded]="open()"
+  [attr.aria-label]="triggerLabel()"
+  [title]="triggerLabel()"
+  (click)="toggle($event)"
+>
+  <app-icon name="ellipsis-vertical" />
+</button>
+
+@if (open()) {
+  <div class="row-actions-popover" role="menu">
+    @for (action of actions(); track action.id) {
+      <button
+        type="button"
+        role="menuitem"
+        [class.row-actions-item--danger]="action.tone === 'danger'"
+        [disabled]="action.disabled"
+        (click)="select(action.id, $event)"
+      >
+        <app-icon [name]="action.icon" />
+        <span>
+          @if (action.labelKey) {
+            {{ action.labelKey | transloco }}
+          } @else {
+            {{ action.label }}
+          }
+        </span>
+      </button>
+    }
+  </div>
+}

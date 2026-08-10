@@ -15,6 +15,11 @@ import { InternalUserFormModal } from '../../components/internal-user-form-modal
 import type { InternalUserRole } from '../../domain/user-management.gateway';
 import { InternalUsersFacade } from '../../facades/internal-users.facade';
 import { INTERNAL_USER_ROLES } from '../../models/internal-user.model';
+import {
+  RowActionsMenu,
+  type RowMenuAction,
+  type RowMenuActionSelection,
+} from '../../../../shared/components/row-actions-menu/row-actions-menu';
 
 type RoleFilter = 'ALL' | InternalUserRole;
 type StatusFilter = 'ALL' | UserStatus;
@@ -29,6 +34,7 @@ type StatusFilter = 'ALL' | UserStatus;
     InternalUserFormModal,
     LocalizedDatePipe,
     Modal,
+    RowActionsMenu,
     StatCard,
     StatusBadge,
     TranslocoPipe,
@@ -201,5 +207,29 @@ export class InternalUsersList {
   protected roleColor(role: string): string {
     if (role === 'ADMIN') return 'purple';
     return role === 'COORDINATOR' ? 'blue' : 'teal';
+  }
+
+  protected rowActions(user: AppUser): readonly RowMenuAction[] {
+    return [
+      { id: 'edit', icon: 'square-pen', labelKey: 'common.edit' },
+      {
+        id: 'status',
+        icon: user.status === 'ACTIVE' ? 'x' : 'circle-check-big',
+        labelKey:
+          user.status === 'ACTIVE'
+            ? 'users.internal.actions.deactivate'
+            : 'users.internal.actions.activate',
+        tone: user.status === 'ACTIVE' ? 'danger' : 'default',
+        disabled: user.id === this.currentUserId(),
+      },
+    ];
+  }
+
+  protected handleRowAction(selection: RowMenuActionSelection, user: AppUser): void {
+    if (selection.id === 'edit') {
+      this.openEdit(user);
+    } else if (selection.id === 'status') {
+      this.confirmStatusChange(user);
+    }
   }
 }

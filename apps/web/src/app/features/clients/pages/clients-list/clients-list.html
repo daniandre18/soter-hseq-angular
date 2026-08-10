@@ -67,28 +67,23 @@
       </button>
     </div>
     <p class="mobile-clients-summary" aria-live="polite">
-      {{ (filtered().length === 1 ? 'clients.countOne' : 'clients.countOther') | transloco: { count: filtered().length } }}
+      {{
+        (filtered().length === 1 ? 'clients.countOne' : 'clients.countOther')
+          | transloco: { count: filtered().length }
+      }}
       <span aria-hidden="true">·</span>
-      {{ (activeInFiltered() === 1 ? 'clients.activeOne' : 'clients.activeOther') | transloco: { count: activeInFiltered() } }}
+      {{
+        (activeInFiltered() === 1 ? 'clients.activeOne' : 'clients.activeOther')
+          | transloco: { count: activeInFiltered() }
+      }}
     </p>
   </div>
 
-  <app-card class="clients-filter-card" padding="sm">
-    <div class="filter-panel-header">
-      <div>
-        <h3>{{ 'clients.filters.title' | transloco }}</h3>
-        <p>{{ 'clients.filters.help' | transloco }}</p>
-      </div>
-      @if (hasActiveFilters()) {
-        <button type="button" class="clear-filters-btn" (click)="clearFilters()">
-          {{ 'clients.filters.clear' | transloco: { count: activeFilterCount() } }}
-        </button>
-      }
-    </div>
-
+  <div class="clients-desktop-filter-bar">
     <div class="clients-filters">
       <label class="filter-field filter-field--search">
-        <span>{{ 'clients.filters.search' | transloco }}</span>
+        <span class="visually-hidden">{{ 'clients.filters.search' | transloco }}</span>
+        <app-icon name="search" />
         <input
           type="search"
           class="search-input"
@@ -99,7 +94,7 @@
       </label>
 
       <label class="filter-field">
-        <span>{{ 'clients.filters.status' | transloco }}</span>
+        <span class="visually-hidden">{{ 'clients.filters.status' | transloco }}</span>
         <select class="status-select" [value]="statusFilter()" (change)="onStatusChange($event)">
           <option value="all">{{ 'clients.filters.allStatuses' | transloco }}</option>
           <option value="ACTIVE">{{ 'clients.filters.active' | transloco }}</option>
@@ -108,7 +103,7 @@
       </label>
 
       <label class="filter-field">
-        <span>{{ 'clients.filters.city' | transloco }}</span>
+        <span class="visually-hidden">{{ 'clients.filters.city' | transloco }}</span>
         <select class="city-select" [value]="cityFilter()" (change)="onCityChange($event)">
           <option value="all">{{ 'clients.filters.allCities' | transloco }}</option>
           @for (city of cityOptions(); track city.value) {
@@ -118,7 +113,7 @@
       </label>
 
       <label class="filter-field">
-        <span>{{ 'clients.filters.tag' | transloco }}</span>
+        <span class="visually-hidden">{{ 'clients.filters.tag' | transloco }}</span>
         <select
           class="tag-filter-select"
           [value]="tagFilter()"
@@ -132,36 +127,132 @@
       </label>
     </div>
 
+    @if (hasActiveFilters()) {
+      <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+        <app-icon name="x" />
+        {{ 'clients.filters.clearAdvanced' | transloco }}
+      </button>
+    }
+
     <div class="clients-summary" aria-live="polite">
       <span>
-        {{ (filtered().length === 1 ? 'clients.countOne' : 'clients.countOther') | transloco: { count: filtered().length } }}
+        {{
+          (filtered().length === 1 ? 'clients.countOne' : 'clients.countOther')
+            | transloco: { count: filtered().length }
+        }}
       </span>
+      <span class="summary-separator" aria-hidden="true">•</span>
       <span class="summary-active">
-        {{ (activeInFiltered() === 1 ? 'clients.activeOne' : 'clients.activeOther') | transloco: { count: activeInFiltered() } }}
+        {{
+          (activeInFiltered() === 1 ? 'clients.activeOne' : 'clients.activeOther')
+            | transloco: { count: activeInFiltered() }
+        }}
       </span>
+      <span class="summary-separator" aria-hidden="true">•</span>
       <span class="summary-inactive">
-        {{ (inactiveInFiltered() === 1 ? 'clients.inactiveOne' : 'clients.inactiveOther') | transloco: { count: inactiveInFiltered() } }}
+        {{
+          (inactiveInFiltered() === 1 ? 'clients.inactiveOne' : 'clients.inactiveOther')
+            | transloco: { count: inactiveInFiltered() }
+        }}
       </span>
     </div>
-  </app-card>
+  </div>
 
   @if (selectedCount() > 0) {
-    <div class="selection-bar">
-      <span class="selection-count">{{ selectedCount() }}</span>
-      <span>{{ (selectedCount() === 1 ? 'clients.selectedOne' : 'clients.selectedOther') | transloco }}</span>
+    <div class="bulk-actions-bar" role="region" aria-live="polite">
+      <strong class="bulk-selection-label">
+        {{ selectedCount() }}
+        {{ (selectedCount() === 1 ? 'clients.selectedOne' : 'clients.selectedOther') | transloco }}
+      </strong>
+
+      <span class="bulk-actions-divider" aria-hidden="true"></span>
+
+      <div class="bulk-action-wrapper">
+        <button
+          type="button"
+          class="bulk-action-btn"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="openBulkActionMenu() === 'tag'"
+          [disabled]="applyingBulkAction()"
+          (click)="toggleBulkActionMenu('tag', $event)"
+        >
+          <app-icon name="tag" />
+          {{ 'clients.bulk.assignTag' | transloco }}
+        </button>
+        @if (openBulkActionMenu() === 'tag') {
+          <div class="bulk-action-popover" role="menu">
+            @for (tag of tagsFacade.tags(); track tag.id) {
+              <button
+                type="button"
+                class="tag-option"
+                role="menuitem"
+                (click)="applyBulkTag(tag.id, $event)"
+              >
+                <span class="tag-dot" [style.background]="tag.color"></span>
+                <span class="tag-option-label">{{ tag.label }}</span>
+              </button>
+            } @empty {
+              <p class="tag-picker-empty">{{ 'clients.noTagsYet' | transloco }}</p>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="bulk-action-wrapper">
+        <button
+          type="button"
+          class="bulk-action-btn"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="openBulkActionMenu() === 'status'"
+          [disabled]="applyingBulkAction()"
+          (click)="toggleBulkActionMenu('status', $event)"
+        >
+          <app-icon name="circle-check-big" />
+          {{ 'clients.bulk.changeStatus' | transloco }}
+        </button>
+        @if (openBulkActionMenu() === 'status') {
+          <div class="bulk-action-popover" role="menu">
+            <button
+              type="button"
+              class="tag-option"
+              role="menuitem"
+              (click)="applyBulkStatus('ACTIVE', $event)"
+            >
+              <span class="status-option-dot status-option-dot--active"></span>
+              {{ 'clients.bulk.activate' | transloco }}
+            </button>
+            <button
+              type="button"
+              class="tag-option"
+              role="menuitem"
+              (click)="applyBulkStatus('INACTIVE', $event)"
+            >
+              <span class="status-option-dot"></span>
+              {{ 'clients.bulk.deactivate' | transloco }}
+            </button>
+          </div>
+        }
+      </div>
+
       @if (canDelete()) {
-        <app-button
-          variant="danger"
-          size="sm"
-          class="selection-delete-btn"
+        <button
+          type="button"
+          class="bulk-action-btn bulk-action-btn--danger"
+          [disabled]="applyingBulkAction()"
           (click)="confirmBulkDelete()"
         >
-          {{ 'common.delete' | transloco }}
-        </app-button>
+          <app-icon name="trash-2" />
+          {{ 'clients.bulk.delete' | transloco }}
+        </button>
       }
+
+      @if (bulkActionFailed()) {
+        <span class="bulk-action-error" role="alert">{{ 'clients.bulk.error' | transloco }}</span>
+      }
+
       <button
         type="button"
-        class="selection-close"
+        class="bulk-actions-close"
         (click)="clearSelection()"
         [attr.aria-label]="'clients.clearSelection' | transloco"
       >
@@ -192,7 +283,7 @@
               <th>{{ 'clients.location' | transloco }}</th>
               <th>{{ 'clients.tags' | transloco }}</th>
               <th>{{ 'clients.status' | transloco }}</th>
-              <th></th>
+              <th class="actions-header">{{ 'common.actions' | transloco }}</th>
             </tr>
           </thead>
           <tbody>
@@ -217,21 +308,20 @@
                       @if (tagsFacade.byId(tagId); as tag) {
                         <span
                           class="tag-chip"
-                          [style.background]="tag.color + '1a'"
-                          [style.color]="tag.color"
+                          [style.--tag-color]="tagChipColor(tag.label, tag.color)"
                         >
                           {{ tag.label }}
                         </span>
                       }
                     }
-                    @if (client.tags.length === 0) {
-                      <span class="muted">{{ 'clients.noTags' | transloco }}</span>
-                    }
                   </div>
                 </td>
                 <td>
                   <app-status-badge
-                    [label]="(client.status === 'ACTIVE' ? 'clients.active' : 'clients.inactive') | transloco"
+                    [label]="
+                      (client.status === 'ACTIVE' ? 'clients.active' : 'clients.inactive')
+                        | transloco
+                    "
                     [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
                   />
                 </td>
@@ -240,22 +330,24 @@
                     type="button"
                     class="sites-btn"
                     (click)="openSites(client, $event)"
-                    [attr.aria-label]="'clients.manageSites' | transloco: { name: client.businessName }"
+                    [attr.aria-label]="
+                      'clients.manageSites' | transloco: { name: client.businessName }
+                    "
                     [title]="'clients.sitesAndContacts' | transloco"
                   >
                     <app-icon name="building-2" />
                     {{ 'clients.sites' | transloco }}
                   </button>
-                  <div class="tag-picker-wrapper" (click)="$event.stopPropagation()">
-                    <button
-                      type="button"
-                      class="icon-btn"
-                      (click)="toggleTagPicker(client.id, $event)"
-                      [attr.aria-label]="'clients.tagClient' | transloco"
-                      [title]="'clients.tagClient' | transloco"
-                    >
-                      <app-icon name="tag" />
-                    </button>
+                  <div class="client-actions-wrapper">
+                    <app-row-actions-menu
+                      [open]="openClientActionsId() === client.id"
+                      [triggerLabel]="
+                        'clients.moreActions' | transloco: { name: client.businessName }
+                      "
+                      [actions]="clientRowActions()"
+                      (toggleRequested)="toggleClientActions(client.id, $event)"
+                      (actionSelected)="handleClientAction($event, client)"
+                    />
                     @if (openTagPickerId() === client.id) {
                       <div class="tag-picker">
                         <input
@@ -274,7 +366,9 @@
                               (click)="createAndApplyTag(client, $event)"
                             >
                               <app-icon name="tag" class="tag-check" />
-                              <span class="tag-option-label">{{ 'clients.createTag' | transloco: { name: tagSearch().trim() } }}</span>
+                              <span class="tag-option-label">{{
+                                'clients.createTag' | transloco: { name: tagSearch().trim() }
+                              }}</span>
                             </button>
                           }
                           @for (tag of filteredTags(); track tag.id) {
@@ -313,35 +407,6 @@
                       </div>
                     }
                   </div>
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    (click)="openDetail(client)"
-                    [attr.aria-label]="'clients.view' | transloco"
-                    [title]="'clients.view' | transloco"
-                  >
-                    <app-icon name="eye" />
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    (click)="openEdit(client, $event)"
-                    [attr.aria-label]="'clients.edit' | transloco"
-                    [title]="'common.edit' | transloco"
-                  >
-                    <app-icon name="square-pen" />
-                  </button>
-                  @if (canDelete()) {
-                    <button
-                      type="button"
-                      class="icon-btn icon-btn--danger"
-                      (click)="confirmDelete(client, $event)"
-                      [attr.aria-label]="'clients.delete' | transloco"
-                      [title]="'common.delete' | transloco"
-                    >
-                      <app-icon name="trash-2" />
-                    </button>
-                  }
                 </td>
               </tr>
             }
@@ -361,24 +426,33 @@
               <div class="mobile-client-identity">
                 <strong>{{ client.businessName }}</strong>
                 <app-status-badge
-                  [label]="(client.status === 'ACTIVE' ? 'clients.active' : 'clients.inactive') | transloco"
+                  [label]="
+                    (client.status === 'ACTIVE' ? 'clients.active' : 'clients.inactive') | transloco
+                  "
                   [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
                 />
               </div>
-              <div class="mobile-client-menu" (click)="$event.stopPropagation()">
+              <div class="mobile-client-menu">
                 <button
                   type="button"
                   class="icon-btn mobile-client-menu-trigger"
                   aria-haspopup="menu"
                   [attr.aria-expanded]="openClientActionsId() === client.id"
-                  [attr.aria-label]="'clients.moreActions' | transloco: { name: client.businessName }"
+                  [attr.aria-label]="
+                    'clients.moreActions' | transloco: { name: client.businessName }
+                  "
                   (click)="toggleClientActions(client.id, $event)"
                 >
                   ⋮
                 </button>
                 @if (openClientActionsId() === client.id) {
                   <div class="tag-picker mobile-client-menu-popover" role="menu">
-                    <button type="button" class="tag-option" role="menuitem" (click)="toggleTagPicker(client.id, $event)">
+                    <button
+                      type="button"
+                      class="tag-option"
+                      role="menuitem"
+                      (click)="toggleTagPicker(client.id, $event)"
+                    >
                       <app-icon name="tag" />
                       {{ 'clients.tagClient' | transloco }}
                     </button>
@@ -413,7 +487,9 @@
                           (click)="createAndApplyTag(client, $event)"
                         >
                           <app-icon name="tag" class="tag-check" />
-                          <span class="tag-option-label">{{ 'clients.createTag' | transloco: { name: tagSearch().trim() } }}</span>
+                          <span class="tag-option-label">{{
+                            'clients.createTag' | transloco: { name: tagSearch().trim() }
+                          }}</span>
                         </button>
                       }
                       @for (tag of filteredTags(); track tag.id) {
@@ -431,11 +507,7 @@
                       }
                     </div>
                     <div class="tag-picker-footer">
-                      <button
-                        type="button"
-                        class="tag-picker-manage"
-                        (click)="openManager($event)"
-                      >
+                      <button type="button" class="tag-picker-manage" (click)="openManager($event)">
                         {{ 'clients.manage' | transloco }}
                       </button>
                       <button
@@ -458,13 +530,15 @@
                 {{ client.city || ('clients.noCityRegistered' | transloco) }}
               </p>
               @if (client.tags.length > 0) {
-                <div class="tag-chips mobile-client-tags" [attr.aria-label]="'clients.tags' | transloco">
+                <div
+                  class="tag-chips mobile-client-tags"
+                  [attr.aria-label]="'clients.tags' | transloco"
+                >
                   @for (tagId of client.tags.slice(0, 2); track tagId) {
                     @if (tagsFacade.byId(tagId); as tag) {
                       <span
                         class="tag-chip"
-                        [style.background]="tag.color + '1a'"
-                        [style.color]="tag.color"
+                        [style.--tag-color]="tagChipColor(tag.label, tag.color)"
                       >
                         {{ tag.label }}
                       </span>
@@ -570,18 +644,24 @@
 <app-modal
   [open]="!!deletingIds()"
   [title]="
-    ((deletingIds()?.length ?? 0) > 1
-      ? 'clients.deleteTitleOther'
-      : 'clients.deleteTitleOne') | transloco: { count: deletingIds()?.length }
+    ((deletingIds()?.length ?? 0) > 1 ? 'clients.deleteTitleOther' : 'clients.deleteTitleOne')
+      | transloco: { count: deletingIds()?.length }
   "
   size="sm"
   (closeRequested)="cancelDelete()"
 >
   <p class="confirm-text">
-    {{ ((deletingIds()?.length ?? 0) > 1 ? 'clients.deleteConfirmationOther' : 'clients.deleteConfirmationOne') | transloco }}
+    {{
+      ((deletingIds()?.length ?? 0) > 1
+        ? 'clients.deleteConfirmationOther'
+        : 'clients.deleteConfirmationOne'
+      ) | transloco
+    }}
   </p>
   <div modalFooter>
-    <app-button variant="outline" (click)="cancelDelete()">{{ 'common.cancel' | transloco }}</app-button>
+    <app-button variant="outline" (click)="cancelDelete()">{{
+      'common.cancel' | transloco
+    }}</app-button>
     <app-button variant="danger" (click)="deleteConfirmed()" [disabled]="deleting()">
       {{ (deleting() ? 'common.deleting' : 'common.delete') | transloco }}
     </app-button>

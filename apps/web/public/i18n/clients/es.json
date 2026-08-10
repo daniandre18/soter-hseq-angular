@@ -54,11 +54,13 @@
   "sitesAndContacts": "Sedes y responsables",
   "manageSites": "Administrar sedes de {{name}}",
   "tagClient": "Etiquetar cliente",
+  "manageTagsAction": "Gestionar etiquetas",
   "tagSearch": "Buscar o crear etiqueta…",
   "createTag": "Crear “{{name}}”",
   "noTagsYet": "Sin etiquetas todavía.",
   "manage": "Administrar",
   "view": "Ver cliente",
+  "viewDetail": "Ver detalle",
   "edit": "Editar cliente",
   "delete": "Eliminar cliente",
   "moreActions": "Más acciones para {{name}}",
@@ -71,6 +73,14 @@
   "deleteTitleOther": "¿Eliminar {{count}} clientes?",
   "deleteConfirmationOne": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con este cliente conservan su nombre, pero ya no vas a poder abrir su ficha.",
   "deleteConfirmationOther": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con estos clientes conservan su nombre, pero ya no vas a poder abrir sus fichas.",
+  "bulk": {
+    "assignTag": "Asignar etiqueta",
+    "changeStatus": "Cambiar estado",
+    "activate": "Marcar como activos",
+    "deactivate": "Marcar como inactivos",
+    "delete": "Eliminar",
+    "error": "No se pudo completar la acción. Inténtalo nuevamente."
+  },
   "tagManager": {
     "title": "Administrar etiquetas",
     "new": "Nueva etiqueta",

@@ -54,11 +54,13 @@
   "sitesAndContacts": "Sites and contacts",
   "manageSites": "Manage {{name}} sites",
   "tagClient": "Tag client",
+  "manageTagsAction": "Manage tags",
   "tagSearch": "Search or create a tag…",
   "createTag": "Create “{{name}}”",
   "noTagsYet": "No tags yet.",
   "manage": "Manage",
   "view": "View client",
+  "viewDetail": "View details",
   "edit": "Edit client",
   "delete": "Delete client",
   "moreActions": "More actions for {{name}}",
@@ -71,6 +73,14 @@
   "deleteTitleOther": "Delete {{count}} clients?",
   "deleteConfirmationOne": "This action cannot be undone. Existing quotes and orders keep this client's name, but you will no longer be able to open the client record.",
   "deleteConfirmationOther": "This action cannot be undone. Existing quotes and orders keep these clients' names, but you will no longer be able to open their records.",
+  "bulk": {
+    "assignTag": "Assign tag",
+    "changeStatus": "Change status",
+    "activate": "Mark as active",
+    "deactivate": "Mark as inactive",
+    "delete": "Delete",
+    "error": "The action could not be completed. Please try again."
+  },
   "tagManager": {
     "title": "Manage tags",
     "new": "New tag",

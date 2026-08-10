@@ -79,7 +79,7 @@
               <th>{{ 'users.internal.columns.contact' | transloco }}</th>
               <th>{{ 'users.internal.columns.status' | transloco }}</th>
               <th>{{ 'users.internal.columns.updated' | transloco }}</th>
-              <th><span class="sr-only">{{ 'common.actions' | transloco }}</span></th>
+              <th class="actions-header">{{ 'common.actions' | transloco }}</th>
             </tr>
           </thead>
           <tbody>
@@ -99,15 +99,17 @@
                 <td><app-status-badge [dot]="true" [label]="(user.status === 'ACTIVE' ? 'users.internal.status.active' : 'users.internal.status.inactive') | transloco" [color]="user.status === 'ACTIVE' ? 'green' : 'gray'" /></td>
                 <td class="date-cell">{{ user.updatedAt | localizedDate }}</td>
                 <td class="action-cell">
-                  <button type="button" class="table-action" (click)="openEdit(user)" [attr.aria-label]="'common.edit' | transloco" [title]="'common.edit' | transloco">
-                    <app-icon name="square-pen" />
-                  </button>
-                  <button type="button" class="table-action" [disabled]="sendingEmailId() === user.id" (click)="sendAccessEmail(user)" [attr.aria-label]="'users.internal.actions.sendAccess' | transloco" [title]="'users.internal.actions.sendAccess' | transloco">
+                  <button type="button" class="domain-action-btn" [disabled]="sendingEmailId() === user.id" (click)="sendAccessEmail(user)" [attr.aria-label]="'users.internal.actions.sendAccess' | transloco" [title]="'users.internal.actions.sendAccess' | transloco">
                     <app-icon name="key-round" />
+                    {{ 'users.internal.actions.sendAccess' | transloco }}
                   </button>
-                  <button type="button" class="table-action table-action--danger" [disabled]="user.id === currentUserId()" (click)="confirmStatusChange(user)" [attr.aria-label]="(user.status === 'ACTIVE' ? 'users.internal.actions.deactivate' : 'users.internal.actions.activate') | transloco" [title]="(user.status === 'ACTIVE' ? 'users.internal.actions.deactivate' : 'users.internal.actions.activate') | transloco">
-                    <app-icon [name]="user.status === 'ACTIVE' ? 'x' : 'circle-check-big'" />
-                  </button>
+                  <app-row-actions-menu
+                    [open]="openMenuId() === user.id"
+                    [triggerLabel]="'users.internal.actions.open' | transloco"
+                    [actions]="rowActions(user)"
+                    (toggleRequested)="toggleMenu(user.id, $event)"
+                    (actionSelected)="handleRowAction($event, user)"
+                  />
                 </td>
               </tr>
             }

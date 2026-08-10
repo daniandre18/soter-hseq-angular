@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { TechniciansFacade } from '../../facades/technicians.facade';
 import { Card } from '../../../../shared/components/card/card';
 import { Button } from '../../../../shared/components/button/button';
@@ -9,12 +9,21 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { TechnicianFormModal } from '../../components/technician-form-modal/technician-form-modal';
 import type { AppUser } from '../../../../core/models/app-user.model';
 import { ToastService } from '../../../../shared/services/toast.service';
+import {
+  RowActionsMenu,
+  type RowMenuAction,
+  type RowMenuActionSelection,
+} from '../../../../shared/components/row-actions-menu/row-actions-menu';
 
 const PAGE_SIZE = 10;
+const TECHNICIAN_ROW_ACTIONS: readonly RowMenuAction[] = [
+  { id: 'edit', icon: 'square-pen', label: 'Editar técnico' },
+  { id: 'delete', icon: 'trash-2', label: 'Eliminar', tone: 'danger' },
+];
 
 @Component({
   selector: 'app-technicians-list',
-  imports: [Card, Button, StatusBadge, Avatar, Icon, Modal, TechnicianFormModal],
+  imports: [Card, Button, StatusBadge, Avatar, Icon, Modal, TechnicianFormModal, RowActionsMenu],
   templateUrl: './technicians-list.html',
   styleUrl: './technicians-list.scss',
 })
@@ -30,6 +39,8 @@ export class TechniciansList {
   protected readonly deletingTechnician = signal<AppUser | null>(null);
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
+  protected readonly openActionsId = signal<string | null>(null);
+  protected readonly rowActions = TECHNICIAN_ROW_ACTIONS;
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -86,6 +97,7 @@ export class TechniciansList {
   }
 
   protected openEdit(technician: AppUser): void {
+    this.openActionsId.set(null);
     this.editingTechnician.set(technician);
     this.formOpen.set(true);
   }
@@ -96,6 +108,7 @@ export class TechniciansList {
   }
 
   protected async toggleStatus(technician: AppUser): Promise<void> {
+    this.openActionsId.set(null);
     this.togglingId.set(technician.id);
     try {
       await this.techniciansFacade.setStatus(
@@ -119,8 +132,28 @@ export class TechniciansList {
   }
 
   protected confirmDelete(technician: AppUser): void {
+    this.openActionsId.set(null);
     this.deleteError.set(null);
     this.deletingTechnician.set(technician);
+  }
+
+  protected toggleActions(technicianId: string, event: Event): void {
+    event.stopPropagation();
+    this.openActionsId.update((current) => (current === technicianId ? null : technicianId));
+  }
+
+  protected handleRowAction(selection: RowMenuActionSelection, technician: AppUser): void {
+    if (selection.id === 'edit') {
+      this.openEdit(technician);
+    } else if (selection.id === 'delete') {
+      this.confirmDelete(technician);
+    }
+  }
+
+  @HostListener('document:click')
+  @HostListener('document:keydown.escape')
+  protected closeActions(): void {
+    this.openActionsId.set(null);
   }
 
   protected cancelDelete(): void {

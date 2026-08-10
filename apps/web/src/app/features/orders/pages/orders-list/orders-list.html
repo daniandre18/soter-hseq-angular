@@ -79,94 +79,118 @@
     <app-card class="orders-results-card" padding="none">
       <div class="table-scroll">
         <table class="orders-table">
+          <colgroup>
+            <col class="order-column" />
+            <col class="client-column" />
+            <col class="assigned-column" />
+            <col class="status-column" />
+            <col class="schedule-column" />
+            <col class="progress-actions-column" />
+          </colgroup>
           <thead>
             <tr>
-              <th>Código</th>
-              <th>Título</th>
-              <th>Cliente</th>
-              <th>Técnico</th>
-              <th>Estado</th>
-              <th>Prioridad</th>
-              <th>Avance</th>
-              <th>Visita</th>
-              <th>Vence</th>
-              <th>Acciones</th>
+              <th scope="col">{{ 'orders.columns.orderAndTitle' | transloco }}</th>
+              <th scope="col">{{ 'orders.columns.client' | transloco }}</th>
+              <th scope="col">{{ 'orders.columns.assigned' | transloco }}</th>
+              <th scope="col">{{ 'orders.columns.statusAndPriority' | transloco }}</th>
+              <th scope="col">{{ 'orders.columns.schedule' | transloco }}</th>
+              <th scope="col" class="progress-actions-header">
+                {{ 'orders.columns.progressAndActions' | transloco }}
+              </th>
             </tr>
           </thead>
           <tbody>
             @for (order of visibleOrders(); track order.id) {
+              @let displayTitle = order.title || order.serviceSummary;
+              @let technicians = technicianNames(order);
               <tr>
-                <td class="order-number">{{ order.orderNumber }}</td>
-                <td class="order-title">{{ order.title || order.serviceSummary }}</td>
-                <td>{{ order.clientBusinessName }}</td>
                 <td>
-                  @if (technicianNames(order).length > 0) {
-                    <div class="technician-cell">
-                      @for (name of technicianNames(order); track name) {
-                        <app-avatar [name]="name" size="sm" />
-                      }
-                      <span>{{ technicianNames(order).join(', ') }}</span>
-                    </div>
-                  } @else {
-                    <span class="muted">Sin asignar</span>
-                  }
-                </td>
-                <td>
-                  <app-status-badge
-                    [label]="statusLabel(order.status)"
-                    [color]="statusColor(order.status)"
-                  />
-                </td>
-                <td>
-                  <app-status-badge
-                    [label]="priorityLabel(order.priority)"
-                    [color]="priorityColor(order.priority)"
-                  />
-                </td>
-                <td>
-                  <div class="progress-cell">
-                    <app-progress-bar [value]="order.progress" class="progress-cell-bar" />
-                    <span class="progress-cell-value">{{ order.progress }}%</span>
+                  <div class="order-identity">
+                    <strong class="order-number">{{ order.orderNumber }}</strong>
+                    <span
+                      class="order-title"
+                      [attr.title]="displayTitle.length > 48 ? displayTitle : null"
+                    >
+                      {{ displayTitle }}
+                    </span>
                   </div>
                 </td>
-                <td class="nowrap">
-                  {{ order.scheduledStart ? (order.scheduledStart | localizedDate: { dateStyle: 'medium', timeStyle: 'short' }) : ('orders.unscheduled' | transloco) }}
-                </td>
-                <td class="nowrap">
-                  {{ order.dueDate ? (order.dueDate | localizedDate: { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—' }}
-                </td>
-                <td class="actions-cell">
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    (click)="openDetail(order)"
-                    aria-label="Ver orden"
-                    title="Ver"
+                <td>
+                  <span
+                    class="client-business-name"
+                    [attr.title]="
+                      order.clientBusinessName.length > 36 ? order.clientBusinessName : null
+                    "
                   >
-                    <app-icon name="eye" />
-                  </button>
-                  @if (canManage()) {
-                    <button
-                      type="button"
-                      class="icon-btn"
-                      (click)="openEditFromList(order, $event)"
-                      aria-label="Editar orden"
-                      title="Editar"
-                    >
-                      <app-icon name="square-pen" />
-                    </button>
+                    {{ order.clientBusinessName }}
+                  </span>
+                </td>
+                <td>
+                  @if (technicians.length > 0) {
+                    <div class="technician-cell" [title]="technicians.join(', ')">
+                      <app-avatar [name]="technicians[0]" size="sm" />
+                      <span>{{ technicians[0] }}</span>
+                      @if (technicians.length > 1) {
+                        <small>+{{ technicians.length - 1 }}</small>
+                      }
+                    </div>
+                  } @else {
+                    <span class="muted">{{ 'orders.unassignedTechnician' | transloco }}</span>
                   }
-                  @if (canDelete() && order.status === 'DRAFT') {
-                    <button
-                      type="button"
-                      class="icon-btn icon-btn--danger"
-                      (click)="confirmDelete(order, $event)"
-                      aria-label="Eliminar orden"
-                      title="Eliminar"
+                </td>
+                <td>
+                  <div class="status-priority-cell">
+                    <app-status-badge
+                      [label]="statusLabel(order.status)"
+                      [color]="statusColor(order.status)"
+                    />
+                    <app-status-badge
+                      [label]="priorityLabel(order.priority)"
+                      [color]="priorityColor(order.priority)"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="schedule-cell">
+                    <span class="visit-date">
+                      {{ order.scheduledStart ? shortScheduleDate(order.scheduledStart) : ('orders.unscheduled' | transloco) }}
+                    </span>
+                    <small>
+                      {{ 'orders.due' | transloco }}:
+                      {{ order.dueDate ? (order.dueDate | localizedDate: { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—' }}
+                    </small>
+                  </div>
+                </td>
+                <td class="progress-actions-cell">
+                  <div class="progress-actions-layout">
+                    <div
+                      class="compact-progress"
+                      [title]="('orders.columns.progress' | transloco) + ': ' + order.progress + '%'"
                     >
-                      <app-icon name="trash-2" />
-                    </button>
-                  }
+                      <span>{{ order.progress }}%</span>
+                      <app-progress-bar [value]="order.progress" class="mini-progress-bar" />
+                    </div>
+                    <div class="row-actions-cluster">
+                      <button
+                        type="button"
+                        class="quick-view-btn"
+                        (click)="openDetail(order, $event)"
+                        [attr.aria-label]="'orders.actions.view' | transloco"
+                        [title]="'orders.actions.view' | transloco"
+                      >
+                        <app-icon name="eye" />
+                      </button>
+                      @if (rowActions(order).length > 0) {
+                        <app-row-actions-menu
+                          [open]="openDesktopActionsId() === order.id"
+                          [triggerLabel]="'orders.actions.more' | transloco"
+                          [actions]="rowActions(order)"
+                          (toggleRequested)="toggleDesktopActions(order.id, $event)"
+                          (actionSelected)="handleRowAction($event, order)"
+                        />
+                      }
+                    </div>
+                  </div>
                 </td>
               </tr>
             }
@@ -194,7 +218,7 @@
                   [color]="priorityColor(order.priority)"
                 />
               </div>
-              <div class="mobile-order-menu" (click)="$event.stopPropagation()">
+              <div class="mobile-order-menu">
                 <button
                   type="button"
                   class="mobile-order-menu-trigger"
@@ -210,7 +234,7 @@
                   <button
                     type="button"
                     role="menuitem"
-                    (click)="openDetail(order)"
+                    (click)="openDetail(order, $event)"
                   >
                     <app-icon name="eye" />
                     {{ 'orders.actions.view' | transloco }}

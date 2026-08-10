@@ -22,6 +22,7 @@ describe('OrdersList', () => {
       assignedTechnicianIds: ['technician-1'],
       title: 'Auditoría ISO 45001',
       priority: 'HIGH',
+      scheduledStart: new Date('2026-08-06T13:00:00Z'),
       dueDate: new Date('2026-08-07'),
       progress: 45,
       status: 'IN_PROGRESS',
@@ -102,6 +103,21 @@ describe('OrdersList', () => {
 
     expect(mobileCard?.querySelectorAll('.mobile-order-menu')).toHaveLength(1);
     expect(mobileCard?.querySelectorAll('.mobile-order-actions')).toHaveLength(0);
+  });
+
+  it('consolidates the desktop table into six readable columns', () => {
+    const table: HTMLElement = fixture.nativeElement.querySelector('.orders-table');
+    const row: HTMLTableRowElement = table.querySelector('tbody tr')!;
+
+    expect(table.querySelectorAll('thead th')).toHaveLength(6);
+    expect(row.cells).toHaveLength(6);
+    expect(row.cells[0].textContent).toContain('ORD-2026-001');
+    expect(row.cells[0].textContent).toContain('Auditoría ISO 45001');
+    expect(row.cells[3].textContent).toContain('Alta');
+    expect(row.querySelector('.visit-date')?.textContent).toContain('Ago,');
+    expect(row.cells[4].textContent).toContain('Vence:');
+    expect(row.querySelector('.progress-actions-cell .quick-view-btn')).toBeTruthy();
+    expect(row.querySelector('.progress-actions-cell app-row-actions-menu')).toBeTruthy();
   });
 
   it('should close the mobile actions menu when clicking outside', async () => {
