@@ -232,6 +232,16 @@ body {
   height: 100%;
 }
 
+@media (max-width: 640px) {
+  .clients-page .client-stats-grid {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
