@@ -12,6 +12,7 @@ import {
   type GeneralFormModel,
 } from '../../components/general-settings-form/general-settings-form';
 import { LOGO_SIZE_RANGE, type LogoAlignment } from '../../../../core/models/app-settings.model';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 type SettingsTab = 'general' | 'appearance' | 'ai-prompts' | 'connections' | 'webhooks';
 
@@ -99,7 +100,7 @@ export class SettingsPage {
   });
 
   constructor() {
-    this.settingsFacade.init();
+    releaseOnDestroy(this.settingsFacade.init());
   }
 
   protected setTab(tab: SettingsTab): void {

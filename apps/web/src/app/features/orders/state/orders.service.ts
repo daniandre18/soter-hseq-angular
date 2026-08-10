@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CLOSING_ACT_GATEWAY } from '../domain/closing-act.gateway';
 import { EVIDENCE_UPLOAD_GATEWAY } from '../domain/evidence-upload.gateway';
 import { ORDER_REPOSITORY, type OrderUpdate } from '../domain/order.repository';
@@ -19,6 +19,10 @@ import type {
 } from '../models/closing-act.model';
 import type { OrderEvent } from '../models/order-event.model';
 import { assertValidVisitSchedule } from '../utils/order-schedule-validation';
+import {
+  ReferenceCountedListener,
+  type ReleaseListener,
+} from '../../../shared/utils/reference-counted-listener';
 
 /**
  * Mantiene el OrdersStore de Akita sincronizado con `OrderRepository` y
@@ -32,42 +36,30 @@ export class OrdersService {
   private readonly evidenceUploadGateway = inject(EVIDENCE_UPLOAD_GATEWAY);
   private readonly closingActGateway = inject(CLOSING_ACT_GATEWAY);
 
-  private ordersSubscription: Subscription | null = null;
+  private readonly listener = new ReferenceCountedListener();
   private ordersRetriedAfterError = false;
 
-  watchOrders(technicianUid?: string, clientId?: string): void {
-    if (this.ordersSubscription) {
-      return;
-    }
-
-    this.store.setLoading(true);
-    this.ordersSubscription = this.repository.watchAll(technicianUid, clientId).subscribe({
-      next: (orders) => {
-        this.ordersRetriedAfterError = false;
-        this.store.setError(null);
-        this.store.set(orders);
-        this.store.setLoading(false);
-      },
-      error: (error: Error & { code?: string }) => {
-        this.store.setError(error.message);
-        this.store.setLoading(false);
-        // El guard de arriba impediría reabrir el listener más adelante si
-        // no se limpia acá. Un `permission-denied` justo después de iniciar
-        // sesión suele ser una carrera del SDK (el canal de Firestore aún no
-        // tiene el token nuevo) y no un rechazo real — se reintenta una sola
-        // vez para no quedar atascado hasta que el usuario recargue.
-        this.ordersSubscription = null;
-        if (error.code === 'permission-denied' && !this.ordersRetriedAfterError) {
-          this.ordersRetriedAfterError = true;
-          setTimeout(() => this.watchOrders(technicianUid, clientId), 1000);
-        }
-      },
+  watchOrders(technicianUid?: string, clientId?: string): ReleaseListener {
+    return this.listener.acquire(() => {
+      this.store.setLoading(true);
+      return this.repository.watchAll(technicianUid, clientId).subscribe({
+        next: (orders) => {
+          this.ordersRetriedAfterError = false;
+          this.store.setError(null);
+          this.store.set(orders);
+          this.store.setLoading(false);
+        },
+        error: (error: Error & { code?: string }) => {
+          this.store.setError(error.message);
+          this.store.setLoading(false);
+          this.listener.markDisconnected();
+          if (error.code === 'permission-denied' && !this.ordersRetriedAfterError) {
+            this.ordersRetriedAfterError = true;
+            this.listener.retryAfter(1000);
+          }
+        },
+      });
     });
-  }
-
-  stopWatchingOrders(): void {
-    this.ordersSubscription?.unsubscribe();
-    this.ordersSubscription = null;
   }
 
   /**

@@ -4,6 +4,7 @@ import type { UserStatus } from '../../../core/models/app-user.model';
 import type { InternalUserUpdate, NewInternalUserData } from '../models/internal-user.model';
 import { InternalUsersQuery } from '../state/internal-users.query';
 import { InternalUsersService } from '../state/internal-users.service';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 @Injectable({ providedIn: 'root' })
 export class InternalUsersFacade {
@@ -14,8 +15,8 @@ export class InternalUsersFacade {
   readonly loading = toSignal(this.query.loading$, { initialValue: false });
   readonly error = toSignal(this.query.error$, { initialValue: null });
 
-  init(): void {
-    this.service.watchUsers();
+  init(): ReleaseListener {
+    return this.service.watchUsers();
   }
 
   inviteUser(data: NewInternalUserData) {

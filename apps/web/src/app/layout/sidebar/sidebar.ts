@@ -7,6 +7,7 @@ import type { UserRole } from '../../core/models/user-role.model';
 import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 import { SettingsFacade } from '../../features/settings/facades/settings.facade';
 import { ThemeService } from '../../shared/services/theme.service';
+import { releaseOnDestroy } from '../../shared/utils/release-on-destroy';
 
 const DEFAULT_LOGO_DARK = 'soter-hseq-logo-menu.jpeg';
 const DEFAULT_LOGO_LIGHT = 'soter-hseq-logo-light.png';
@@ -206,7 +207,7 @@ export class Sidebar {
   );
 
   constructor() {
-    this.settingsFacade.init();
+    releaseOnDestroy(this.settingsFacade.init());
   }
 
   protected readonly navSections = computed(() => {

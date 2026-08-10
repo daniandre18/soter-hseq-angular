@@ -21,6 +21,7 @@ import {
   type RowMenuAction,
   type RowMenuActionSelection,
 } from '../../../../shared/components/row-actions-menu/row-actions-menu';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 type BulkActionMenu = 'tag' | 'status';
@@ -205,8 +206,8 @@ export class ClientsList {
   });
 
   constructor() {
-    this.clientsFacade.init();
-    this.tagsFacade.init();
+    releaseOnDestroy(this.clientsFacade.init());
+    releaseOnDestroy(this.tagsFacade.init());
   }
 
   protected onSearchInput(event: Event): void {

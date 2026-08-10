@@ -5,6 +5,7 @@ import { TechniciansService } from '../state/technicians.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
 import type { AppUser, UserStatus } from '../../../core/models/app-user.model';
 import type { NewTechnicianData, TechnicianDetailsUpdate } from '../models/technician.model';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 /** Único punto de contacto entre la UI y la gestión de técnicos. */
 @Injectable({ providedIn: 'root' })
@@ -17,8 +18,8 @@ export class TechniciansFacade {
   readonly loading = toSignal(this.query.loading$, { initialValue: false });
   readonly error = toSignal(this.query.error$, { initialValue: null });
 
-  init(): void {
-    this.service.watchTechnicians();
+  init(): ReleaseListener {
+    return this.service.watchTechnicians();
   }
 
   byId(id: string): AppUser | undefined {

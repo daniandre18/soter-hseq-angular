@@ -20,6 +20,7 @@ import {
   type RowMenuAction,
   type RowMenuActionSelection,
 } from '../../../../shared/components/row-actions-menu/row-actions-menu';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 type RoleFilter = 'ALL' | InternalUserRole;
 type StatusFilter = 'ALL' | UserStatus;
@@ -100,7 +101,7 @@ export class InternalUsersList {
   );
 
   constructor() {
-    this.usersFacade.init();
+    releaseOnDestroy(this.usersFacade.init());
   }
 
   @HostListener('document:click')

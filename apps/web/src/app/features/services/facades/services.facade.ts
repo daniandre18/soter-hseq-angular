@@ -4,6 +4,7 @@ import { ServicesQuery } from '../state/services.query';
 import { ServicesService } from '../state/services.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
 import type { NewService, Service } from '../models/service.model';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 /** Único punto de contacto entre la UI y el catálogo de servicios. */
 @Injectable({ providedIn: 'root' })
@@ -18,8 +19,8 @@ export class ServicesFacade {
 
   readonly activeServices = computed(() => this.services().filter((service) => service.active));
 
-  init(): void {
-    this.service.watchServices();
+  init(): ReleaseListener {
+    return this.service.watchServices();
   }
 
   byId(id: string): Service | undefined {

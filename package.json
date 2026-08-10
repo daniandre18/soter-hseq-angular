@@ -10,7 +10,7 @@
     "seed:catalog": "npm --prefix scripts run seed:catalog",
     "seed:clients": "npm --prefix scripts run seed:clients",
     "seed:clients:production": "npm --prefix scripts run seed:clients:production",
-    "test:rules": "firebase emulators:exec --config firebase.test.json --project demo-soter-hseq --only firestore \"node --test tests/firestore-rules.test.mjs\""
+    "test:rules": "npm --prefix functions run build && firebase emulators:exec --config firebase.test.json --project demo-soter-hseq --only firestore \"node --test --test-concurrency=1 tests/firestore-rules.test.mjs functions/test/dashboard-metrics.test.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

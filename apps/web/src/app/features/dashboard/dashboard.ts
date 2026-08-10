@@ -1,8 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { OrdersFacade } from '../orders/facades/orders.facade';
-import { ClientsFacade } from '../clients/facades/clients.facade';
-import { QuotesFacade } from '../quotes/facades/quotes.facade';
+import { DashboardFacade } from './facades/dashboard.facade';
 import { ORDER_STATUS_CONFIG } from '../orders/models/order-status-config';
 import type { ServiceOrder } from '../orders/models/order.model';
 import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
@@ -15,6 +13,7 @@ import { Button } from '../../shared/components/button/button';
 import { Icon } from '../../shared/components/icon/icon';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../core/i18n/language.service';
+import { releaseOnDestroy } from '../../shared/utils/release-on-destroy';
 
 @Component({
   selector: 'app-dashboard',
@@ -35,9 +34,7 @@ import { LanguageService } from '../../core/i18n/language.service';
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
-  protected readonly ordersFacade = inject(OrdersFacade);
-  protected readonly clientsFacade = inject(ClientsFacade);
-  protected readonly quotesFacade = inject(QuotesFacade);
+  protected readonly dashboardFacade = inject(DashboardFacade);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
@@ -45,7 +42,7 @@ export class Dashboard {
   protected readonly translatedStatusBreakdown = computed(() => {
     this.language.currentLanguage();
     this.language.translationsLoaded();
-    return this.ordersFacade.statusBreakdown().map((slice) => ({
+    return this.dashboardFacade.statusBreakdown().map((slice) => ({
       ...slice,
       label: this.transloco.translate(slice.label),
     }));
@@ -53,14 +50,14 @@ export class Dashboard {
 
   /** KPI 1 — Órdenes Activas: abiertas + pendientes de iniciar. */
   protected readonly activeOrdersCount = computed(
-    () => this.ordersFacade.openCount() + this.ordersFacade.pendingCount(),
+    () => this.dashboardFacade.openCount() + this.dashboardFacade.pendingCount(),
   );
 
   protected readonly activeOrdersSubtitle = computed(() => {
     this.language.currentLanguage();
     this.language.translationsLoaded();
-    const open = this.ordersFacade.openCount();
-    const pending = this.ordersFacade.pendingCount();
+    const open = this.dashboardFacade.openCount();
+    const pending = this.dashboardFacade.pendingCount();
     const openLabel = this.transloco.translate(
       open === 1 ? 'dashboard.kpi.activeOrdersOpenOne' : 'dashboard.kpi.activeOrdersOpenOther',
       { count: open },
@@ -77,7 +74,7 @@ export class Dashboard {
   protected readonly overdueAlertText = computed(() => {
     this.language.currentLanguage();
     this.language.translationsLoaded();
-    const overdue = this.ordersFacade.overdueCount();
+    const overdue = this.dashboardFacade.overdueCount();
     if (overdue === 0) {
       return '';
     }
@@ -91,8 +88,7 @@ export class Dashboard {
    * requieren una acción desde el listado de órdenes. */
   protected readonly operationalAlertsCount = computed(
     () =>
-      this.ordersFacade.overdueOrders().length +
-      this.ordersFacade.correctionRequiredOrders().length,
+      this.dashboardFacade.overdueCount() + this.dashboardFacade.correctionRequiredCount(),
   );
 
   /** KPI 2 — Recursos en Campo: técnicos con una orden EN_PROGRESO hoy, de
@@ -100,8 +96,8 @@ export class Dashboard {
   protected readonly fieldResourcesSubtitle = computed(() => {
     this.language.currentLanguage();
     this.language.translationsLoaded();
-    const active = this.ordersFacade.techniciansInFieldCount();
-    const total = this.ordersFacade.technicians().length;
+    const active = this.dashboardFacade.techniciansInFieldCount();
+    const total = this.dashboardFacade.technicianCount();
     return this.transloco.translate(
       active === 1 ? 'dashboard.kpi.fieldResourcesSubtitleOne' : 'dashboard.kpi.fieldResourcesSubtitleOther',
       { count: active, total },
@@ -112,7 +108,7 @@ export class Dashboard {
   protected readonly visitsWeekSubtitle = computed(() => {
     this.language.currentLanguage();
     this.language.translationsLoaded();
-    const count = this.ordersFacade.visitsThisWeekCount();
+    const count = this.dashboardFacade.visitsThisWeekCount();
     return this.transloco.translate(
       count === 1 ? 'dashboard.kpi.visitsWeekOne' : 'dashboard.kpi.visitsWeekOther',
       { count },
@@ -120,12 +116,12 @@ export class Dashboard {
   });
 
   /** KPI 4 — Conversión Comercial: % de cotizaciones convertidas en orden. */
-  protected readonly conversionValue = computed(() => `${this.quotesFacade.conversionRate()}%`);
+  protected readonly conversionValue = computed(() => `${this.dashboardFacade.conversionRate()}%`);
 
   protected readonly conversionSubtitle = computed(() => {
     this.language.currentLanguage();
     this.language.translationsLoaded();
-    const total = this.quotesFacade.quotes().length;
+    const total = this.dashboardFacade.quotesTotal();
     return this.transloco.translate(
       total === 1 ? 'dashboard.quotesTotalOne' : 'dashboard.quotesTotalOther',
       { count: total },
@@ -136,7 +132,7 @@ export class Dashboard {
   protected readonly funnelStages = computed<FunnelStage[]>(() => {
     this.language.currentLanguage();
     this.language.translationsLoaded();
-    const counts = this.quotesFacade.funnelCounts();
+    const counts = this.dashboardFacade.funnelCounts();
     return [
       { key: 'sent', label: this.transloco.translate('dashboard.funnelSent'), value: counts.sent },
       {
@@ -153,14 +149,10 @@ export class Dashboard {
   });
 
   constructor() {
-    // Se activan acá (y no en el arranque de la app) porque este componente
-    // solo se monta detrás de authGuard/roleGuard, cuando ya hay sesión.
-    // Arrancarlos antes de autenticarse causaba un permission-denied
-    // permanente en el listener de Firestore (nunca se reintenta tras
-    // loguearse).
-    this.ordersFacade.init();
-    this.clientsFacade.init();
-    this.quotesFacade.init();
+    // El listener del snapshot materializado se inicia acá porque la ruta ya
+    // está detrás de authGuard/roleGuard. Al salir, la liberación impide que
+    // una respuesta tardía actualice estado que ya no tiene consumidores.
+    releaseOnDestroy(this.dashboardFacade.init());
   }
 
   protected statusLabel(status: ServiceOrder['status']): string {
@@ -178,7 +170,7 @@ export class Dashboard {
 
   protected technicianNameFor(order: ServiceOrder): string {
     const id = order.assignedTechnicianIds[0];
-    return id ? this.ordersFacade.technicianName(id) : '';
+    return id ? this.dashboardFacade.technicianNameFor(order) : '';
   }
 
   /** Reemplaza el "Sin iniciar" plano bajo el badge de estado (en "Órdenes

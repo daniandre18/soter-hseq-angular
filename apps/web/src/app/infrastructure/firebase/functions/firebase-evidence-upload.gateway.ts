@@ -1,12 +1,11 @@
-import { Injectable, inject } from '@angular/core';
-import { httpsCallable } from 'firebase/functions';
+import { Injectable } from '@angular/core';
 import type {
   EvidenceUploadGateway,
   UploadEvidenceInput,
 } from '../../../features/orders/domain/evidence-upload.gateway';
 import type { EvidenceCategory } from '../../../features/orders/models/evidence.model';
 import { environment } from '../../../../environments/environment';
-import { FIREBASE_FUNCTIONS } from '../firebase.tokens';
+import { firebaseCallable } from './firebase-callable';
 
 /** Lee un `File` como base64 puro (sin el prefijo `data:...;base64,`) para
  *  enviarlo en el payload de la Callable Function `uploadEvidence`. */
@@ -45,8 +44,6 @@ interface UploadEvidenceResponse {
  */
 @Injectable({ providedIn: 'root' })
 export class FirebaseEvidenceUploadGateway implements EvidenceUploadGateway {
-  private readonly functions = inject(FIREBASE_FUNCTIONS);
-
   async upload(input: UploadEvidenceInput): Promise<string> {
     if (!environment.evidenceUploadsEnabled) {
       throw new Error('La carga de evidencias está deshabilitada en el demo gratuito.');
@@ -55,10 +52,10 @@ export class FirebaseEvidenceUploadGateway implements EvidenceUploadGateway {
     const fileBase64 = await fileToBase64(input.file);
     input.onProgress?.(60);
 
-    const uploadEvidenceFn = httpsCallable<UploadEvidenceRequest, UploadEvidenceResponse>(
-      this.functions,
-      'uploadEvidence',
-    );
+    const uploadEvidenceFn = await firebaseCallable<
+      UploadEvidenceRequest,
+      UploadEvidenceResponse
+    >('uploadEvidence');
 
     const { data } = await uploadEvidenceFn({
       orderId: input.orderId,

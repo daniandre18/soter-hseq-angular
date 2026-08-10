@@ -9,6 +9,7 @@ import { ServicesFacade } from '../../../services/facades/services.facade';
 import { QuotesFacade } from '../../facades/quotes.facade';
 import type { NewQuoteItem, Quote } from '../../models/quote.model';
 import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 interface QuoteItemRow {
   serviceId: string;
@@ -83,7 +84,7 @@ export class QuoteFormModal {
   );
 
   constructor() {
-    this.servicesFacade.init();
+    releaseOnDestroy(this.servicesFacade.init());
     effect(() => {
       const open = this.open();
       const quote = this.editingQuote();

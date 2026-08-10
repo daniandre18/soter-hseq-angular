@@ -8,6 +8,7 @@ import { OrdersFacade } from '../../facades/orders.facade';
 import { ORDER_PRIORITY_CONFIG, ORDER_PRIORITY_KEYS } from '../../models/order-priority-config';
 import type { NewOrderServiceRow, OrderPriority, ServiceOrder } from '../../models/order.model';
 import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 /** Una fila = un servicio = una orden nueva al guardar (ver `onSubmit`). */
 interface OrderServiceRow {
@@ -178,7 +179,7 @@ export class OrderFormModal {
   });
 
   constructor() {
-    this.servicesFacade.init();
+    releaseOnDestroy(this.servicesFacade.init());
     effect(() => {
       const order = this.editingOrder();
       const services = this.activeServices();

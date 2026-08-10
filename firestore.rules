@@ -262,6 +262,14 @@ service cloud.firestore {
       allow write: if false; // solo el backend escribe bitácora de auditoría
     }
 
+    // Snapshot sintético del dashboard. Los roles que pueden abrir esa ruta
+    // escuchan un solo documento; únicamente los triggers con Admin SDK lo
+    // recalculan para que ningún cliente pueda alterar los KPI.
+    match /dashboardMetrics/{metricId} {
+      allow read: if hasRole(['ADMIN', 'COMMERCIAL', 'COORDINATOR']);
+      allow write: if false;
+    }
+
     // Inbox de notificaciones del header (ADMIN/COORDINATOR): un documento
     // por evento. `readBy` y `dismissedBy` guardan el estado personal sin
     // borrar el documento compartido. El cliente solo puede agregar su uid

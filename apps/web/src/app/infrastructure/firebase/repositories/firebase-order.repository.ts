@@ -16,7 +16,6 @@ import {
 } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import type { OrderRepository, OrderUpdate } from '../../../features/orders/domain/order.repository';
-import { ORDER_STATUS_CONFIG } from '../../../features/orders/models/order-status-config';
 import type {
   NewOrderServiceRow,
   OrderDetailsUpdate,
@@ -29,6 +28,7 @@ import type { ClosingAct, ClosingActContent } from '../../../features/orders/mod
 import type { OrderEvent, OrderEventAction } from '../../../features/orders/models/order-event.model';
 import { FIREBASE_FIRESTORE } from '../firebase.tokens';
 import { toDate, toDateOrDefault } from '../mappers/firestore.mapper';
+import { toServiceOrder } from '../mappers/service-order.mapper';
 
 function toTechnicalNote(id: string, orderId: string, data: DocumentData): TechnicalNote {
   return {
@@ -123,47 +123,6 @@ function toClosingAct(id: string, data: DocumentData): ClosingAct {
     clientDecisionByName: data['clientDecisionByName'] ?? undefined,
     clientDecisionByRole: data['clientDecisionByRole'] ?? undefined,
     clientDecisions,
-    createdAt: toDateOrDefault(data['createdAt']),
-    createdBy: data['createdBy'],
-    updatedAt: toDateOrDefault(data['updatedAt']),
-    updatedBy: data['updatedBy'],
-  };
-}
-
-function toServiceOrder(id: string, data: DocumentData): ServiceOrder {
-  const status: OrderStatus = data['status'];
-  return {
-    id,
-    orderNumber: data['orderNumber'],
-    quoteId: data['quoteId'],
-    quoteNumber: data['quoteNumber'],
-    clientId: data['clientId'],
-    clientBusinessName: data['clientBusinessName'],
-    assignedTechnicianIds: data['assignedTechnicianIds'] ?? [],
-    assignedTechnicianNames: data['assignedTechnicianNames'] ?? [],
-    coordinatorId: data['coordinatorId'],
-    // `title`/`priority`/`progress` no existían antes de agregar la creación
-    // manual de órdenes: los documentos previos (venidos de una cotización)
-    // no los tienen, así que se cubren con un valor por defecto razonable
-    // en vez de quedar `undefined` en la UI.
-    title: data['title'] ?? data['serviceSummary'] ?? '',
-    priority: data['priority'] ?? 'MEDIUM',
-    dueDate: toDate(data['dueDate']),
-    description: data['description'] ?? undefined,
-    progress: data['progress'] ?? ORDER_STATUS_CONFIG[status]?.progress ?? 0,
-    scheduledStart: toDate(data['scheduledStart']),
-    scheduledEnd: toDate(data['scheduledEnd']),
-    actualStart: toDate(data['actualStart']),
-    actualEnd: toDate(data['actualEnd']),
-    serviceAddress: data['serviceAddress'],
-    city: data['city'],
-    status: data['status'],
-    serviceSummary: data['serviceSummary'],
-    technicalNotes: data['technicalNotes'],
-    findings: data['findings'],
-    recommendations: data['recommendations'],
-    evidenceCount: data['evidenceCount'] ?? 0,
-    closingActId: data['closingActId'],
     createdAt: toDateOrDefault(data['createdAt']),
     createdBy: data['createdBy'],
     updatedAt: toDateOrDefault(data['updatedAt']),

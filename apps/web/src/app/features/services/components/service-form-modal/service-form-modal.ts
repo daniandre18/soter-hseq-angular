@@ -6,6 +6,7 @@ import { ServicesFacade } from '../../facades/services.facade';
 import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
 import type { Service } from '../../models/service.model';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 // `status` como string-union (no `active: boolean`) a propósito: un
 // `<select>` nativo siempre emite string, y Signal Forms no coerciona el
@@ -64,7 +65,7 @@ export class ServiceFormModal {
   );
 
   constructor() {
-    this.categoriesFacade.init();
+    releaseOnDestroy(this.categoriesFacade.init());
     effect(() => {
       const service = this.editingService();
       if (!this.open()) {

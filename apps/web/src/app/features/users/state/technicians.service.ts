@@ -4,6 +4,10 @@ import { USER_MANAGEMENT_GATEWAY } from '../domain/user-management.gateway';
 import { TechniciansStore } from './technicians.store';
 import type { UserStatus } from '../../../core/models/app-user.model';
 import type { NewTechnicianData, TechnicianDetailsUpdate } from '../models/technician.model';
+import {
+  ReferenceCountedListener,
+  type ReleaseListener,
+} from '../../../shared/utils/reference-counted-listener';
 
 /** Mantiene el TechniciansStore de Akita sincronizado con los usuarios
  *  `role == 'TECHNICIAN'` de la colección `users` (vía `UsersRepository`,
@@ -14,23 +18,23 @@ export class TechniciansService {
   private readonly usersRepository = inject(USERS_REPOSITORY);
   private readonly userManagementGateway = inject(USER_MANAGEMENT_GATEWAY);
 
-  private watching = false;
+  private readonly listener = new ReferenceCountedListener();
 
-  watchTechnicians(): void {
-    if (this.watching) {
-      return;
-    }
-    this.watching = true;
-    this.store.setLoading(true);
-    this.usersRepository.watchByRole('TECHNICIAN').subscribe({
-      next: (technicians) => {
-        this.store.set(technicians);
-        this.store.setLoading(false);
-      },
-      error: (error: Error) => {
-        this.store.setError(error.message);
-        this.store.setLoading(false);
-      },
+  watchTechnicians(): ReleaseListener {
+    return this.listener.acquire(() => {
+      this.store.setLoading(true);
+      return this.usersRepository.watchByRole('TECHNICIAN').subscribe({
+        next: (technicians) => {
+          this.store.setError(null);
+          this.store.set(technicians);
+          this.store.setLoading(false);
+        },
+        error: (error: Error) => {
+          this.store.setError(error.message);
+          this.store.setLoading(false);
+          this.listener.markDisconnected();
+        },
+      });
     });
   }
 

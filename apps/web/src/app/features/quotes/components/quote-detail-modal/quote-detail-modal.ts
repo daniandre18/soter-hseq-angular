@@ -19,6 +19,7 @@ import { LocalizedCurrencyPipe } from '../../../../shared/pipes/localized-curren
 import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
 import { COMPANY_PROFILE } from '../../../../shared/data/company-profile';
 import { generateQuotePdf, quotePdfFileName } from '../../utils/quote-pdf.generator';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 @Component({
   selector: 'app-quote-detail-modal',
@@ -78,8 +79,8 @@ export class QuoteDetailModal {
   });
 
   constructor() {
-    this.ordersFacade.init();
-    this.clientsFacade.init();
+    releaseOnDestroy(this.ordersFacade.init());
+    releaseOnDestroy(this.clientsFacade.init());
   }
 
   protected readonly statusLabel = computed(() => {

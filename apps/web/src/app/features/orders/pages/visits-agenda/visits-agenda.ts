@@ -18,6 +18,7 @@ import { Avatar } from '../../../../shared/components/avatar/avatar';
 import type { OrderStatus, ServiceOrder } from '../../models/order.model';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 type AgendaStatusFilter = OrderStatus | 'all';
 
@@ -273,7 +274,7 @@ export class VisitsAgenda {
   });
 
   constructor() {
-    this.ordersFacade.init();
+    releaseOnDestroy(this.ordersFacade.init());
 
     effect((onCleanup) => {
       if (this.filtersSheetOpen()) {

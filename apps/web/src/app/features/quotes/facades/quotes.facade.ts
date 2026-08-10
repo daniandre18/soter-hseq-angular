@@ -7,6 +7,7 @@ import { AuthFacade } from '../../auth/facades/auth.facade';
 import { QUOTE_STATUS_CONFIG } from '../models/quote-status-config';
 import type { NewQuote, NewQuoteItem, Quote, QuoteItem, QuoteStatus } from '../models/quote.model';
 import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 export interface QuoteFunnelCounts {
   sent: number;
@@ -89,15 +90,25 @@ export class QuotesFacade {
     };
   });
 
-  init(): void {
+  init(): ReleaseListener {
     // El guard puede resolver su propia lectura de perfil una fracción antes
     // de que `currentUser` publique en el Signal. Esperar explícitamente evita
     // que un VIEWER abra por accidente una consulta global que Rules rechaza.
-    this.authFacade.resolveCurrentUser$().subscribe((user) => {
-      this.service.watchQuotes(
+    let releaseListener: ReleaseListener | null = null;
+    let released = false;
+    const authSubscription = this.authFacade.resolveCurrentUser$().subscribe((user) => {
+      if (released) {
+        return;
+      }
+      releaseListener = this.service.watchQuotes(
         user?.role === 'VIEWER' ? (user.clientId ?? '__without-client__') : undefined,
       );
     });
+    return () => {
+      released = true;
+      authSubscription.unsubscribe();
+      releaseListener?.();
+    };
   }
 
   watchItems(quoteId: string): Observable<QuoteItem[]> {

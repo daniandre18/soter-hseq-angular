@@ -1,6 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CLIENT_REPOSITORY } from '../domain/client.repository';
+import {
+  ReferenceCountedListener,
+  type ReleaseListener,
+} from '../../../shared/utils/reference-counted-listener';
 import { ClientsStore } from './clients.store';
 import type {
   ClientContact,
@@ -16,34 +20,29 @@ export class ClientsService {
   private readonly store = inject(ClientsStore);
   private readonly repository = inject(CLIENT_REPOSITORY);
 
-  private clientsSubscription: Subscription | null = null;
+  private readonly listener = new ReferenceCountedListener();
   private clientsRetriedAfterError = false;
 
-  watchClients(): void {
-    if (this.clientsSubscription) {
-      return;
-    }
-
-    this.store.setLoading(true);
-    this.clientsSubscription = this.repository.watchAll().subscribe({
-      next: (clients) => {
-        this.clientsRetriedAfterError = false;
-        this.store.setError(null);
-        this.store.set(clients);
-        this.store.setLoading(false);
-      },
-      error: (error: Error & { code?: string }) => {
-        this.store.setError(error.message);
-        this.store.setLoading(false);
-        // Ver el mismo comentario en OrdersService.watchOrders: sin limpiar
-        // el guard, un permission-denied transitorio justo tras el login
-        // deja el listener atascado hasta recargar la página.
-        this.clientsSubscription = null;
-        if (error.code === 'permission-denied' && !this.clientsRetriedAfterError) {
-          this.clientsRetriedAfterError = true;
-          setTimeout(() => this.watchClients(), 1000);
-        }
-      },
+  watchClients(): ReleaseListener {
+    return this.listener.acquire(() => {
+      this.store.setLoading(true);
+      return this.repository.watchAll().subscribe({
+        next: (clients) => {
+          this.clientsRetriedAfterError = false;
+          this.store.setError(null);
+          this.store.set(clients);
+          this.store.setLoading(false);
+        },
+        error: (error: Error & { code?: string }) => {
+          this.store.setError(error.message);
+          this.store.setLoading(false);
+          this.listener.markDisconnected();
+          if (error.code === 'permission-denied' && !this.clientsRetriedAfterError) {
+            this.clientsRetriedAfterError = true;
+            this.listener.retryAfter(1000);
+          }
+        },
+      });
     });
   }
 

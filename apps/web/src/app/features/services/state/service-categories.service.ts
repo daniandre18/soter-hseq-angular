@@ -1,6 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { SERVICE_CATEGORY_REPOSITORY } from '../domain/service-category.repository';
+import {
+  ReferenceCountedListener,
+  type ReleaseListener,
+} from '../../../shared/utils/reference-counted-listener';
 import { ServiceCategoriesStore } from './service-categories.store';
 import type { NewServiceCategory } from '../models/service-category.model';
 
@@ -12,34 +15,29 @@ export class ServiceCategoriesService {
   private readonly store = inject(ServiceCategoriesStore);
   private readonly repository = inject(SERVICE_CATEGORY_REPOSITORY);
 
-  private categoriesSubscription: Subscription | null = null;
+  private readonly listener = new ReferenceCountedListener();
   private categoriesRetriedAfterError = false;
 
-  watchCategories(): void {
-    if (this.categoriesSubscription) {
-      return;
-    }
-
-    this.store.setLoading(true);
-    this.categoriesSubscription = this.repository.watchAll().subscribe({
-      next: (categories) => {
-        this.categoriesRetriedAfterError = false;
-        this.store.setError(null);
-        this.store.set(categories);
-        this.store.setLoading(false);
-      },
-      error: (error: Error & { code?: string }) => {
-        this.store.setError(error.message);
-        this.store.setLoading(false);
-        // Ver el mismo comentario en OrdersService.watchOrders: sin limpiar
-        // el guard, un permission-denied transitorio justo tras el login
-        // deja el listener atascado hasta recargar la página.
-        this.categoriesSubscription = null;
-        if (error.code === 'permission-denied' && !this.categoriesRetriedAfterError) {
-          this.categoriesRetriedAfterError = true;
-          setTimeout(() => this.watchCategories(), 1000);
-        }
-      },
+  watchCategories(): ReleaseListener {
+    return this.listener.acquire(() => {
+      this.store.setLoading(true);
+      return this.repository.watchAll().subscribe({
+        next: (categories) => {
+          this.categoriesRetriedAfterError = false;
+          this.store.setError(null);
+          this.store.set(categories);
+          this.store.setLoading(false);
+        },
+        error: (error: Error & { code?: string }) => {
+          this.store.setError(error.message);
+          this.store.setLoading(false);
+          this.listener.markDisconnected();
+          if (error.code === 'permission-denied' && !this.categoriesRetriedAfterError) {
+            this.categoriesRetriedAfterError = true;
+            this.listener.retryAfter(1000);
+          }
+        },
+      });
     });
   }
 

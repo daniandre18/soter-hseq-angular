@@ -23,7 +23,7 @@
     <app-kpi-card
       style="--stagger-delay: 50ms"
       [title]="'dashboard.kpi.fieldResourcesTitle' | transloco"
-      [value]="ordersFacade.techniciansInFieldCount()"
+      [value]="dashboardFacade.techniciansInFieldCount()"
       [subtitle]="fieldResourcesSubtitle()"
       icon="hard-hat"
       color="orange"
@@ -31,7 +31,7 @@
     <app-kpi-card
       style="--stagger-delay: 100ms"
       [title]="'dashboard.kpi.visitsTodayTitle' | transloco"
-      [value]="ordersFacade.todayVisitsCount()"
+      [value]="dashboardFacade.todayVisitsCount()"
       [subtitle]="visitsWeekSubtitle()"
       icon="calendar-days"
       color="purple"
@@ -46,13 +46,11 @@
     />
   </div>
 
-  @if (ordersFacade.error()) {
-    <p class="dashboard-error">{{ ordersFacade.error() }}</p>
+  @if (dashboardFacade.error()) {
+    <p class="dashboard-error">{{ dashboardFacade.error() }}</p>
   }
 
-  @if (
-    ordersFacade.overdueOrders().length > 0 || ordersFacade.correctionRequiredOrders().length > 0
-  ) {
+  @if (operationalAlertsCount() > 0) {
     <section
       class="operational-alert"
       role="status"
@@ -81,7 +79,7 @@
       <div class="dashboard-card">
         <div class="dashboard-card-header">
           <h2>{{ 'dashboard.pipelineTitle' | transloco }}</h2>
-          <p>{{ (ordersFacade.orders().length === 1 ? 'dashboard.ordersTotalOne' : 'dashboard.ordersTotalOther') | transloco: { count: ordersFacade.orders().length } }}</p>
+          <p>{{ (dashboardFacade.ordersTotal() === 1 ? 'dashboard.ordersTotalOne' : 'dashboard.ordersTotalOther') | transloco: { count: dashboardFacade.ordersTotal() } }}</p>
         </div>
         <app-segmented-bar
           [items]="translatedStatusBreakdown()"
@@ -95,11 +93,11 @@
           <h2>{{ 'dashboard.recentOrders' | transloco }}</h2>
           <a routerLink="/ordenes">{{ 'dashboard.viewAllOrders' | transloco }}</a>
         </div>
-        @if (ordersFacade.recentOrders().length === 0) {
+        @if (dashboardFacade.recentOrders().length === 0) {
           <p class="dashboard-empty">{{ 'dashboard.noRecentOrders' | transloco }}</p>
         } @else {
           <div class="list">
-            @for (order of ordersFacade.recentOrders(); track order.id) {
+            @for (order of dashboardFacade.recentOrders(); track order.id) {
               <a class="list-row" [routerLink]="['/ordenes', order.id]">
                 @if (technicianNameFor(order); as technician) {
                   <app-avatar [name]="technician" size="sm" />
@@ -137,11 +135,11 @@
           <h2>{{ 'dashboard.upcomingVisits' | transloco }}</h2>
           <a routerLink="/agenda">{{ 'dashboard.viewSchedule' | transloco }}</a>
         </div>
-        @if (ordersFacade.upcomingVisits().length === 0) {
+        @if (dashboardFacade.upcomingVisits().length === 0) {
           <p class="dashboard-empty">{{ 'dashboard.noUpcomingVisits' | transloco }}</p>
         } @else {
           <div class="timeline">
-            @for (order of ordersFacade.upcomingVisits(); track order.id) {
+            @for (order of dashboardFacade.upcomingVisits(); track order.id) {
               <a class="timeline-row" [routerLink]="['/ordenes', order.id]">
                 <div class="timeline-marker">
                   <span class="timeline-date">
@@ -161,7 +159,7 @@
                   </p>
                   <p class="timeline-subtitle">
                     <app-icon name="hard-hat" class="timeline-icon" />
-                    {{ ordersFacade.technicianName(order.assignedTechnicianIds[0] ?? '') }}
+                    {{ dashboardFacade.technicianNameFor(order) }}
                   </p>
                 </div>
               </a>

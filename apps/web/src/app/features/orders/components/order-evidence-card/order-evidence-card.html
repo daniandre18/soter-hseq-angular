@@ -6,7 +6,15 @@
       @for (item of evidenceList(); track item.id) {
         <a class="evidence-thumb-link" [href]="item.downloadUrl" target="_blank" rel="noopener">
           @if (item.type === 'PHOTO') {
-            <img class="evidence-thumb" [src]="item.downloadUrl" [alt]="item.fileName" />
+            <img
+              class="evidence-thumb"
+              [src]="item.downloadUrl"
+              [alt]="item.fileName"
+              width="160"
+              height="160"
+              loading="lazy"
+              decoding="async"
+            />
           } @else {
             <div class="evidence-thumb evidence-thumb--file">
               {{ item.type === 'PDF' ? 'PDF' : 'DOC' }}
@@ -48,7 +56,14 @@
       } @else {
         <div class="attachment-card">
           @if (selectedFilePreviewUrl(); as previewUrl) {
-            <img [src]="previewUrl" class="attachment-card__thumb" alt="" />
+            <img
+              [src]="previewUrl"
+              class="attachment-card__thumb"
+              width="44"
+              height="44"
+              decoding="async"
+              alt=""
+            />
           } @else {
             <div class="attachment-card__icon">
               <app-icon name="file-text" />

@@ -1,7 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter, withHashLocation } from '@angular/router';
-import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { provideQuillConfig } from 'ngx-quill/config';
 
 import { routes } from './app.routes';
@@ -14,7 +13,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withHashLocation()),
     provideHttpClient(),
-    provideCharts(withDefaultRegisterables()),
     provideQuillConfig({
       theme: 'snow',
       format: 'html',
