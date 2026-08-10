@@ -74,6 +74,17 @@ function toEvidence(id: string, orderId: string, data: DocumentData): Evidence {
 }
 
 function toClosingAct(id: string, data: DocumentData): ClosingAct {
+  const clientDecisions = Array.isArray(data['clientDecisions'])
+    ? data['clientDecisions'].map((decision: DocumentData) => ({
+        decision: decision['decision'],
+        representativeName: decision['representativeName'],
+        representativeRole: decision['representativeRole'],
+        comment: decision['comment'] ?? undefined,
+        decidedAt: toDateOrDefault(decision['decidedAt']),
+        decidedBy: decision['decidedBy'],
+        version: decision['version'],
+      }))
+    : undefined;
   return {
     id,
     orderId: data['orderId'],
@@ -105,6 +116,13 @@ function toClosingAct(id: string, data: DocumentData): ClosingAct {
     reviewedBy: data['reviewedBy'] ?? undefined,
     approvedAt: toDate(data['approvedAt']),
     approvedBy: data['approvedBy'] ?? undefined,
+    clientDecision: data['clientDecision'] ?? undefined,
+    clientDecisionComment: data['clientDecisionComment'] ?? undefined,
+    clientDecisionAt: toDate(data['clientDecisionAt']),
+    clientDecisionBy: data['clientDecisionBy'] ?? undefined,
+    clientDecisionByName: data['clientDecisionByName'] ?? undefined,
+    clientDecisionByRole: data['clientDecisionByRole'] ?? undefined,
+    clientDecisions,
     createdAt: toDateOrDefault(data['createdAt']),
     createdBy: data['createdBy'],
     updatedAt: toDateOrDefault(data['updatedAt']),

@@ -1,10 +1,22 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import {
+  FormField,
+  form,
+  maxLength,
+  minLength,
+  required,
+  submit,
+} from '@angular/forms/signals';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Button } from '../../../../shared/components/button/button';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { OrdersFacade } from '../../facades/orders.facade';
-import type { ClosingAct, ClosingActContent } from '../../models/closing-act.model';
+import type {
+  ClientActDecisionInput,
+  ClosingAct,
+  ClosingActContent,
+} from '../../models/closing-act.model';
 import type { TechnicalNote } from '../../models/note.model';
 import type { ServiceOrder } from '../../models/order.model';
 
@@ -23,7 +35,7 @@ function linesToArray(text: string): string[] {
  *  cambios de lógica, CLAUDE.md §11.5-§11.6. */
 @Component({
   selector: 'app-order-closing-act-card',
-  imports: [Button, Icon, StatusBadge, TranslocoPipe],
+  imports: [Button, FormField, Icon, StatusBadge, TranslocoPipe],
   providers: [...provideTranslocoScope('orders')],
   templateUrl: './order-closing-act-card.html',
   styleUrl: './order-closing-act-card.scss',
@@ -39,6 +51,8 @@ export class OrderClosingActCard {
   readonly canEditActa = input(false);
   readonly canApproveActa = input(false);
   readonly canCloseOrder = input(false);
+  readonly canReviewAsClient = input(false);
+  readonly clientReviewerName = input('');
 
   protected readonly generatingActa = signal(false);
   protected readonly creatingManualAct = signal(false);
@@ -47,10 +61,34 @@ export class OrderClosingActCard {
   protected readonly savingActa = signal(false);
   protected readonly approvingActa = signal(false);
   protected readonly closingOrder = signal(false);
+  protected readonly submittingClientDecision = signal(false);
   protected readonly pdfUrl = signal<string | null>(null);
   protected readonly actaError = signal<string | null>(null);
   protected readonly creationMode = signal<ActCreationMode | null>(null);
   protected readonly selectedActFile = signal<File | null>(null);
+
+  protected readonly clientDecisionModel = linkedSignal<ClientActDecisionInput>(() => ({
+    decision: 'ACCEPT',
+    representativeName: this.clientReviewerName(),
+    representativeRole: '',
+    comment: '',
+    acceptedTerms: false,
+  }));
+  protected readonly clientDecisionForm = form(this.clientDecisionModel, (path) => {
+    required(path.representativeName);
+    minLength(path.representativeName, 2);
+    maxLength(path.representativeName, 120);
+    required(path.representativeRole);
+    minLength(path.representativeRole, 2);
+    maxLength(path.representativeRole, 120);
+    required(path.comment, {
+      when: ({ valueOf }) => valueOf(path.decision) === 'REQUEST_CHANGES',
+    });
+    maxLength(path.comment, 1000);
+    required(path.acceptedTerms, {
+      when: ({ valueOf }) => valueOf(path.decision) === 'ACCEPT',
+    });
+  });
 
   protected readonly actObjective = linkedSignal(() => this.closingAct()?.objective ?? '');
   protected readonly actExecutiveSummary = linkedSignal(() => this.closingAct()?.executiveSummary ?? '');
@@ -267,5 +305,30 @@ export class OrderClosingActCard {
     } finally {
       this.closingOrder.set(false);
     }
+  }
+
+  protected submitClientDecision(): void {
+    const act = this.closingAct();
+    if (!act || !this.canReviewAsClient()) {
+      return;
+    }
+    void submit(this.clientDecisionForm, async () => {
+      this.submittingClientDecision.set(true);
+      this.actaError.set(null);
+      try {
+        const url = await this.ordersFacade.reviewClosingActAsClient(
+          this.order().id,
+          act.id,
+          this.clientDecisionModel(),
+        );
+        if (url) {
+          this.pdfUrl.set(url);
+        }
+      } catch {
+        this.actaError.set(this.transloco.translate('orders.toast.clientDecisionError'));
+      } finally {
+        this.submittingClientDecision.set(false);
+      }
+    });
   }
 }
