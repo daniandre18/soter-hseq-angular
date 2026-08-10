@@ -1,75 +1,75 @@
 <app-modal
   [open]="open()"
-  [title]="editingQuote() ? 'Editar Cotización' : 'Nueva Cotización'"
+  [title]="(editingQuote() ? 'quotes.form.editTitle' : 'quotes.form.createTitle') | transloco"
   size="xl"
   (closeRequested)="close()"
 >
   <form class="quote-form" (submit)="onSubmit(); $event.preventDefault()">
     <div class="quote-form-grid">
       <label class="field">
-        Cliente *
+        {{ 'quotes.form.client' | transloco }} *
         <select [formField]="quoteForm.clientId">
-          <option value="">Seleccionar cliente...</option>
+          <option value="">{{ 'quotes.form.selectClient' | transloco }}</option>
           @for (client of activeClients(); track client.id) {
             <option [value]="client.id">{{ client.businessName }}</option>
           }
         </select>
         @if (quoteForm.clientId().touched() && quoteForm.clientId().errors().length) {
-          <span class="field-error">{{ quoteForm.clientId().errors()[0].message }}</span>
+          <span class="field-error">{{ quoteForm.clientId().errors()[0].message | transloco }}</span>
         }
       </label>
 
       <label class="field">
-        Válida hasta *
+        {{ 'quotes.form.validUntil' | transloco }} *
         <input type="date" [formField]="quoteForm.validUntil" />
       </label>
     </div>
 
     <div class="items-section">
       <div class="items-header">
-        <h4>Servicios</h4>
-        <button type="button" class="add-row-btn" (click)="addRow()">+ Agregar servicio</button>
+        <h4>{{ 'quotes.form.services' | transloco }}</h4>
+        <button type="button" class="add-row-btn" (click)="addRow()">+ {{ 'quotes.form.addService' | transloco }}</button>
       </div>
 
       <table class="items-table">
         <thead>
           <tr>
-            <th>Servicio</th>
-            <th>Cant.</th>
-            <th>Valor Unit.</th>
-            <th>Total</th>
+            <th>{{ 'quotes.form.service' | transloco }}</th>
+            <th>{{ 'quotes.form.quantity' | transloco }}</th>
+            <th>{{ 'quotes.form.unitPrice' | transloco }}</th>
+            <th>{{ 'common.total' | transloco }}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           @for (item of quoteForm.items; track $index; let i = $index) {
             <tr>
-              <td data-label="Servicio">
+              <td [attr.data-label]="'quotes.form.service' | transloco">
                 <select
-                  aria-label="Servicio"
+                  [attr.aria-label]="'quotes.form.service' | transloco"
                   [formField]="item.serviceId"
                   (change)="onServiceSelected(i, $any($event.target).value)"
                 >
-                  <option value="">Seleccionar servicio...</option>
+                  <option value="">{{ 'quotes.form.selectService' | transloco }}</option>
                   @for (service of activeServices(); track service.id) {
                     <option [value]="service.id">{{ service.name }}</option>
                   }
                 </select>
               </td>
-              <td data-label="Cantidad">
-                <input type="number" aria-label="Cantidad" [formField]="item.quantity" />
+              <td [attr.data-label]="'quotes.form.quantity' | transloco">
+                <input type="number" [attr.aria-label]="'quotes.form.quantity' | transloco" [formField]="item.quantity" />
               </td>
-              <td data-label="Valor unitario">
-                <input type="number" aria-label="Valor unitario" [formField]="item.unitPrice" />
+              <td [attr.data-label]="'quotes.form.unitPrice' | transloco">
+                <input type="number" [attr.aria-label]="'quotes.form.unitPrice' | transloco" [formField]="item.unitPrice" />
               </td>
-              <td class="row-total" data-label="Total">{{ rowTotal(i) | localizedCurrency }}</td>
+              <td class="row-total" [attr.data-label]="'common.total' | transloco">{{ rowTotal(i) | localizedCurrency }}</td>
               <td>
                 @if (quoteForm.items.length > 1) {
                   <button
                     type="button"
                     class="remove-row-btn"
                     (click)="removeRow(i)"
-                    aria-label="Quitar servicio"
+                    [attr.aria-label]="'quotes.form.removeService' | transloco"
                   >
                     ✕
                   </button>
@@ -80,7 +80,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="3" class="total-label">Total</td>
+            <td colspan="3" class="total-label">{{ 'common.total' | transloco }}</td>
             <td class="total-value">{{ subtotal() | localizedCurrency }}</td>
             <td></td>
           </tr>
@@ -89,25 +89,25 @@
     </div>
 
     <label class="field field--full">
-      Notas (opcional)
+      {{ 'quotes.form.notes' | transloco }}
       <textarea
         [formField]="quoteForm.notes"
         rows="3"
-        placeholder="Condiciones, alcance, observaciones..."
+        [placeholder]="'quotes.form.notesPlaceholder' | transloco"
       ></textarea>
     </label>
   </form>
 
   <div modalFooter>
-    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button variant="outline" (click)="close()">{{ 'common.cancel' | transloco }}</app-button>
     <app-button
       (click)="onSubmit()"
       [disabled]="quoteForm().invalid() || saving() || loadingDraft()"
     >
       @if (saving()) {
-        {{ editingQuote() ? 'Guardando…' : 'Creando…' }}
+        {{ (editingQuote() ? 'quotes.form.saving' : 'quotes.form.creating') | transloco }}
       } @else {
-        {{ editingQuote() ? 'Guardar cambios' : 'Crear Cotización' }}
+        {{ (editingQuote() ? 'quotes.form.saveChanges' : 'quotes.form.create') | transloco }}
       }
     </app-button>
   </div>

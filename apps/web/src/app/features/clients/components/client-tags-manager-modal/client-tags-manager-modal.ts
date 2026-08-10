@@ -4,15 +4,18 @@ import { Button } from '../../../../shared/components/button/button';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { ClientTagsFacade } from '../../facades/client-tags.facade';
 import { CLIENT_TAG_COLOR_PALETTE } from '../../models/client-tag.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-client-tags-manager-modal',
-  imports: [Modal, Button, Icon],
+  imports: [Modal, Button, Icon, TranslocoPipe],
+  providers: [...provideTranslocoScope('clients')],
   templateUrl: './client-tags-manager-modal.html',
   styleUrl: './client-tags-manager-modal.scss',
 })
 export class ClientTagsManagerModal {
   private readonly tagsFacade = inject(ClientTagsFacade);
+  private readonly transloco = inject(TranslocoService);
 
   readonly open = input(false);
   readonly closeRequested = output<void>();
@@ -59,7 +62,7 @@ export class ClientTagsManagerModal {
       this.creating.set(false);
     } catch (error) {
       this.saveError.set(
-        error instanceof Error ? error.message : 'No fue posible guardar la etiqueta.',
+        error instanceof Error ? error.message : this.transloco.translate('clients.tagManager.saveError'),
       );
     } finally {
       this.saving.set(false);

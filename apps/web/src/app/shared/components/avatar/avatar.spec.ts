@@ -20,4 +20,12 @@ describe('Avatar', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('uses the session colors when requested', async () => {
+    fixture.componentRef.setInput('tone', 'session');
+    await fixture.whenStable();
+
+    const avatar = fixture.nativeElement.querySelector('.avatar') as HTMLElement;
+    expect(avatar.classList).toContain('avatar--session');
+  });
 });

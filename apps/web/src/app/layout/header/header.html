@@ -13,7 +13,7 @@
       @if (showNotifications()) {
         <app-notification-bell />
       }
-      <app-avatar [name]="user.displayName" size="sm" />
+      <app-avatar [name]="user.displayName" size="sm" tone="session" />
       <div class="header-user-info">
         <p class="header-user-name">{{ user.displayName }}</p>
         <p class="header-user-role">{{ roleTranslationKey() | transloco }}</p>

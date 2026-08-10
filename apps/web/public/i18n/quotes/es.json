@@ -19,6 +19,32 @@
   "delete": "Eliminar cotización",
   "deleteTitle": "¿Eliminar esta cotización?",
   "deleteConfirmation": "Se eliminarán la cotización {{number}} y todos sus servicios. Esta acción no se puede deshacer.",
+  "form": {
+    "createTitle": "Nueva cotización",
+    "editTitle": "Editar cotización",
+    "client": "Cliente",
+    "selectClient": "Seleccionar cliente…",
+    "validUntil": "Válida hasta",
+    "services": "Servicios",
+    "addService": "Agregar servicio",
+    "service": "Servicio",
+    "quantity": "Cant.",
+    "unitPrice": "Valor unit.",
+    "selectService": "Seleccionar servicio…",
+    "removeService": "Quitar servicio",
+    "notes": "Notas (opcional)",
+    "notesPlaceholder": "Condiciones, alcance, observaciones…",
+    "saving": "Guardando…",
+    "creating": "Creando…",
+    "saveChanges": "Guardar cambios",
+    "create": "Crear cotización",
+    "validation": {
+      "clientRequired": "Selecciona un cliente.",
+      "validUntilRequired": "La fecha de vigencia es obligatoria.",
+      "serviceRequired": "Selecciona un servicio.",
+      "quantityMin": "La cantidad debe ser mayor a 0."
+    }
+  },
   "detail": {
     "services": "Servicios",
     "service": "Servicio",

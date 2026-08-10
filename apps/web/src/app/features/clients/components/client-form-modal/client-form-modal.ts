@@ -79,24 +79,24 @@ export class ClientFormModal {
   protected readonly siteDraftModel = signal<SiteDraftFormModel>({ ...EMPTY_SITE_DRAFT });
 
   protected readonly clientForm = form(this.model, (schemaPath) => {
-    required(schemaPath.businessName, { message: 'La razón social es obligatoria.' });
-    required(schemaPath.taxId, { message: 'El NIT es obligatorio.' });
+    required(schemaPath.businessName, { message: 'clients.form.validation.businessNameRequired' });
+    required(schemaPath.taxId, { message: 'clients.form.validation.taxIdRequired' });
   });
 
   protected readonly siteDraftForm = form(this.siteDraftModel, (schemaPath) => {
-    required(schemaPath.name, { message: 'El nombre de la sede es obligatorio.' });
-    required(schemaPath.address, { message: 'La dirección es obligatoria.' });
-    required(schemaPath.city, { message: 'La ciudad es obligatoria.' });
-    required(schemaPath.responsibleName, { message: 'El responsable es obligatorio.' });
-    required(schemaPath.responsiblePhone, { message: 'El teléfono es obligatorio.' });
-    email(schemaPath.responsibleEmail, { message: 'Ingresa un correo válido.' });
+    required(schemaPath.name, { message: 'clients.form.validation.siteNameRequired' });
+    required(schemaPath.address, { message: 'clients.form.validation.addressRequired' });
+    required(schemaPath.city, { message: 'clients.form.validation.cityRequired' });
+    required(schemaPath.responsibleName, { message: 'clients.form.validation.responsibleRequired' });
+    required(schemaPath.responsiblePhone, { message: 'clients.form.validation.phoneRequired' });
+    email(schemaPath.responsibleEmail, { message: 'clients.form.validation.emailInvalid' });
   });
 
   protected readonly title = computed(() =>
-    this.editingClient() ? 'Editar Cliente' : 'Nuevo Cliente',
+    this.editingClient() ? 'clients.form.editTitle' : 'clients.form.createTitle',
   );
   protected readonly siteDraftTitle = computed(() =>
-    this.editingDraftIndex() === null ? 'Agregar sede' : 'Editar sede',
+    this.editingDraftIndex() === null ? 'clients.form.addSiteTitle' : 'clients.form.editSiteTitle',
   );
 
   constructor() {
@@ -191,7 +191,7 @@ export class ClientFormModal {
           index !== editingIndex && normalizeUniqueName(site.name) === normalizedName,
       );
       if (duplicate) {
-        this.siteDraftError.set('Ya agregaste una sede con ese nombre.');
+        this.siteDraftError.set('clients.form.validation.duplicateSite');
         return;
       }
 

@@ -1,17 +1,17 @@
-<app-modal [open]="open()" [title]="title()" size="lg" (closeRequested)="close()">
+<app-modal [open]="open()" [title]="title() | transloco" size="lg" (closeRequested)="close()">
   <form class="service-form" (submit)="onSubmit(); $event.preventDefault()">
     <label class="field field--full">
-      Nombre *
-      <input [formField]="serviceForm.name" placeholder="Capacitación SST - Trabajo en Alturas" />
+      {{ 'services.form.name' | transloco }} *
+      <input [formField]="serviceForm.name" [placeholder]="'services.form.namePlaceholder' | transloco" />
       @if (serviceForm.name().touched() && serviceForm.name().errors().length) {
-        <span class="field-error">{{ serviceForm.name().errors()[0].message }}</span>
+        <span class="field-error">{{ serviceForm.name().errors()[0].message | transloco }}</span>
       }
     </label>
 
     <label class="field">
-      Categoría *
+      {{ 'services.form.category' | transloco }} *
       <select [formField]="serviceForm.category">
-        <option value="">Seleccionar categoría...</option>
+        <option value="">{{ 'services.form.selectCategory' | transloco }}</option>
         @for (category of categories(); track category.id) {
           <option [value]="category.id">
             {{ category.icon ? category.icon + ' ' : '' }}{{ category.label }}
@@ -19,40 +19,40 @@
         }
       </select>
       @if (serviceForm.category().touched() && serviceForm.category().errors().length) {
-        <span class="field-error">{{ serviceForm.category().errors()[0].message }}</span>
+        <span class="field-error">{{ serviceForm.category().errors()[0].message | transloco }}</span>
       }
     </label>
 
     <label class="field">
-      Unidad *
-      <input [formField]="serviceForm.unit" placeholder="visita, hora, empleado..." />
+      {{ 'services.form.unit' | transloco }} *
+      <input [formField]="serviceForm.unit" [placeholder]="'services.form.unitPlaceholder' | transloco" />
       @if (serviceForm.unit().touched() && serviceForm.unit().errors().length) {
-        <span class="field-error">{{ serviceForm.unit().errors()[0].message }}</span>
+        <span class="field-error">{{ serviceForm.unit().errors()[0].message | transloco }}</span>
       }
     </label>
 
     <label class="field">
-      Precio *
+      {{ 'services.form.price' | transloco }} *
       <input type="number" [formField]="serviceForm.price" />
       @if (serviceForm.price().touched() && serviceForm.price().errors().length) {
-        <span class="field-error">{{ serviceForm.price().errors()[0].message }}</span>
+        <span class="field-error">{{ serviceForm.price().errors()[0].message | transloco }}</span>
       }
     </label>
 
     <label class="field">
-      Estado
+      {{ 'services.form.status' | transloco }}
       <select [formField]="serviceForm.status">
-        <option value="ACTIVE">Activo</option>
-        <option value="INACTIVE">Inactivo</option>
+        <option value="ACTIVE">{{ 'services.form.active' | transloco }}</option>
+        <option value="INACTIVE">{{ 'services.form.inactive' | transloco }}</option>
       </select>
     </label>
 
     <label class="field field--full">
-      Descripción (opcional)
+      {{ 'services.form.description' | transloco }}
       <textarea
         [formField]="serviceForm.description"
         rows="3"
-        placeholder="Alcance, requisitos, entregables..."
+        [placeholder]="'services.form.descriptionPlaceholder' | transloco"
       ></textarea>
     </label>
   </form>
@@ -62,9 +62,9 @@
   }
 
   <div modalFooter>
-    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button variant="outline" (click)="close()">{{ 'common.cancel' | transloco }}</app-button>
     <app-button (click)="onSubmit()" [disabled]="serviceForm().invalid() || saving()">
-      {{ saving() ? 'Guardando…' : 'Guardar' }}
+      {{ (saving() ? 'services.form.saving' : 'common.save') | transloco }}
     </app-button>
   </div>
 </app-modal>

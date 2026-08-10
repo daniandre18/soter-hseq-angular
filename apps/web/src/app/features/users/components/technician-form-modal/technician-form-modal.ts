@@ -5,6 +5,7 @@ import { Button } from '../../../../shared/components/button/button';
 import { TechniciansFacade } from '../../facades/technicians.facade';
 import type { AppUser } from '../../../../core/models/app-user.model';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 interface TechnicianFormModel {
   displayName: string;
@@ -24,13 +25,15 @@ const EMPTY_MODEL: TechnicianFormModel = {
 
 @Component({
   selector: 'app-technician-form-modal',
-  imports: [Modal, Button, FormField],
+  imports: [Modal, Button, FormField, TranslocoPipe],
+  providers: [...provideTranslocoScope('users')],
   templateUrl: './technician-form-modal.html',
   styleUrl: './technician-form-modal.scss',
 })
 export class TechnicianFormModal {
   private readonly techniciansFacade = inject(TechniciansFacade);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly open = input(false);
   readonly editingTechnician = input<AppUser | null>(null);
@@ -41,7 +44,7 @@ export class TechnicianFormModal {
   protected readonly model = signal<TechnicianFormModel>({ ...EMPTY_MODEL });
 
   protected readonly title = computed(() =>
-    this.editingTechnician() ? 'Editar Técnico' : 'Nuevo Técnico',
+    this.editingTechnician() ? 'users.form.editTitle' : 'users.form.createTitle',
   );
 
   // El email y la contraseña solo se piden al crear — editarlos requeriría
@@ -52,15 +55,15 @@ export class TechnicianFormModal {
   // valía `editingTechnician()` la primera vez, ver mismo patrón de bug ya
   // evitado en otros formularios de este proyecto.
   protected readonly technicianForm = form(this.model, (schemaPath) => {
-    required(schemaPath.displayName, { message: 'El nombre es obligatorio.' });
+    required(schemaPath.displayName, { message: 'users.form.validation.nameRequired' });
     applyWhen(
       schemaPath,
       () => !this.editingTechnician(),
       (createPath) => {
-        required(createPath.email, { message: 'El correo es obligatorio.' });
-        email(createPath.email, { message: 'Ingresa un correo válido.' });
-        required(createPath.password, { message: 'La contraseña es obligatoria.' });
-        minLength(createPath.password, 6, { message: 'Debe tener al menos 6 caracteres.' });
+        required(createPath.email, { message: 'users.form.validation.emailRequired' });
+        email(createPath.email, { message: 'users.form.validation.emailInvalid' });
+        required(createPath.password, { message: 'users.form.validation.passwordRequired' });
+        minLength(createPath.password, 6, { message: 'users.form.validation.passwordMin' });
       },
     );
   });
@@ -103,7 +106,7 @@ export class TechnicianFormModal {
             phone: value.phone || undefined,
             specialty: value.specialty || undefined,
           });
-          this.toast.success('Técnico actualizado correctamente.');
+          this.toast.success(this.transloco.translate('users.form.updated'));
         } else {
           await this.techniciansFacade.createTechnician({
             displayName: value.displayName,
@@ -112,12 +115,14 @@ export class TechnicianFormModal {
             phone: value.phone || undefined,
             specialty: value.specialty || undefined,
           });
-          this.toast.success('Técnico creado correctamente.');
+          this.toast.success(this.transloco.translate('users.form.created'));
         }
         this.close();
       } catch (error) {
         const message =
-          error instanceof Error && error.message ? error.message : 'No se pudo guardar el técnico.';
+          error instanceof Error && error.message
+            ? error.message
+            : this.transloco.translate('users.form.saveError');
         this.errorMessage.set(message);
         this.toast.error(message);
       } finally {

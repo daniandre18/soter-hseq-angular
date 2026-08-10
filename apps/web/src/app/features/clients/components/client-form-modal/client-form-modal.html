@@ -1,23 +1,23 @@
-<app-modal [open]="open()" [title]="title()" size="lg" (closeRequested)="close()">
+<app-modal [open]="open()" [title]="title() | transloco" size="lg" (closeRequested)="close()">
   <form class="client-form" (submit)="onSubmit(); $event.preventDefault()">
     <label class="field field--full">
-      Razón Social *
-      <input [formField]="clientForm.businessName" placeholder="Empresa S.A.S." />
+      {{ 'clients.form.businessName' | transloco }} *
+      <input [formField]="clientForm.businessName" [placeholder]="'clients.form.businessNamePlaceholder' | transloco" />
       @if (clientForm.businessName().touched() && clientForm.businessName().errors().length) {
-        <span class="field-error">{{ clientForm.businessName().errors()[0].message }}</span>
+        <span class="field-error">{{ clientForm.businessName().errors()[0].message | transloco }}</span>
       }
     </label>
 
     <label class="field">
-      NIT *
+      {{ 'clients.form.taxId' | transloco }} *
       <input [formField]="clientForm.taxId" placeholder="900.000.000-0" />
       @if (clientForm.taxId().touched() && clientForm.taxId().errors().length) {
-        <span class="field-error">{{ clientForm.taxId().errors()[0].message }}</span>
+        <span class="field-error">{{ clientForm.taxId().errors()[0].message | transloco }}</span>
       }
     </label>
 
     <label class="field">
-      Correo
+      {{ 'clients.form.email' | transloco }}
       <input type="email" [formField]="clientForm.email" placeholder="contacto@empresa.com" />
     </label>
 
@@ -40,15 +40,15 @@
     </div>
 
     <label class="field field--full">
-      Dirección
+      {{ 'clients.form.address' | transloco }}
       <input [formField]="clientForm.address" placeholder="Calle 80 # 45-22" />
     </label>
 
     <label class="field field--full">
-      Estado
+      {{ 'clients.form.status' | transloco }}
       <select [formField]="clientForm.status">
-        <option value="ACTIVE">Activo</option>
-        <option value="INACTIVE">Inactivo</option>
+        <option value="ACTIVE">{{ 'clients.form.active' | transloco }}</option>
+        <option value="INACTIVE">{{ 'clients.form.inactive' | transloco }}</option>
       </select>
     </label>
   </form>
@@ -60,8 +60,8 @@
           <div class="new-client-sites-title">
             <span class="sites-shortcut-icon"><app-icon name="building-2" /></span>
             <div>
-              <strong>Sedes y responsables</strong>
-              <span>Opcional · puedes agregar una o varias antes de guardar.</span>
+              <strong>{{ 'clients.form.sitesTitle' | transloco }}</strong>
+              <span>{{ 'clients.form.sitesOptional' | transloco }}</span>
             </div>
           </div>
         </div>
@@ -79,15 +79,15 @@
                 <strong>{{ site.name }}</strong>
                 <span>{{ site.address }} · {{ site.city }}</span>
                 <small>
-                  Responsable: {{ site.responsible.name }} · {{ site.responsible.phone }}
+                  {{ 'clients.form.responsibleSummary' | transloco: { name: site.responsible.name, phone: site.responsible.phone } }}
                 </small>
               </div>
               <div class="draft-site-actions">
                 <button
                   type="button"
                   (click)="editSiteDraft($index)"
-                  [attr.aria-label]="'Editar sede ' + site.name"
-                  title="Editar sede"
+                  [attr.aria-label]="'clients.form.editSite' | transloco: { name: site.name }"
+                  [title]="'clients.form.editSiteTitle' | transloco"
                 >
                   <app-icon name="square-pen" />
                 </button>
@@ -95,8 +95,8 @@
                   type="button"
                   class="draft-site-delete"
                   (click)="removeSiteDraft($index)"
-                  [attr.aria-label]="'Eliminar sede ' + site.name"
-                  title="Eliminar sede"
+                  [attr.aria-label]="'clients.form.deleteSite' | transloco: { name: site.name }"
+                  [title]="'clients.form.deleteSite' | transloco: { name: site.name }"
                 >
                   <app-icon name="trash-2" />
                 </button>
@@ -113,10 +113,10 @@
           (submit)="saveSiteDraft(); $event.preventDefault()"
         >
           <div class="site-draft-form-heading">
-            <strong>{{ siteDraftTitle() }}</strong>
+            <strong>{{ siteDraftTitle() | transloco }}</strong>
             <button
               type="button"
-              aria-label="Cerrar formulario de sede"
+              [attr.aria-label]="'clients.form.closeSiteForm' | transloco"
               (click)="cancelSiteDraft()"
             >
               <app-icon name="x" />
@@ -125,18 +125,18 @@
 
           <div class="site-draft-grid">
             <label class="site-draft-field site-draft-field--full">
-              Nombre de la sede *
-              <input [formField]="siteDraftForm.name" placeholder="Ej. Sede Norte" />
+              {{ 'clients.form.siteName' | transloco }} *
+              <input [formField]="siteDraftForm.name" [placeholder]="'clients.form.siteNamePlaceholder' | transloco" />
               @if (siteDraftForm.name().touched() && siteDraftForm.name().errors().length) {
-                <span class="field-error">{{ siteDraftForm.name().errors()[0].message }}</span>
+                <span class="field-error">{{ siteDraftForm.name().errors()[0].message | transloco }}</span>
               }
             </label>
 
             <label class="site-draft-field site-draft-field--full">
-              Dirección *
+              {{ 'clients.form.address' | transloco }} *
               <input [formField]="siteDraftForm.address" placeholder="Calle 80 # 45-22" />
               @if (siteDraftForm.address().touched() && siteDraftForm.address().errors().length) {
-                <span class="field-error">{{ siteDraftForm.address().errors()[0].message }}</span>
+                <span class="field-error">{{ siteDraftForm.address().errors()[0].message | transloco }}</span>
               }
             </label>
 
@@ -148,33 +148,33 @@
                 (cityChange)="siteDraftForm.city().value.set($event)"
               />
               @if (siteDraftForm.city().touched() && siteDraftForm.city().errors().length) {
-                <span class="field-error">{{ siteDraftForm.city().errors()[0].message }}</span>
+                <span class="field-error">{{ siteDraftForm.city().errors()[0].message | transloco }}</span>
               }
             </div>
 
             <label class="site-draft-field">
-              Responsable *
-              <input [formField]="siteDraftForm.responsibleName" placeholder="Nombre completo" />
+              {{ 'clients.form.responsible' | transloco }} *
+              <input [formField]="siteDraftForm.responsibleName" [placeholder]="'clients.form.fullNamePlaceholder' | transloco" />
               @if (
                 siteDraftForm.responsibleName().touched() &&
                 siteDraftForm.responsibleName().errors().length
               ) {
                 <span class="field-error">
-                  {{ siteDraftForm.responsibleName().errors()[0].message }}
+                  {{ siteDraftForm.responsibleName().errors()[0].message | transloco }}
                 </span>
               }
             </label>
 
             <label class="site-draft-field">
-              Cargo
+              {{ 'clients.form.position' | transloco }}
               <input
                 [formField]="siteDraftForm.responsiblePosition"
-                placeholder="Ej. Coordinador HSEQ"
+                [placeholder]="'clients.form.positionPlaceholder' | transloco"
               />
             </label>
 
             <label class="site-draft-field">
-              Teléfono *
+              {{ 'clients.form.phone' | transloco }} *
               <input
                 type="tel"
                 [formField]="siteDraftForm.responsiblePhone"
@@ -185,13 +185,13 @@
                 siteDraftForm.responsiblePhone().errors().length
               ) {
                 <span class="field-error">
-                  {{ siteDraftForm.responsiblePhone().errors()[0].message }}
+                  {{ siteDraftForm.responsiblePhone().errors()[0].message | transloco }}
                 </span>
               }
             </label>
 
             <label class="site-draft-field site-draft-field--full">
-              Correo
+              {{ 'clients.form.email' | transloco }}
               <input
                 type="email"
                 [formField]="siteDraftForm.responsibleEmail"
@@ -202,29 +202,29 @@
                 siteDraftForm.responsibleEmail().errors().length
               ) {
                 <span class="field-error">
-                  {{ siteDraftForm.responsibleEmail().errors()[0].message }}
+                  {{ siteDraftForm.responsibleEmail().errors()[0].message | transloco }}
                 </span>
               }
             </label>
           </div>
 
           @if (siteDraftError()) {
-            <p class="site-draft-error" role="alert">{{ siteDraftError() }}</p>
+            <p class="site-draft-error" role="alert">{{ siteDraftError()! | transloco }}</p>
           }
 
           <div class="site-draft-form-actions">
             <app-button variant="outline" size="sm" (click)="cancelSiteDraft()">
-              Cancelar
+              {{ 'common.cancel' | transloco }}
             </app-button>
             <app-button type="submit" size="sm" [disabled]="siteDraftForm().invalid()">
-              {{ editingDraftIndex() === null ? 'Agregar sede' : 'Guardar cambios' }}
+              {{ (editingDraftIndex() === null ? 'clients.form.addSite' : 'clients.form.saveChanges') | transloco }}
             </app-button>
           </div>
         </form>
       } @else {
         <button type="button" class="add-site-draft-btn" (click)="openNewSiteDraft()">
           <app-icon name="building-2" />
-          {{ draftSites().length === 0 ? 'Agregar una sede' : 'Agregar otra sede' }}
+          {{ (draftSites().length === 0 ? 'clients.form.addFirstSite' : 'clients.form.addAnotherSite') | transloco }}
         </button>
       }
     </section>
@@ -232,11 +232,11 @@
     <aside class="sites-shortcut">
       <span class="sites-shortcut-icon"><app-icon name="building-2" /></span>
       <div class="sites-shortcut-copy">
-        <strong>Sedes y responsables</strong>
-        <span>Administra las ubicaciones y contactos de {{ client.businessName }}.</span>
+        <strong>{{ 'clients.form.sitesTitle' | transloco }}</strong>
+        <span>{{ 'clients.form.manageSitesHelp' | transloco: { name: client.businessName } }}</span>
       </div>
       <app-button variant="secondary" size="sm" (click)="manageSites()">
-        Administrar sedes
+        {{ 'clients.form.manageSites' | transloco }}
       </app-button>
     </aside>
   }
@@ -246,12 +246,12 @@
   }
 
   <div modalFooter>
-    <app-button variant="outline" (click)="close()">Cancelar</app-button>
+    <app-button variant="outline" (click)="close()">{{ 'common.cancel' | transloco }}</app-button>
     <app-button
       (click)="onSubmit()"
       [disabled]="clientForm().invalid() || saving() || siteDraftEditorOpen()"
     >
-      {{ saving() ? 'Guardando…' : 'Guardar' }}
+      {{ (saving() ? 'clients.form.saving' : 'common.save') | transloco }}
     </app-button>
   </div>
 </app-modal>

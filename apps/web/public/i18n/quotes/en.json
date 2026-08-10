@@ -19,6 +19,32 @@
   "delete": "Delete quote",
   "deleteTitle": "Delete this quote?",
   "deleteConfirmation": "Quote {{number}} and all its services will be deleted. This action cannot be undone.",
+  "form": {
+    "createTitle": "New quote",
+    "editTitle": "Edit quote",
+    "client": "Client",
+    "selectClient": "Select client…",
+    "validUntil": "Valid until",
+    "services": "Services",
+    "addService": "Add service",
+    "service": "Service",
+    "quantity": "Qty.",
+    "unitPrice": "Unit price",
+    "selectService": "Select service…",
+    "removeService": "Remove service",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "Terms, scope, observations…",
+    "saving": "Saving…",
+    "creating": "Creating…",
+    "saveChanges": "Save changes",
+    "create": "Create quote",
+    "validation": {
+      "clientRequired": "Select a client.",
+      "validUntilRequired": "The validity date is required.",
+      "serviceRequired": "Select a service.",
+      "quantityMin": "Quantity must be greater than 0."
+    }
+  },
   "detail": {
     "services": "Services",
     "service": "Service",

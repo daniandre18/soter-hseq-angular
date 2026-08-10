@@ -132,7 +132,7 @@
   <div class="sidebar-footer">
     @if (currentUser(); as user) {
       <div class="sidebar-user" [class.sidebar-user--collapsed]="isCollapsed()">
-        <app-avatar [name]="user.displayName" size="sm" />
+        <app-avatar [name]="user.displayName" size="sm" tone="session" />
         @if (!isCollapsed()) {
           <div class="sidebar-user-info">
             <p class="sidebar-user-name">{{ user.displayName }}</p>

@@ -1,6 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 
 type AvatarSize = 'sm' | 'md' | 'lg';
+type AvatarTone = 'auto' | 'session';
 
 const COLOR_CLASSES = [
   'avatar--brand',
@@ -20,6 +21,7 @@ const COLOR_CLASSES = [
 export class Avatar {
   readonly name = input.required<string>();
   readonly size = input<AvatarSize>('md');
+  readonly tone = input<AvatarTone>('auto');
 
   protected readonly initials = computed(() =>
     this.name()
@@ -31,6 +33,10 @@ export class Avatar {
   );
 
   protected readonly colorClass = computed(() => {
+    if (this.tone() === 'session') {
+      return 'avatar--session';
+    }
+
     const index = (this.name().codePointAt(0) ?? 0) % COLOR_CLASSES.length;
     return COLOR_CLASSES[index];
   });
