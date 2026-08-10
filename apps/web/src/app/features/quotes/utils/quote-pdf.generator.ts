@@ -48,7 +48,8 @@ export interface GenerateQuotePdfParams {
   labels: QuotePdfLabels;
 }
 
-const BRAND_RGB: [number, number, number] = [221, 30, 30];
+/** #11047A — navy institucional usado exclusivamente en el encabezado PDF. */
+const PDF_HEADER_RGB: [number, number, number] = [17, 4, 122];
 const GRAY_RGB: [number, number, number] = [107, 114, 128];
 const DARK_RGB: [number, number, number] = [17, 24, 39];
 const PAGE_MARGIN = 40;
@@ -83,7 +84,7 @@ export async function generateQuotePdf(params: GenerateQuotePdfParams): Promise<
   const rightEdge = pageWidth - PAGE_MARGIN;
 
   // Encabezado
-  doc.setFillColor(...BRAND_RGB);
+  doc.setFillColor(...PDF_HEADER_RGB);
   doc.rect(0, 0, pageWidth, 100, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
