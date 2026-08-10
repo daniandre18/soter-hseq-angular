@@ -85,6 +85,8 @@
     "evidenceUploaded": "Evidencia cargada",
     "statusChanged": "Cambio de estado",
     "techniciansAssigned": "Técnicos asignados",
+    "clientAcceptedAct": "Acta aceptada por el cliente",
+    "clientRequestedActChanges": "Cliente solicitó cambios al acta",
     "orderClosed": "Orden cerrada"
   },
   "my": {
@@ -108,7 +110,8 @@
     "uploadActError": "No se pudo subir el acta. Verifica el PDF e inténtalo nuevamente.",
     "actSaveError": "No se pudieron guardar los cambios del acta.",
     "actApproveError": "No se pudo aprobar el acta.",
-    "closeError": "No se pudo cerrar la orden ni generar el PDF."
+    "closeError": "No se pudo cerrar la orden ni generar el PDF.",
+    "clientDecisionError": "No se pudo registrar tu decisión sobre el acta. Verifica la información e inténtalo nuevamente."
   },
   "detail": {
     "changeStatus": "Cambiar Estado",
@@ -249,6 +252,29 @@
     "uploadedDocument": "Acta cargada",
     "viewDocument": "Ver documento",
     "uploadedNotice": "Revisa que el documento corresponda a esta orden antes de aprobarlo.",
+    "clientReviewTitle": "Revisión y aceptación del cliente",
+    "clientReviewHelp": "Revisa el documento completo. Puedes aceptarlo para cerrar la orden o devolverlo con observaciones específicas.",
+    "clientDecisionLabel": "Decisión sobre el acta",
+    "acceptAct": "Aceptar acta",
+    "acceptActHelp": "Confirma la ejecución del servicio y cierra la orden.",
+    "requestActChanges": "Solicitar cambios",
+    "requestActChangesHelp": "Devuelve el acta al equipo SOTER para su corrección.",
+    "representativeName": "Nombre del representante",
+    "representativeNameError": "Registra un nombre válido.",
+    "representativeRoleError": "Registra el cargo del representante.",
+    "clientComment": "Comentario u observaciones (opcional)",
+    "changeReason": "Cambios requeridos",
+    "changeReasonError": "Describe los cambios que debe realizar el equipo.",
+    "acceptanceStatement": "Declaro que revisé el acta y acepto la ejecución del servicio descrito. Entiendo que esta acción dejará una constancia auditada y cerrará la orden.",
+    "acceptanceRequired": "Debes confirmar la declaración para aceptar el acta.",
+    "auditNotice": "La identidad y la hora se registrarán automáticamente.",
+    "submittingDecision": "Registrando…",
+    "confirmAcceptance": "Confirmar aceptación",
+    "confirmChangeRequest": "Enviar solicitud de cambios",
+    "clientDecision": {
+      "ACCEPTED": "Aceptada por el cliente",
+      "CHANGES_REQUESTED": "Cambios solicitados por el cliente"
+    },
     "source": {
       "MANUAL": "Acta creada en SOTER",
       "AI_ASSISTED": "Borrador asistido por IA",
@@ -259,6 +285,7 @@
       "AI_GENERATED": "Generada por IA",
       "UNDER_REVIEW": "En revisión",
       "APPROVED": "Aprobada",
+      "CHANGES_REQUESTED": "Cambios solicitados",
       "FINAL": "Final"
     }
   },
@@ -318,6 +345,7 @@
     },
     "team": {
       "title": "Equipo Asignado",
+      "assignedTechnician": "Técnico asignado",
       "notes": "Notas",
       "evidence": "Evidencias",
       "created": "Creada"

@@ -112,6 +112,28 @@
       <app-status-badge [label]="('orders.report.status.' + closingAct()!.status) | transloco" color="purple" />
     </div>
 
+    @if (closingAct()!.clientDecision; as decision) {
+      <div
+        class="client-decision-summary"
+        [class.client-decision-summary--accepted]="decision === 'ACCEPTED'"
+        [class.client-decision-summary--changes]="decision === 'CHANGES_REQUESTED'"
+      >
+        <app-icon [name]="decision === 'ACCEPTED' ? 'circle-check-big' : 'triangle-alert'" />
+        <div>
+          <strong>{{ ('orders.report.clientDecision.' + decision) | transloco }}</strong>
+          <span>
+            {{ closingAct()!.clientDecisionByName }}
+            @if (closingAct()!.clientDecisionByRole) {
+              · {{ closingAct()!.clientDecisionByRole }}
+            }
+          </span>
+          @if (closingAct()!.clientDecisionComment) {
+            <p>{{ closingAct()!.clientDecisionComment }}</p>
+          }
+        </div>
+      </div>
+    }
+
     @if (closingAct()!.source === 'UPLOADED') {
       <div class="uploaded-document">
         <span class="uploaded-document__icon"><app-icon name="file-text" /></span>
@@ -217,6 +239,91 @@
         </app-button>
       </div>
     }
+  }
+
+  @if (canReviewAsClient()) {
+    <form class="client-review-panel" (submit)="submitClientDecision(); $event.preventDefault()">
+      <div class="client-review-heading">
+        <span class="panel-icon"><app-icon name="file-text" /></span>
+        <div>
+          <h3>{{ 'orders.report.clientReviewTitle' | transloco }}</h3>
+          <p>{{ 'orders.report.clientReviewHelp' | transloco }}</p>
+        </div>
+      </div>
+
+      <fieldset class="decision-options">
+        <legend>{{ 'orders.report.clientDecisionLabel' | transloco }}</legend>
+        <label>
+          <input type="radio" value="ACCEPT" [formField]="clientDecisionForm.decision" />
+          <span>
+            <app-icon name="circle-check-big" />
+            <strong>{{ 'orders.report.acceptAct' | transloco }}</strong>
+            <small>{{ 'orders.report.acceptActHelp' | transloco }}</small>
+          </span>
+        </label>
+        <label>
+          <input type="radio" value="REQUEST_CHANGES" [formField]="clientDecisionForm.decision" />
+          <span>
+            <app-icon name="triangle-alert" />
+            <strong>{{ 'orders.report.requestActChanges' | transloco }}</strong>
+            <small>{{ 'orders.report.requestActChangesHelp' | transloco }}</small>
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="client-review-fields">
+        <label class="field">
+          {{ 'orders.report.representativeName' | transloco }} *
+          <input [formField]="clientDecisionForm.representativeName" autocomplete="name" />
+          @if (clientDecisionForm.representativeName().touched() && clientDecisionForm.representativeName().invalid()) {
+            <small class="field-error">{{ 'orders.report.representativeNameError' | transloco }}</small>
+          }
+        </label>
+        <label class="field">
+          {{ 'orders.report.role' | transloco }} *
+          <input [formField]="clientDecisionForm.representativeRole" autocomplete="organization-title" />
+          @if (clientDecisionForm.representativeRole().touched() && clientDecisionForm.representativeRole().invalid()) {
+            <small class="field-error">{{ 'orders.report.representativeRoleError' | transloco }}</small>
+          }
+        </label>
+        <label class="field field--full">
+          {{ (clientDecisionModel().decision === 'REQUEST_CHANGES' ? 'orders.report.changeReason' : 'orders.report.clientComment') | transloco }}
+          @if (clientDecisionModel().decision === 'REQUEST_CHANGES') { * }
+          <textarea rows="3" [formField]="clientDecisionForm.comment"></textarea>
+          @if (clientDecisionForm.comment().touched() && clientDecisionForm.comment().invalid()) {
+            <small class="field-error">{{ 'orders.report.changeReasonError' | transloco }}</small>
+          }
+        </label>
+      </div>
+
+      @if (clientDecisionModel().decision === 'ACCEPT') {
+        <label class="acceptance-check">
+          <input type="checkbox" [formField]="clientDecisionForm.acceptedTerms" />
+          <span>{{ 'orders.report.acceptanceStatement' | transloco }}</span>
+        </label>
+        @if (clientDecisionForm.acceptedTerms().touched() && clientDecisionForm.acceptedTerms().invalid()) {
+          <small class="field-error">{{ 'orders.report.acceptanceRequired' | transloco }}</small>
+        }
+      }
+
+      <div class="client-review-actions">
+        <p><app-icon name="clock" /> {{ 'orders.report.auditNotice' | transloco }}</p>
+        <app-button
+          type="submit"
+          [variant]="clientDecisionModel().decision === 'ACCEPT' ? 'accent' : 'danger-outline'"
+          size="sm"
+          [disabled]="submittingClientDecision()"
+        >
+          {{
+            (submittingClientDecision()
+              ? 'orders.report.submittingDecision'
+              : clientDecisionModel().decision === 'ACCEPT'
+                ? 'orders.report.confirmAcceptance'
+                : 'orders.report.confirmChangeRequest') | transloco
+          }}
+        </app-button>
+      </div>
+    </form>
   }
 
   @if (closingAct(); as act) {

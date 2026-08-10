@@ -123,7 +123,9 @@ export class OrdersList {
   }
 
   protected technicianNames(order: ServiceOrder): string[] {
-    return order.assignedTechnicianIds.map((id) => this.ordersFacade.technicianName(id));
+    return order.assignedTechnicianNames?.length
+      ? order.assignedTechnicianNames
+      : order.assignedTechnicianIds.map((id) => this.ordersFacade.technicianName(id));
   }
 
   protected onSearchInput(event: Event): void {

@@ -1,5 +1,8 @@
 import { InjectionToken } from '@angular/core';
-import type { ClosingActContent } from '../models/closing-act.model';
+import type {
+  ClientActDecisionInput,
+  ClosingActContent,
+} from '../models/closing-act.model';
 
 /**
  * Puerto para las dos operaciones del acta de cierre que requieren
@@ -21,6 +24,15 @@ export interface ClosingActGateway {
   /** Sube un PDF de acta ya elaborado o firmado y lo registra como el
    *  documento que deberá aprobarse antes del cierre. */
   uploadDraft(orderId: string, file: File, onProgress?: (percent: number) => void): Promise<void>;
+
+  /** Registra la decisión del representante del cliente. La aceptación
+   * cierra la orden en backend; una solicitud de cambios la devuelve a
+   * corrección. */
+  reviewAsClient(
+    orderId: string,
+    actId: string,
+    input: ClientActDecisionInput,
+  ): Promise<string | undefined>;
 
   /** Genera el PDF final y cierra la orden. Retorna la URL de descarga ya
    *  resuelta. */

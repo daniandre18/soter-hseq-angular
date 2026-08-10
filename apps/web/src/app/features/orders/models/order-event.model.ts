@@ -3,6 +3,8 @@ export type OrderEventAction =
   | 'EVIDENCE_UPLOADED'
   | 'ORDER_STATUS_CHANGED'
   | 'ORDER_ASSIGNED'
+  | 'CLIENT_ACCEPTED_ACT'
+  | 'CLIENT_REQUESTED_ACT_CHANGES'
   | 'ORDER_CLOSED';
 
 /**
@@ -27,5 +29,7 @@ export const ORDER_EVENT_ACTION_TRANSLATION_KEYS: Record<OrderEventAction, `orde
   EVIDENCE_UPLOADED: 'orders.eventAction.evidenceUploaded',
   ORDER_STATUS_CHANGED: 'orders.eventAction.statusChanged',
   ORDER_ASSIGNED: 'orders.eventAction.techniciansAssigned',
+  CLIENT_ACCEPTED_ACT: 'orders.eventAction.clientAcceptedAct',
+  CLIENT_REQUESTED_ACT_CHANGES: 'orders.eventAction.clientRequestedActChanges',
   ORDER_CLOSED: 'orders.eventAction.orderClosed',
 };

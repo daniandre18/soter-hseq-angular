@@ -12,7 +12,11 @@ import type {
 } from '../models/order.model';
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory } from '../models/evidence.model';
-import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
+import type {
+  ClientActDecisionInput,
+  ClosingAct,
+  ClosingActContent,
+} from '../models/closing-act.model';
 import type { OrderEvent } from '../models/order-event.model';
 import { assertValidVisitSchedule } from '../utils/order-schedule-validation';
 
@@ -276,6 +280,14 @@ export class OrdersService {
 
   watchClosingAct(orderId: string): Observable<ClosingAct | null> {
     return this.repository.watchClosingAct(orderId);
+  }
+
+  async reviewClosingActAsClient(
+    orderId: string,
+    actId: string,
+    input: ClientActDecisionInput,
+  ): Promise<string | undefined> {
+    return this.closingActGateway.reviewAsClient(orderId, actId, input);
   }
 
   /**
