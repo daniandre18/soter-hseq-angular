@@ -104,6 +104,8 @@
     "evidenceUploaded": "Evidencia subida.",
     "evidenceError": "No se pudo subir la evidencia.",
     "draftError": "No se pudo generar el borrador con IA.",
+    "manualActError": "No se pudo crear el acta. Revisa la información e inténtalo nuevamente.",
+    "uploadActError": "No se pudo subir el acta. Verifica el PDF e inténtalo nuevamente.",
     "actSaveError": "No se pudieron guardar los cambios del acta.",
     "actApproveError": "No se pudo aprobar el acta.",
     "closeError": "No se pudo cerrar la orden ni generar el PDF."
@@ -144,7 +146,14 @@
       "title": "Programar visita",
       "start": "Inicio",
       "end": "Fin",
-      "schedule": "Programar"
+      "schedule": "Programar",
+      "success": "Visita programada correctamente.",
+      "error": "No fue posible programar la visita. Revisa las fechas e inténtalo nuevamente.",
+      "validation": {
+        "MISSING_DUE_DATE": "Define primero la fecha límite de la orden.",
+        "END_BEFORE_START": "El fin de la visita debe ser posterior al inicio.",
+        "AFTER_DUE_DATE": "La visita no puede exceder la fecha límite de la orden."
+      }
     },
     "assign": {
       "title": "Asignar técnicos",
@@ -187,10 +196,34 @@
     "empty": "Sin actividad registrada."
   },
   "report": {
+    "cardHelp": "Documento formal requerido para aprobar y cerrar la orden.",
+    "chooseMethod": "Preparación del acta",
+    "chooseTitle": "¿Cómo deseas agregar el acta de cierre?",
+    "chooseHelp": "Selecciona el método que corresponda. Ninguna opción cerrará la orden sin revisión y aprobación.",
+    "manualTitle": "Crear acta guiada",
+    "manualHelp": "Diligencia un modelo profesional y genera el PDF corporativo al cerrar.",
+    "recommended": "Recomendado",
+    "aiTitle": "Redactar con IA",
+    "aiHelp": "Usa las notas de campo para preparar un borrador editable.",
+    "uploadTitle": "Subir acta firmada",
+    "uploadHelp": "Adjunta un PDF elaborado previamente para revisión y aprobación.",
+    "changeMethod": "Cambiar método",
     "generateTitle": "Generar borrador con IA",
     "generateHelp": "Se enviará un resumen de las notas de campo a la IA para redactar un borrador. Siempre queda sujeto a revisión y aprobación humana antes del cierre.",
     "generating": "Generando…",
     "generate": "Generar borrador con IA",
+    "uploadPanelTitle": "Subir acta en PDF",
+    "uploadPanelHelp": "El archivo se conservará como documento oficial y no será reemplazado al cerrar la orden.",
+    "selectPdf": "Seleccionar archivo PDF",
+    "pdfRequirements": "Solo PDF · máximo 10 MB",
+    "uploading": "Subiendo…",
+    "uploadAction": "Subir acta para revisión",
+    "uploadTypeError": "Selecciona un archivo PDF válido.",
+    "uploadSizeError": "El acta supera el tamaño máximo de 10 MB.",
+    "manualEyebrow": "Modelo de acta HSEQ",
+    "manualFormTitle": "Acta de ejecución y cierre del servicio",
+    "manualFormHelp": "La identificación de la orden se completa automáticamente. Resume únicamente hechos verificables de la ejecución.",
+    "objective": "Objetivo y alcance",
     "notReady": "El acta se puede generar una vez la orden esté en revisión.",
     "executiveSummary": "Resumen ejecutivo",
     "activitiesPerformed": "Actividades realizadas (una por línea)",
@@ -198,12 +231,36 @@
     "recommendations": "Recomendaciones (una por línea)",
     "conclusions": "Conclusiones",
     "limitations": "Limitaciones",
+    "acceptanceNotes": "Observaciones de aceptación",
+    "responsiblePeople": "Responsables y firmas",
+    "soterRepresentative": "Responsable SOTER HSEQ",
+    "clientRepresentative": "Representante del cliente",
+    "role": "Cargo",
+    "signatureHelp": "El PDF generado incluirá líneas de firma. Si ya cuentas con el documento firmado, utiliza la opción Subir acta firmada.",
+    "creating": "Creando acta…",
+    "createDraft": "Crear acta para revisión",
     "saveChanges": "Guardar cambios",
     "approve": "Aprobar Acta",
     "approving": "Aprobando…",
     "closeAndGeneratePdf": "Cerrar Orden y Generar PDF",
+    "closeWithUploadedAct": "Cerrar orden con esta acta",
     "generatingPdf": "Generando PDF…",
-    "downloadPdf": "Descargar PDF"
+    "downloadPdf": "Descargar PDF",
+    "uploadedDocument": "Acta cargada",
+    "viewDocument": "Ver documento",
+    "uploadedNotice": "Revisa que el documento corresponda a esta orden antes de aprobarlo.",
+    "source": {
+      "MANUAL": "Acta creada en SOTER",
+      "AI_ASSISTED": "Borrador asistido por IA",
+      "UPLOADED": "Documento PDF cargado"
+    },
+    "status": {
+      "DRAFT": "Borrador",
+      "AI_GENERATED": "Generada por IA",
+      "UNDER_REVIEW": "En revisión",
+      "APPROVED": "Aprobada",
+      "FINAL": "Final"
+    }
   },
   "page": {
     "breadcrumbAriaLabel": "Ruta de navegación",
@@ -351,6 +408,7 @@
     "selectService": "Selecciona un servicio.",
     "dueDateRequired": "La fecha límite es obligatoria.",
     "visitDateRequired": "Selecciona la fecha de la visita.",
-    "visitTimeRequired": "Selecciona la hora de la visita."
+    "visitTimeRequired": "Selecciona la hora de la visita.",
+    "visitAfterDueDate": "La fecha de visita no puede ser posterior a la fecha límite."
   }
 }

@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { FormField, applyEach, form, required, submit } from '@angular/forms/signals';
+import { FormField, applyEach, form, required, submit, validate } from '@angular/forms/signals';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
@@ -141,6 +141,13 @@ export class OrderFormModal {
       message: 'orders.validation.visitTimeRequired',
       when: ({ valueOf }) => editing() && Boolean(valueOf(schemaPath.visitDate)),
     });
+    validate(schemaPath.visitDate, ({ value, valueOf }) => {
+      const visitDate = value();
+      const dueDate = valueOf(schemaPath.dueDate);
+      return visitDate && dueDate && visitDate > dueDate
+        ? { kind: 'visitAfterDueDate', message: 'orders.validation.visitAfterDueDate' }
+        : undefined;
+    });
 
     const creating = () => this.editingOrder() === null;
     applyEach(schemaPath.rows, (row) => {
@@ -153,6 +160,13 @@ export class OrderFormModal {
       required(row.visitTime, {
         message: 'orders.validation.visitTimeRequired',
         when: ({ valueOf }) => creating() && Boolean(valueOf(row.visitDate)),
+      });
+      validate(row.visitDate, ({ value, valueOf }) => {
+        const visitDate = value();
+        const dueDate = valueOf(row.dueDate);
+        return visitDate && dueDate && visitDate > dueDate
+          ? { kind: 'visitAfterDueDate', message: 'orders.validation.visitAfterDueDate' }
+          : undefined;
       });
     });
   });

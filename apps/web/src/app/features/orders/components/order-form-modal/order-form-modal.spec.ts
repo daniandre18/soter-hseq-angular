@@ -239,6 +239,47 @@ describe('OrderFormModal', () => {
     expect(batch.rows[1].scheduledStart).toBeUndefined();
   });
 
+  it('blocks creating an order when the visit is after its due date', async () => {
+    activeServices.set([
+      {
+        id: 'service-1',
+        name: 'Inspección de seguridad',
+        category: 'category-1',
+        price: 250000,
+        unit: 'visita',
+        active: true,
+        createdAt: new Date('2026-08-01T12:00:00Z'),
+        createdBy: 'admin-1',
+        updatedAt: new Date('2026-08-01T12:00:00Z'),
+        updatedBy: 'admin-1',
+      },
+    ]);
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    const setControlValue = (element: Element | null, value: string): void => {
+      const control = element as HTMLInputElement;
+      control.value = value;
+      control.dispatchEvent(new Event('input', { bubbles: true }));
+      control.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    const row = fixture.nativeElement.querySelector('.order-service-row');
+    setControlValue(fixture.nativeElement.querySelector('select[aria-label="Cliente"]'), 'client-1');
+    setControlValue(row.querySelector('select[aria-label="Servicio"]'), 'service-1');
+    setControlValue(row.querySelector('input[aria-label="Fecha límite"]'), '2099-08-20');
+    setControlValue(row.querySelector('input[aria-label="Fecha de visita"]'), '2099-08-21');
+    setControlValue(row.querySelector('input[aria-label="Hora de visita"]'), '09:30');
+    await fixture.whenStable();
+
+    const createButton = fixture.nativeElement.querySelector(
+      '.order-form-action:last-child button',
+    ) as HTMLButtonElement;
+    expect(createButton.disabled).toBe(true);
+    expect(component['orderForm'].rows[0].visitDate().errors()[0].message).toBe(
+      'orders.validation.visitAfterDueDate',
+    );
+  });
+
   it('updates the visit date and time while preserving an existing duration', async () => {
     activeServices.set([
       {

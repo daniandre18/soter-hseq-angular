@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import type { ClosingActContent } from '../models/closing-act.model';
 
 /**
  * Puerto para las dos operaciones del acta de cierre que requieren
@@ -12,6 +13,14 @@ export interface ClosingActGateway {
    *  sí sola). El store se actualiza vía el listener de `OrderRepository`,
    *  no mediante el valor de retorno. */
   generateDraft(orderId: string, notes: string): Promise<void>;
+
+  /** Crea un acta estructurada redactada por el usuario, sin intervención
+   *  de IA. Queda en revisión y nunca cierra la orden automáticamente. */
+  createManualDraft(orderId: string, content: ClosingActContent): Promise<void>;
+
+  /** Sube un PDF de acta ya elaborado o firmado y lo registra como el
+   *  documento que deberá aprobarse antes del cierre. */
+  uploadDraft(orderId: string, file: File, onProgress?: (percent: number) => void): Promise<void>;
 
   /** Genera el PDF final y cierra la orden. Retorna la URL de descarga ya
    *  resuelta. */

@@ -27,16 +27,29 @@
       <div class="schedule-fields">
         <label class="field">
           {{ 'orders.detail.schedule.start' | transloco }}
-          <input type="datetime-local" [value]="scheduledStartValue()" (input)="onScheduledStartInput($event)" />
+          <input
+            type="datetime-local"
+            [value]="scheduledStartValue()"
+            [max]="dueDateMax()"
+            (input)="onScheduledStartInput($event)"
+          />
         </label>
         <label class="field">
           {{ 'orders.detail.schedule.end' | transloco }}
-          <input type="datetime-local" [value]="scheduledEndValue()" (input)="onScheduledEndInput($event)" />
+          <input
+            type="datetime-local"
+            [value]="scheduledEndValue()"
+            [max]="dueDateMax()"
+            (input)="onScheduledEndInput($event)"
+          />
         </label>
         <app-button variant="outline" size="sm" (click)="saveSchedule()" [disabled]="!canConfirmSchedule()">
           {{ (saving() ? 'orders.detail.progress.saving' : 'orders.detail.schedule.schedule') | transloco }}
         </app-button>
       </div>
+      @if (scheduleErrorKey(); as errorKey) {
+        <p class="field-error" role="alert">{{ errorKey | transloco }}</p>
+      }
     </div>
   }
 

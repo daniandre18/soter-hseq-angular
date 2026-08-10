@@ -31,6 +31,23 @@ service cloud.firestore {
       return hasRole(['VIEWER']) && currentClientId() == clientId;
     }
 
+    // Una visita solo puede existir si la orden tiene fecha límite y tanto
+    // su inicio como su fin ocurren, como máximo, durante ese mismo día.
+    function hasValidVisitSchedule(data) {
+      return !('scheduledStart' in data)
+             || ('dueDate' in data
+                 && data.scheduledStart < data.dueDate + duration.value(1, 'd')
+                 && (!('scheduledEnd' in data)
+                     || (data.scheduledEnd >= data.scheduledStart
+                         && data.scheduledEnd < data.dueDate + duration.value(1, 'd'))));
+    }
+
+    function visitScheduleWasNotInvalidated() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['scheduledStart', 'scheduledEnd', 'dueDate'])
+             || hasValidVisitSchedule(request.resource.data);
+    }
+
     function orderData(orderId) {
       return get(/databases/$(database)/documents/orders/$(orderId)).data;
     }
@@ -123,7 +140,18 @@ service cloud.firestore {
       allow update: if hasRole(['ADMIN', 'COMMERCIAL'])
                     && (resource.data.status == 'DRAFT'
                         || request.resource.data.diff(resource.data).affectedKeys()
-                             .hasOnly(['status', 'orderIds', 'updatedAt', 'updatedBy']));
+                             .hasOnly(['status', 'orderIds', 'updatedAt', 'updatedBy']))
+                    // El portal cliente puede aceptar únicamente una
+                    // cotización enviada de su propia empresa. No obtiene
+                    // permisos para editar valores comerciales, rechazarla,
+                    // convertirla ni actuar sobre cotizaciones ajenas.
+                    || (viewerOwnsClient(resource.data.clientId)
+                        && resource.data.status == 'SENT'
+                        && request.resource.data.status == 'APPROVED'
+                        && request.resource.data.updatedBy == request.auth.uid
+                        && request.resource.data.updatedAt == request.time
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['status', 'updatedAt', 'updatedBy']));
       allow delete: if hasRole(['ADMIN', 'COMMERCIAL']) && resource.data.status == 'DRAFT';
 
       match /items/{itemId} {
@@ -145,7 +173,8 @@ service cloud.firestore {
                    || viewerOwnsClient(resource.data.clientId);
       // COMMERCIAL también puede convertir una cotización aprobada en
       // orden (CLAUDE.md §3.2), lo que crea el documento de la orden.
-      allow create: if hasRole(['ADMIN', 'COORDINATOR', 'COMMERCIAL']);
+      allow create: if hasRole(['ADMIN', 'COORDINATOR', 'COMMERCIAL'])
+                    && hasValidVisitSchedule(request.resource.data);
       // Una orden cerrada es de solo lectura salvo una acción explícita de
       // administrador auditada aparte (CLAUDE.md §10.2); COORDINATOR y
       // TECHNICIAN no pueden modificarla una vez CLOSED.
@@ -158,16 +187,17 @@ service cloud.firestore {
       // de evidencia; sin este campo en la lista, ese batch entero fallaba
       // y el técnico nunca podía subir evidencias). Reasignar técnicos o
       // reprogramar fechas sigue siendo exclusivo de COORDINATOR/ADMIN.
-      allow update: if isAdmin()
-                     || (hasRole(['COORDINATOR']) && resource.data.status != 'CLOSED')
-                     || (hasRole(['TECHNICIAN'])
-                         && request.auth.uid in resource.data.assignedTechnicianIds
-                         && resource.data.status != 'CLOSED'
-                         && request.resource.data.diff(resource.data).affectedKeys()
-                              .hasOnly([
-                                'status', 'progress', 'actualStart', 'actualEnd',
-                                'evidenceCount', 'updatedAt', 'updatedBy'
-                              ]));
+      allow update: if visitScheduleWasNotInvalidated()
+                    && (isAdmin()
+                        || (hasRole(['COORDINATOR']) && resource.data.status != 'CLOSED')
+                        || (hasRole(['TECHNICIAN'])
+                            && request.auth.uid in resource.data.assignedTechnicianIds
+                            && resource.data.status != 'CLOSED'
+                            && request.resource.data.diff(resource.data).affectedKeys()
+                                 .hasOnly([
+                                   'status', 'progress', 'actualStart', 'actualEnd',
+                                   'evidenceCount', 'updatedAt', 'updatedBy'
+                                 ])));
       // Solo se puede eliminar en `DRAFT` (nada de campo/evidencia/actas
       // asociadas todavía) y solo admin: si la orden viene de una
       // cotización convertida, borrarla también revierte `quotes/{id}` a

@@ -69,7 +69,12 @@
         <div class="visit-schedule-fields">
           <label class="field">
             {{ 'orders.form.visitDate' | transloco }}
-            <input type="date" [attr.aria-label]="'orders.form.visitDate' | transloco" [formField]="orderForm.visitDate" />
+            <input
+              type="date"
+              [attr.aria-label]="'orders.form.visitDate' | transloco"
+              [max]="model().dueDate"
+              [formField]="orderForm.visitDate"
+            />
             @if (orderForm.visitDate().touched() && orderForm.visitDate().errors().length) {
               <span class="field-error">{{ orderForm.visitDate().errors()[0].message | transloco }}</span>
             }
@@ -154,7 +159,12 @@
             <div class="visit-schedule-fields">
               <label class="field">
                 {{ 'orders.form.visitDate' | transloco }}
-                <input type="date" [attr.aria-label]="'orders.form.visitDate' | transloco" [formField]="row.visitDate" />
+                <input
+                  type="date"
+                  [attr.aria-label]="'orders.form.visitDate' | transloco"
+                  [max]="model().rows[i].dueDate"
+                  [formField]="row.visitDate"
+                />
                 @if (row.visitDate().touched() && row.visitDate().errors().length) {
                   <span class="field-error">{{ row.visitDate().errors()[0].message | transloco }}</span>
                 }

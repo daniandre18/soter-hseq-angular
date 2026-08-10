@@ -1,5 +1,5 @@
 export type ClosingActStatus = 'DRAFT' | 'AI_GENERATED' | 'UNDER_REVIEW' | 'APPROVED' | 'FINAL';
-export type ClosingActSource = 'MANUAL' | 'AI_ASSISTED';
+export type ClosingActSource = 'MANUAL' | 'AI_ASSISTED' | 'UPLOADED';
 
 /** Modelo de dominio de la colección `closingActs` (CLAUDE.md §9.8). */
 export interface ClosingAct {
@@ -9,12 +9,20 @@ export interface ClosingAct {
   status: ClosingActStatus;
   source: ClosingActSource;
   title: string;
+  objective?: string;
   executiveSummary: string;
   performedActivities: string[];
   findings: string[];
   recommendations: string[];
   conclusions?: string;
   limitations?: string;
+  acceptanceNotes?: string;
+  serviceProviderRepresentative?: string;
+  serviceProviderRepresentativeRole?: string;
+  clientRepresentative?: string;
+  clientRepresentativeRole?: string;
+  uploadedFileName?: string;
+  uploadedFileSize?: number;
   modelName?: string;
   promptVersion?: string;
   pdfPath?: string;
@@ -34,5 +42,16 @@ export interface ClosingAct {
 /** Campos editables por el coordinador al revisar el borrador (CLAUDE.md §11.6). */
 export type ClosingActContent = Pick<
   ClosingAct,
-  'executiveSummary' | 'performedActivities' | 'findings' | 'recommendations' | 'conclusions' | 'limitations'
+  | 'objective'
+  | 'executiveSummary'
+  | 'performedActivities'
+  | 'findings'
+  | 'recommendations'
+  | 'conclusions'
+  | 'limitations'
+  | 'acceptanceNotes'
+  | 'serviceProviderRepresentative'
+  | 'serviceProviderRepresentativeRole'
+  | 'clientRepresentative'
+  | 'clientRepresentativeRole'
 >;

@@ -96,11 +96,19 @@ export class QuoteDetailModal {
     return quote ? QUOTE_STATUS_CONFIG[quote.status].color : 'gray';
   });
 
+  protected readonly canClientApprove = computed(() =>
+    this.quotesFacade.canApproveQuote(this.quote()),
+  );
+
   protected readonly nextStatuses = computed(() => {
     const quote = this.quote();
-    return quote && this.canManageQuotes()
-      ? nextQuoteStatuses(quote.status).filter((status) => status !== 'CONVERTED')
-      : [];
+    if (!quote) {
+      return [];
+    }
+    if (this.canManageQuotes()) {
+      return nextQuoteStatuses(quote.status).filter((status) => status !== 'CONVERTED');
+    }
+    return this.canClientApprove() ? (['APPROVED'] satisfies QuoteStatus[]) : [];
   });
 
   protected statusButtonLabel(status: QuoteStatus): string {
@@ -122,7 +130,8 @@ export class QuoteDetailModal {
 
   protected async setStatus(status: QuoteStatus): Promise<void> {
     const quote = this.quote();
-    if (!quote || !this.canManageQuotes()) {
+    const isAllowedClientApproval = status === 'APPROVED' && this.canClientApprove();
+    if (!quote || (!this.canManageQuotes() && !isAllowedClientApproval)) {
       return;
     }
     this.saving.set(true);

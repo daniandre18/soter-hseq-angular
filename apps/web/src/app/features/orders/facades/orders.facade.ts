@@ -312,6 +312,18 @@ export class OrdersFacade {
     }
   }
 
+  async createManualClosingAct(orderId: string, content: ClosingActContent): Promise<void> {
+    await this.service.createManualClosingAct(orderId, content);
+  }
+
+  async uploadClosingAct(
+    orderId: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): Promise<void> {
+    await this.service.uploadClosingAct(orderId, file, onProgress);
+  }
+
   /**
    * Arma el texto de "notas de campo" que se envía a la Cloud Function
    * (CLAUDE.md §12.2: resumen del servicio, notas técnicas, hallazgos,
