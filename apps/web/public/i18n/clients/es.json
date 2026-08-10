@@ -6,7 +6,8 @@
   "stats": { "total": "Total clientes", "active": "Clientes activos", "rate": "Tasa de actividad", "cities": "Ciudades cubiertas" },
   "filters": {
     "title": "Buscar y filtrar clientes", "help": "Combina los filtros para encontrar resultados específicos.",
-    "clear": "Limpiar filtros ({{count}})", "search": "Buscar", "searchPlaceholder": "Nombre, NIT, correo, teléfono o ciudad…",
+    "clear": "Limpiar filtros ({{count}})", "search": "Buscar", "searchPlaceholder": "Nombre, NIT, correo, teléfono o ciudad…", "mobileSearchPlaceholder": "Buscar por nombre, NIT…",
+    "advanced": "Filtros", "advancedTitle": "Filtros de clientes", "clearAdvanced": "Limpiar", "apply": "Aplicar filtros",
     "status": "Estado", "allStatuses": "Todos los estados", "active": "Activos", "inactive": "Inactivos",
     "city": "Ciudad", "allCities": "Todas las ciudades", "tag": "Etiqueta", "allTags": "Todas las etiquetas"
   },
@@ -22,6 +23,8 @@
   "manageSites": "Administrar sedes de {{name}}", "tagClient": "Etiquetar cliente",
   "tagSearch": "Buscar o crear etiqueta…", "createTag": "Crear “{{name}}”", "noTagsYet": "Sin etiquetas todavía.",
   "manage": "Administrar", "view": "Ver cliente", "edit": "Editar cliente", "delete": "Eliminar cliente",
+  "moreActions": "Más acciones para {{name}}",
+  "taxIdShort": "NIT", "viewSites": "Ver sedes",
   "showLess": "Mostrar menos", "showMore": "Mostrar {{count}} más", "showAll": "Mostrar todas ({{count}})",
   "deleteTitleOne": "¿Eliminar este cliente?", "deleteTitleOther": "¿Eliminar {{count}} clientes?",
   "deleteConfirmationOne": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con este cliente conservan su nombre, pero ya no vas a poder abrir su ficha.",

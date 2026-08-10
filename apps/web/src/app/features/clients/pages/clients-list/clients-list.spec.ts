@@ -90,6 +90,40 @@ describe('ClientsList', () => {
     expect(fixture.nativeElement.querySelectorAll('.mobile-client-row')).toHaveLength(3);
   });
 
+  it('should expose the compact mobile search and advanced filters modal', async () => {
+    expect(fixture.nativeElement.querySelector('.mobile-client-search input')).toBeTruthy();
+
+    const filtersButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '.mobile-advanced-filters-btn',
+    );
+    filtersButton.click();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.mobile-advanced-filters')).toBeTruthy();
+  });
+
+  it('should keep visible checkboxes for quick multi-selection', () => {
+    const mobileCards = fixture.nativeElement.querySelectorAll('.mobile-client-row');
+    const mobileCheckboxes = fixture.nativeElement.querySelectorAll(
+      '.mobile-client-header > input[type="checkbox"]',
+    );
+
+    expect(mobileCheckboxes).toHaveLength(mobileCards.length);
+  });
+
+  it('should close the mobile client actions menu when clicking outside', async () => {
+    const trigger: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '.mobile-client-menu-trigger',
+    );
+    trigger.click();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.mobile-client-menu-popover')).toBeTruthy();
+
+    document.body.click();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.mobile-client-menu-popover')).toBeNull();
+  });
+
   it('opens sites and responsible contacts directly from a client action', async () => {
     const sitesButton: HTMLButtonElement = fixture.nativeElement.querySelector(
       '[aria-label="Administrar sedes de Textiles Andinos"]',

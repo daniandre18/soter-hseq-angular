@@ -4,7 +4,9 @@
       <h2>{{ 'clients.title' | transloco }}</h2>
       <p>{{ 'clients.description' | transloco }}</p>
     </div>
-    <app-button (click)="openCreate()">+ {{ 'clients.new' | transloco }}</app-button>
+    <app-button class="new-client-btn" size="sm" (click)="openCreate()">
+      + {{ 'clients.new' | transloco }}
+    </app-button>
   </div>
 
   <div class="client-stats-grid" [attr.aria-label]="'clients.summaryAria' | transloco">
@@ -36,6 +38,39 @@
       color="orange"
       [compact]="true"
     />
+  </div>
+
+  <div class="clients-mobile-filter-bar">
+    <div class="mobile-filter-row">
+      <label class="mobile-client-search">
+        <app-icon name="search" />
+        <input
+          type="search"
+          class="search-input"
+          [placeholder]="'clients.filters.mobileSearchPlaceholder' | transloco"
+          [attr.aria-label]="'clients.filters.search' | transloco"
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        />
+      </label>
+      <button
+        type="button"
+        class="mobile-advanced-filters-btn"
+        (click)="openMobileFilters()"
+        [attr.aria-label]="'clients.filters.advanced' | transloco"
+      >
+        <app-icon name="sliders-horizontal" />
+        <span>{{ 'clients.filters.advanced' | transloco }}</span>
+        @if (advancedFilterCount() > 0) {
+          <small>{{ advancedFilterCount() }}</small>
+        }
+      </button>
+    </div>
+    <p class="mobile-clients-summary" aria-live="polite">
+      {{ (filtered().length === 1 ? 'clients.countOne' : 'clients.countOther') | transloco: { count: filtered().length } }}
+      <span aria-hidden="true">·</span>
+      {{ (activeInFiltered() === 1 ? 'clients.activeOne' : 'clients.activeOther') | transloco: { count: activeInFiltered() } }}
+    </p>
   </div>
 
   <app-card class="clients-filter-card" padding="sm">
@@ -140,7 +175,7 @@
       <p>{{ 'clients.empty' | transloco }}</p>
     </app-card>
   } @else {
-    <app-card padding="none">
+    <app-card class="clients-results-card" padding="none">
       <div class="table-scroll">
         <table class="clients-table">
           <thead>
@@ -211,7 +246,7 @@
                     <app-icon name="building-2" />
                     {{ 'clients.sites' | transloco }}
                   </button>
-                  <div class="tag-picker-wrapper">
+                  <div class="tag-picker-wrapper" (click)="$event.stopPropagation()">
                     <button
                       type="button"
                       class="icon-btn"
@@ -323,132 +358,134 @@
                 [checked]="isSelected(client.id)"
                 (click)="toggleSelect(client.id, $event)"
               />
-              <button type="button" class="mobile-client-main" (click)="openDetail(client)">
+              <div class="mobile-client-identity">
                 <strong>{{ client.businessName }}</strong>
-                <span>{{ client.taxId }}</span>
-              </button>
-              <div class="mobile-client-actions">
-                <div class="tag-picker-wrapper">
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    (click)="toggleTagPicker(client.id, $event)"
-                    [attr.aria-label]="'clients.tagClient' | transloco"
-                    [title]="'clients.tagClient' | transloco"
-                  >
-                    <app-icon name="tag" />
-                  </button>
-                  @if (openTagPickerId() === client.id) {
-                    <div class="tag-picker tag-picker--mobile">
-                      <input
-                        type="text"
-                        class="tag-search-input"
-                        [placeholder]="'clients.tagSearch' | transloco"
-                        [attr.aria-label]="'clients.tagSearch' | transloco"
-                        [value]="tagSearch()"
-                        (input)="onTagSearchInput($event)"
-                      />
-                      <div class="tag-options-scroll">
-                        @if (canCreateTagFromSearch()) {
-                          <button
-                            type="button"
-                            class="tag-option tag-option--create"
-                            (click)="createAndApplyTag(client, $event)"
-                          >
-                            <app-icon name="tag" class="tag-check" />
-                            <span class="tag-option-label">{{ 'clients.createTag' | transloco: { name: tagSearch().trim() } }}</span>
-                          </button>
-                        }
-                        @for (tag of filteredTags(); track tag.id) {
-                          <button
-                            type="button"
-                            class="tag-option"
-                            (click)="toggleTag(client, tag.id, $event)"
-                          >
-                            <span class="tag-dot" [style.background]="tag.color"></span>
-                            <span class="tag-option-label">{{ tag.label }}</span>
-                            @if (hasTag(client, tag.id)) {
-                              <app-icon name="circle-check-big" class="tag-check" />
-                            }
-                          </button>
-                        }
-                      </div>
-                      <div class="tag-picker-footer">
-                        <button
-                          type="button"
-                          class="tag-picker-manage"
-                          (click)="openManager($event)"
-                        >
-                          {{ 'clients.manage' | transloco }}
-                        </button>
-                        <button
-                          type="button"
-                          class="tag-picker-close"
-                          (click)="closeTagPicker($event)"
-                        >
-                          {{ 'common.close' | transloco }}
-                        </button>
-                      </div>
-                    </div>
-                  }
-                </div>
+                <app-status-badge
+                  [label]="(client.status === 'ACTIVE' ? 'clients.active' : 'clients.inactive') | transloco"
+                  [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
+                />
+              </div>
+              <div class="mobile-client-menu" (click)="$event.stopPropagation()">
                 <button
                   type="button"
-                  class="icon-btn icon-btn--primary"
-                  (click)="openDetail(client)"
-                  [attr.aria-label]="'clients.view' | transloco"
-                  [title]="'clients.view' | transloco"
+                  class="icon-btn mobile-client-menu-trigger"
+                  aria-haspopup="menu"
+                  [attr.aria-expanded]="openClientActionsId() === client.id"
+                  [attr.aria-label]="'clients.moreActions' | transloco: { name: client.businessName }"
+                  (click)="toggleClientActions(client.id, $event)"
                 >
-                  <app-icon name="eye" />
+                  ⋮
                 </button>
-                @if (canDelete()) {
-                  <button
-                    type="button"
-                    class="icon-btn icon-btn--danger"
-                    (click)="confirmDelete(client, $event)"
-                    [attr.aria-label]="'clients.delete' | transloco"
-                    [title]="'common.delete' | transloco"
-                  >
-                    <app-icon name="trash-2" />
-                  </button>
+                @if (openClientActionsId() === client.id) {
+                  <div class="tag-picker mobile-client-menu-popover" role="menu">
+                    <button type="button" class="tag-option" role="menuitem" (click)="toggleTagPicker(client.id, $event)">
+                      <app-icon name="tag" />
+                      {{ 'clients.tagClient' | transloco }}
+                    </button>
+                    @if (canDelete()) {
+                      <button
+                        type="button"
+                        class="tag-option mobile-client-menu-danger"
+                        role="menuitem"
+                        (click)="confirmDelete(client, $event)"
+                      >
+                        <app-icon name="trash-2" />
+                        {{ 'clients.delete' | transloco }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (openTagPickerId() === client.id) {
+                  <div class="tag-picker tag-picker--mobile">
+                    <input
+                      type="text"
+                      class="tag-search-input"
+                      [placeholder]="'clients.tagSearch' | transloco"
+                      [attr.aria-label]="'clients.tagSearch' | transloco"
+                      [value]="tagSearch()"
+                      (input)="onTagSearchInput($event)"
+                    />
+                    <div class="tag-options-scroll">
+                      @if (canCreateTagFromSearch()) {
+                        <button
+                          type="button"
+                          class="tag-option tag-option--create"
+                          (click)="createAndApplyTag(client, $event)"
+                        >
+                          <app-icon name="tag" class="tag-check" />
+                          <span class="tag-option-label">{{ 'clients.createTag' | transloco: { name: tagSearch().trim() } }}</span>
+                        </button>
+                      }
+                      @for (tag of filteredTags(); track tag.id) {
+                        <button
+                          type="button"
+                          class="tag-option"
+                          (click)="toggleTag(client, tag.id, $event)"
+                        >
+                          <span class="tag-dot" [style.background]="tag.color"></span>
+                          <span class="tag-option-label">{{ tag.label }}</span>
+                          @if (hasTag(client, tag.id)) {
+                            <app-icon name="circle-check-big" class="tag-check" />
+                          }
+                        </button>
+                      }
+                    </div>
+                    <div class="tag-picker-footer">
+                      <button
+                        type="button"
+                        class="tag-picker-manage"
+                        (click)="openManager($event)"
+                      >
+                        {{ 'clients.manage' | transloco }}
+                      </button>
+                      <button
+                        type="button"
+                        class="tag-picker-close"
+                        (click)="closeTagPicker($event)"
+                      >
+                        {{ 'common.close' | transloco }}
+                      </button>
+                    </div>
+                  </div>
                 }
               </div>
             </div>
 
-            <p class="mobile-client-location">
-              <app-icon name="map-pin" />
-              {{ client.city || ('clients.noCityRegistered' | transloco) }}
-            </p>
-
-            <div class="mobile-client-footer">
-              <div class="mobile-client-links">
-                <button type="button" class="mobile-sites-link" (click)="openSites(client, $event)">
-                  <app-icon name="building-2" />
-                  {{ 'clients.sites' | transloco }}
-                </button>
-                <button type="button" class="mobile-edit-link" (click)="openEdit(client, $event)">
-                  {{ 'clients.edit' | transloco }}
-                </button>
-              </div>
-              <div class="mobile-client-tags">
-                @for (tagId of client.tags.slice(0, 2); track tagId) {
-                  @if (tagsFacade.byId(tagId); as tag) {
-                    <span
-                      class="tag-chip"
-                      [style.background]="tag.color + '1a'"
-                      [style.color]="tag.color"
-                    >
-                      {{ tag.label }}
-                    </span>
+            <div class="mobile-client-secondary">
+              <p class="mobile-client-info">
+                {{ 'clients.taxIdShort' | transloco }}: {{ client.taxId }}
+                <span aria-hidden="true">•</span>
+                {{ client.city || ('clients.noCityRegistered' | transloco) }}
+              </p>
+              @if (client.tags.length > 0) {
+                <div class="tag-chips mobile-client-tags" [attr.aria-label]="'clients.tags' | transloco">
+                  @for (tagId of client.tags.slice(0, 2); track tagId) {
+                    @if (tagsFacade.byId(tagId); as tag) {
+                      <span
+                        class="tag-chip"
+                        [style.background]="tag.color + '1a'"
+                        [style.color]="tag.color"
+                      >
+                        {{ tag.label }}
+                      </span>
+                    }
                   }
-                }
-                @if (client.tags.length === 0) {
-                  <app-status-badge
-                    [label]="(client.status === 'ACTIVE' ? 'clients.active' : 'clients.inactive') | transloco"
-                    [color]="client.status === 'ACTIVE' ? 'green' : 'gray'"
-                  />
-                }
-              </div>
+                  @if (client.tags.length > 2) {
+                    <small>+{{ client.tags.length - 2 }}</small>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="mobile-client-primary-actions">
+              <button type="button" class="mobile-sites-link" (click)="openSites(client, $event)">
+                <app-icon name="building-2" />
+                {{ 'clients.viewSites' | transloco }}
+              </button>
+              <button type="button" (click)="openEdit(client, $event)">
+                <app-icon name="square-pen" />
+                {{ 'clients.edit' | transloco }}
+              </button>
             </div>
           </article>
         }
@@ -476,6 +513,52 @@
     </app-card>
   }
 </section>
+
+<app-modal
+  [open]="mobileFiltersOpen()"
+  [title]="'clients.filters.advancedTitle' | transloco"
+  size="sm"
+  (closeRequested)="closeMobileFilters()"
+>
+  <div class="mobile-advanced-filters">
+    <label class="filter-field">
+      <span>{{ 'clients.filters.status' | transloco }}</span>
+      <select class="status-select" [value]="statusFilter()" (change)="onStatusChange($event)">
+        <option value="all">{{ 'clients.filters.allStatuses' | transloco }}</option>
+        <option value="ACTIVE">{{ 'clients.filters.active' | transloco }}</option>
+        <option value="INACTIVE">{{ 'clients.filters.inactive' | transloco }}</option>
+      </select>
+    </label>
+    <label class="filter-field">
+      <span>{{ 'clients.filters.city' | transloco }}</span>
+      <select class="city-select" [value]="cityFilter()" (change)="onCityChange($event)">
+        <option value="all">{{ 'clients.filters.allCities' | transloco }}</option>
+        @for (city of cityOptions(); track city.value) {
+          <option [value]="city.value">{{ city.label }}</option>
+        }
+      </select>
+    </label>
+    <label class="filter-field">
+      <span>{{ 'clients.filters.tag' | transloco }}</span>
+      <select class="tag-filter-select" [value]="tagFilter()" (change)="onTagFilterChange($event)">
+        <option value="all">{{ 'clients.filters.allTags' | transloco }}</option>
+        @for (tag of tagsFacade.tags(); track tag.id) {
+          <option [value]="tag.id">{{ tag.label }}</option>
+        }
+      </select>
+    </label>
+  </div>
+  <div modalFooter>
+    @if (advancedFilterCount() > 0) {
+      <app-button variant="ghost" size="sm" (click)="clearAdvancedFilters()">
+        {{ 'clients.filters.clearAdvanced' | transloco }}
+      </app-button>
+    }
+    <app-button size="sm" (click)="closeMobileFilters()">
+      {{ 'clients.filters.apply' | transloco }}
+    </app-button>
+  </div>
+</app-modal>
 
 <app-client-form-modal
   [open]="formOpen()"

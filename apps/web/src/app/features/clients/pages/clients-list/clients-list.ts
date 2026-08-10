@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { ClientsFacade } from '../../facades/clients.facade';
 import { ClientTagsFacade } from '../../facades/client-tags.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
@@ -52,8 +52,10 @@ export class ClientsList {
   protected readonly visibleCount = signal(PAGE_SIZE);
 
   protected readonly formOpen = signal(false);
+  protected readonly mobileFiltersOpen = signal(false);
   protected readonly editingClient = signal<Client | null>(null);
   protected readonly detailClient = signal<Client | null>(null);
+  protected readonly openClientActionsId = signal<string | null>(null);
   protected readonly openTagPickerId = signal<string | null>(null);
   protected readonly tagSearch = signal('');
   protected readonly creatingTag = signal(false);
@@ -102,6 +104,12 @@ export class ClientsList {
   protected readonly activeFilterCount = computed(
     () =>
       Number(this.search().trim().length > 0) +
+      Number(this.statusFilter() !== 'all') +
+      Number(this.cityFilter() !== 'all') +
+      Number(this.tagFilter() !== 'all'),
+  );
+  protected readonly advancedFilterCount = computed(
+    () =>
       Number(this.statusFilter() !== 'all') +
       Number(this.cityFilter() !== 'all') +
       Number(this.tagFilter() !== 'all'),
@@ -204,6 +212,21 @@ export class ClientsList {
     this.resetFilteredView();
   }
 
+  protected clearAdvancedFilters(): void {
+    this.statusFilter.set('all');
+    this.cityFilter.set('all');
+    this.tagFilter.set('all');
+    this.resetFilteredView();
+  }
+
+  protected openMobileFilters(): void {
+    this.mobileFiltersOpen.set(true);
+  }
+
+  protected closeMobileFilters(): void {
+    this.mobileFiltersOpen.set(false);
+  }
+
   private resetFilteredView(): void {
     this.visibleCount.set(PAGE_SIZE);
     this.selectedIds.set(new Set());
@@ -228,6 +251,7 @@ export class ClientsList {
 
   protected openEdit(client: Client, event: Event): void {
     event.stopPropagation();
+    this.openClientActionsId.set(null);
     this.editingClient.set(client);
     this.formOpen.set(true);
   }
@@ -243,6 +267,7 @@ export class ClientsList {
 
   protected openSites(client: Client, event?: Event): void {
     event?.stopPropagation();
+    this.openClientActionsId.set(null);
     this.formOpen.set(false);
     this.editingClient.set(null);
     this.detailClient.set(client);
@@ -254,6 +279,7 @@ export class ClientsList {
 
   protected toggleTagPicker(clientId: string, event: Event): void {
     event.stopPropagation();
+    this.openClientActionsId.set(null);
     this.tagSearch.set('');
     this.openTagPickerId.update((current) => (current === clientId ? null : clientId));
   }
@@ -308,6 +334,7 @@ export class ClientsList {
 
   protected toggleSelect(clientId: string, event: Event): void {
     event.stopPropagation();
+    this.openClientActionsId.set(null);
     this.selectedIds.update((current) => {
       const next = new Set(current);
       if (next.has(clientId)) {
@@ -332,7 +359,20 @@ export class ClientsList {
 
   protected confirmDelete(client: Client, event: Event): void {
     event.stopPropagation();
+    this.openClientActionsId.set(null);
     this.deletingIds.set([client.id]);
+  }
+
+  protected toggleClientActions(clientId: string, event: Event): void {
+    event.stopPropagation();
+    this.openTagPickerId.set(null);
+    this.openClientActionsId.update((currentId) => (currentId === clientId ? null : clientId));
+  }
+
+  @HostListener('document:click')
+  protected closeClientPopovers(): void {
+    this.openClientActionsId.set(null);
+    this.openTagPickerId.set(null);
   }
 
   protected confirmBulkDelete(): void {
