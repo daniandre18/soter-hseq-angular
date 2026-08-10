@@ -22,6 +22,9 @@ import type { AppUser } from '../../../../core/models/app-user.model';
 })
 export class OrderTeamCard {
   readonly technicians = input<AppUser[]>([]);
+  /** Fallback denormalizado para TECHNICIAN/VIEWER, cuyos permisos no
+   * permiten leer el directorio global de usuarios. */
+  readonly technicianNames = input<string[]>([]);
   readonly notesCount = input(0);
   readonly evidenceCount = input(0);
   readonly createdAt = input.required<Date>();

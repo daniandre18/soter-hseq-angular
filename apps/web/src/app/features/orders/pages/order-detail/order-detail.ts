@@ -137,6 +137,9 @@ export class OrderDetail {
   );
 
   protected readonly role = computed(() => this.authFacade.currentRole());
+  protected readonly currentUserDisplayName = computed(
+    () => this.authFacade.currentUser()?.displayName ?? '',
+  );
   protected readonly backRoute = computed(() => (this.role() === 'TECHNICIAN' ? '/mis-ordenes' : '/ordenes'));
 
   protected readonly notes = toSignal(
@@ -185,9 +188,15 @@ export class OrderDetail {
     this.order() ? ORDER_PRIORITY_CONFIG[this.order()!.priority].color : 'gray',
   );
 
-  protected readonly assignedTechnicianNames = computed(
-    () => this.order()?.assignedTechnicianIds.map((id) => this.ordersFacade.technicianName(id)) ?? [],
-  );
+  protected readonly assignedTechnicianNames = computed(() => {
+    const order = this.order();
+    if (!order) {
+      return [];
+    }
+    return order.assignedTechnicianNames?.length
+      ? order.assignedTechnicianNames
+      : order.assignedTechnicianIds.map((id) => this.ordersFacade.technicianName(id));
+  });
   /** Objetos completos (no solo el nombre) para la tarjeta de equipo de la
    *  columna derecha — mismo `technicians()` que ya carga `OrdersFacade`
    *  para la asignación, sin ninguna consulta nueva. */
@@ -279,6 +288,15 @@ export class OrderDetail {
   protected readonly canCloseOrder = computed(() => {
     const act = this.closingAct();
     return this.canManage() && !!act && act.status === 'APPROVED';
+  });
+  protected readonly canReviewActAsClient = computed(() => {
+    const act = this.closingAct();
+    return (
+      this.role() === 'VIEWER' &&
+      this.order()?.status === 'APPROVED' &&
+      !!act &&
+      act.status === 'APPROVED'
+    );
   });
 
   constructor() {

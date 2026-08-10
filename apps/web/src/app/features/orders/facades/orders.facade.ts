@@ -14,7 +14,11 @@ import type {
 } from '../models/order.model';
 import type { NoteType, TechnicalNote } from '../models/note.model';
 import type { Evidence, EvidenceCategory } from '../models/evidence.model';
-import type { ClosingAct, ClosingActContent } from '../models/closing-act.model';
+import type {
+  ClientActDecisionInput,
+  ClosingAct,
+  ClosingActContent,
+} from '../models/closing-act.model';
 import type { OrderEvent } from '../models/order-event.model';
 import type { PieSlice } from '../../../shared/components/pie-chart/pie-chart';
 
@@ -350,6 +354,14 @@ export class OrdersFacade {
   async approveClosingAct(actId: string, orderId: string): Promise<void> {
     const userId = this.authFacade.currentUser()?.id ?? 'unknown';
     await this.service.approveClosingAct(actId, orderId, userId);
+  }
+
+  async reviewClosingActAsClient(
+    orderId: string,
+    actId: string,
+    input: ClientActDecisionInput,
+  ): Promise<string | undefined> {
+    return this.service.reviewClosingActAsClient(orderId, actId, input);
   }
 
   async closeOrderWithPdf(orderId: string, actId: string): Promise<string> {

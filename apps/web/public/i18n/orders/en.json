@@ -85,6 +85,8 @@
     "evidenceUploaded": "Evidence uploaded",
     "statusChanged": "Status change",
     "techniciansAssigned": "Technicians assigned",
+    "clientAcceptedAct": "Report accepted by client",
+    "clientRequestedActChanges": "Client requested report changes",
     "orderClosed": "Order closed"
   },
   "my": {
@@ -108,7 +110,8 @@
     "uploadActError": "The closing record could not be uploaded. Check the PDF and try again.",
     "actSaveError": "The closing record changes could not be saved.",
     "actApproveError": "The closing record could not be approved.",
-    "closeError": "The order could not be closed or its PDF generated."
+    "closeError": "The order could not be closed or its PDF generated.",
+    "clientDecisionError": "Your decision on the report could not be recorded. Check the information and try again."
   },
   "detail": {
     "changeStatus": "Change status",
@@ -249,6 +252,29 @@
     "uploadedDocument": "Uploaded record",
     "viewDocument": "View document",
     "uploadedNotice": "Verify that the document belongs to this order before approving it.",
+    "clientReviewTitle": "Client review and acceptance",
+    "clientReviewHelp": "Review the complete document. You can accept it to close the order or return it with specific comments.",
+    "clientDecisionLabel": "Decision on the report",
+    "acceptAct": "Accept report",
+    "acceptActHelp": "Confirm service completion and close the order.",
+    "requestActChanges": "Request changes",
+    "requestActChangesHelp": "Return the report to the SOTER team for correction.",
+    "representativeName": "Representative name",
+    "representativeNameError": "Enter a valid name.",
+    "representativeRoleError": "Enter the representative's job title.",
+    "clientComment": "Comment or observations (optional)",
+    "changeReason": "Required changes",
+    "changeReasonError": "Describe the changes the team must make.",
+    "acceptanceStatement": "I confirm that I reviewed the report and accept the performance of the described service. I understand this action will create an audited record and close the order.",
+    "acceptanceRequired": "You must confirm the statement to accept the report.",
+    "auditNotice": "Your identity and the time will be recorded automatically.",
+    "submittingDecision": "Recording…",
+    "confirmAcceptance": "Confirm acceptance",
+    "confirmChangeRequest": "Send change request",
+    "clientDecision": {
+      "ACCEPTED": "Accepted by client",
+      "CHANGES_REQUESTED": "Changes requested by client"
+    },
     "source": {
       "MANUAL": "Record created in SOTER",
       "AI_ASSISTED": "AI-assisted draft",
@@ -259,6 +285,7 @@
       "AI_GENERATED": "AI generated",
       "UNDER_REVIEW": "Under review",
       "APPROVED": "Approved",
+      "CHANGES_REQUESTED": "Changes requested",
       "FINAL": "Final"
     }
   },
@@ -318,6 +345,7 @@
     },
     "team": {
       "title": "Assigned Team",
+      "assignedTechnician": "Assigned technician",
       "notes": "Notes",
       "evidence": "Evidence",
       "created": "Created"

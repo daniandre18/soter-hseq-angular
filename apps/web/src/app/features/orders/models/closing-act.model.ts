@@ -1,5 +1,30 @@
-export type ClosingActStatus = 'DRAFT' | 'AI_GENERATED' | 'UNDER_REVIEW' | 'APPROVED' | 'FINAL';
+export type ClosingActStatus =
+  | 'DRAFT'
+  | 'AI_GENERATED'
+  | 'UNDER_REVIEW'
+  | 'APPROVED'
+  | 'CHANGES_REQUESTED'
+  | 'FINAL';
 export type ClosingActSource = 'MANUAL' | 'AI_ASSISTED' | 'UPLOADED';
+export type ClientActDecision = 'ACCEPTED' | 'CHANGES_REQUESTED';
+
+export interface ClientActDecisionInput {
+  decision: 'ACCEPT' | 'REQUEST_CHANGES';
+  representativeName: string;
+  representativeRole: string;
+  comment: string;
+  acceptedTerms: boolean;
+}
+
+export interface ClientActDecisionRecord {
+  decision: ClientActDecision;
+  representativeName: string;
+  representativeRole: string;
+  comment?: string;
+  decidedAt: Date;
+  decidedBy: string;
+  version: number;
+}
 
 /** Modelo de dominio de la colección `closingActs` (CLAUDE.md §9.8). */
 export interface ClosingAct {
@@ -33,6 +58,13 @@ export interface ClosingAct {
   reviewedBy?: string;
   approvedAt?: Date;
   approvedBy?: string;
+  clientDecision?: ClientActDecision;
+  clientDecisionComment?: string;
+  clientDecisionAt?: Date;
+  clientDecisionBy?: string;
+  clientDecisionByName?: string;
+  clientDecisionByRole?: string;
+  clientDecisions?: ClientActDecisionRecord[];
   createdAt: Date;
   createdBy: string;
   updatedAt: Date;

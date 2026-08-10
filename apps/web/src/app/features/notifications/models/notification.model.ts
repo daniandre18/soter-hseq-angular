@@ -5,7 +5,8 @@ export type NotificationType =
   | 'ORDER_ASSIGNED'
   | 'NOTE_ADDED'
   | 'EVIDENCE_UPLOADED'
-  | 'QUOTE_STATUS_CHANGED';
+  | 'QUOTE_STATUS_CHANGED'
+  | 'CLOSING_ACT_CLIENT_DECISION';
 
 export type NotificationEntityType = 'ORDER' | 'QUOTE';
 
@@ -32,4 +33,5 @@ export const NOTIFICATION_TYPE_ICON: Record<NotificationType, IconName> = {
   NOTE_ADDED: 'file-text',
   EVIDENCE_UPLOADED: 'clipboard-list',
   QUOTE_STATUS_CHANGED: 'circle-check-big',
+  CLOSING_ACT_CLIENT_DECISION: 'file-text',
 };

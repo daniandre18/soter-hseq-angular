@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
@@ -50,7 +50,13 @@ async function requireRole(uid: string, allowedRoles: Role[]): Promise<Role> {
 }
 
 type OrderEventAction =
-  'NOTE_ADDED' | 'EVIDENCE_UPLOADED' | 'ORDER_STATUS_CHANGED' | 'ORDER_ASSIGNED' | 'ORDER_CLOSED';
+  | 'NOTE_ADDED'
+  | 'EVIDENCE_UPLOADED'
+  | 'ORDER_STATUS_CHANGED'
+  | 'ORDER_ASSIGNED'
+  | 'CLIENT_ACCEPTED_ACT'
+  | 'CLIENT_REQUESTED_ACT_CHANGES'
+  | 'ORDER_CLOSED';
 
 interface OrderEventInput {
   orderId: string;
@@ -102,7 +108,8 @@ type NotificationType =
   | 'ORDER_ASSIGNED'
   | 'NOTE_ADDED'
   | 'EVIDENCE_UPLOADED'
-  | 'QUOTE_STATUS_CHANGED';
+  | 'QUOTE_STATUS_CHANGED'
+  | 'CLOSING_ACT_CLIENT_DECISION';
 
 interface NotificationInput {
   type: NotificationType;
@@ -229,7 +236,10 @@ export const onOrderStatusChanged = onDocumentUpdated('orders/{orderId}', async 
   ]);
 });
 
-/** Reasignación de técnicos — independiente de `onOrderStatusChanged`, se dispara y aborta si no cambió. */
+/** Reasignación de técnicos — independiente de `onOrderStatusChanged`.
+ * También repara órdenes históricas que tienen ids asignados pero no los
+ * nombres denormalizados que necesita el portal cliente (VIEWER no puede
+ * leer el directorio global de `users`). */
 export const onOrderAssigned = onDocumentUpdated('orders/{orderId}', async (event) => {
   const beforeData = event.data?.before.data();
   const afterData = event.data?.after.data();
@@ -239,22 +249,43 @@ export const onOrderAssigned = onDocumentUpdated('orders/{orderId}', async (even
   const afterSet = new Set(after);
   const added = after.filter((id) => !beforeSet.has(id));
   const removed = before.filter((id) => !afterSet.has(id));
-  if (added.length === 0 && removed.length === 0) {
+  const assignmentChanged = added.length > 0 || removed.length > 0;
+  const storedNames: string[] = afterData?.['assignedTechnicianNames'] ?? [];
+  const namesNeedSync =
+    assignmentChanged ||
+    storedNames.length !== after.length ||
+    storedNames.some((name) => !name.trim() || name === 'Técnico');
+  if (!assignmentChanged && !namesNeedSync) {
     return;
   }
   const orderId = event.params.orderId;
   const orderNumber = afterData?.['orderNumber'] ?? orderId;
   const updatedBy = afterData?.['updatedBy'] ?? 'system';
+  const tasks: Promise<unknown>[] = [];
 
-  await Promise.all([
-    recordOrderEvent({
+  if (namesNeedSync) {
+    const firestore = getFirestore();
+    const userSnapshots = await Promise.all(
+      after.map((uid) => firestore.collection('users').doc(uid).get()),
+    );
+    const resolvedNames = userSnapshots.map(
+      (snapshot, index) =>
+        (snapshot.data()?.['displayName'] as string | undefined) ??
+        storedNames[index] ??
+        'Técnico asignado',
+    );
+    tasks.push(event.data!.after.ref.update({ assignedTechnicianNames: resolvedNames }));
+  }
+
+  if (assignmentChanged) {
+    tasks.push(recordOrderEvent({
       orderId,
       action: 'ORDER_ASSIGNED',
       description: 'Técnicos asignados actualizados',
       metadata: { added, removed },
       createdBy: updatedBy,
-    }),
-    notifyAdmins({
+    }));
+    tasks.push(notifyAdmins({
       type: 'ORDER_ASSIGNED',
       title: `Técnicos actualizados en la orden ${orderNumber}`,
       description:
@@ -264,8 +295,10 @@ export const onOrderAssigned = onDocumentUpdated('orders/{orderId}', async (even
       entityType: 'ORDER',
       entityId: orderId,
       createdBy: updatedBy,
-    }),
-  ]);
+    }));
+  }
+
+  await Promise.all(tasks);
 });
 
 /** Cambio de estado de una cotización (CLAUDE.md §9.4) — misma razón que `onOrderStatusChanged`;
@@ -645,6 +678,14 @@ interface CloseOrderRequest {
   actId: string;
 }
 
+interface ReviewClosingActAsClientRequest extends CloseOrderRequest {
+  decision: 'ACCEPT' | 'REQUEST_CHANGES';
+  representativeName: string;
+  representativeRole: string;
+  comment?: string;
+  acceptedTerms?: boolean;
+}
+
 function formatPdfDate(value: unknown): string {
   const date =
     value && typeof (value as { toDate?: unknown }).toDate === 'function'
@@ -759,9 +800,201 @@ function buildClosingActPdf(
       },
     );
 
+    if (act['clientDecision'] === 'ACCEPTED') {
+      section('Constancia de aceptación digital', [
+        `Representante: ${act['clientDecisionByName'] ?? '—'}`,
+        `Cargo: ${act['clientDecisionByRole'] ?? '—'}`,
+        `Fecha de aceptación: ${formatPdfDate(act['clientDecisionAt'])}`,
+        `Usuario autenticado: ${act['clientDecisionBy'] ?? '—'}`,
+        `Versión del acta aceptada: ${act['version'] ?? '—'}`,
+        act['clientDecisionComment']
+          ? `Observaciones: ${act['clientDecisionComment']}`
+          : 'Sin observaciones adicionales.',
+      ]);
+      doc
+        .moveDown(0.5)
+        .fontSize(8)
+        .fillColor('#666666')
+        .text(
+          'Esta constancia registra una aceptación operacional realizada por un usuario autenticado del portal cliente.',
+        );
+    }
+
     doc.end();
   });
 }
+
+/**
+ * Decisión del cliente sobre un acta aprobada internamente. El Admin SDK
+ * escribe el resultado porque el portal cliente conserva acceso de solo
+ * lectura sobre actas y órdenes. Aceptar genera el PDF final y cierra la
+ * orden; solicitar cambios devuelve la orden al circuito de corrección.
+ */
+export const reviewClosingActAsClient = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para revisar el acta.');
+  }
+
+  const {
+    orderId,
+    actId,
+    decision,
+    representativeName,
+    representativeRole,
+    comment,
+    acceptedTerms,
+  } = (request.data ?? {}) as Partial<ReviewClosingActAsClientRequest>;
+  if (!orderId || !actId || !decision || !['ACCEPT', 'REQUEST_CHANGES'].includes(decision)) {
+    throw new HttpsError('invalid-argument', 'La decisión sobre el acta no es válida.');
+  }
+
+  const cleanRepresentativeName = cleanOptionalText(representativeName, 120);
+  const cleanRepresentativeRole = cleanOptionalText(representativeRole, 120);
+  const cleanComment = cleanOptionalText(comment, 1000);
+  if (!cleanRepresentativeName || !cleanRepresentativeRole) {
+    throw new HttpsError('invalid-argument', 'Registra el nombre y cargo del representante.');
+  }
+  if (decision === 'REQUEST_CHANGES' && !cleanComment) {
+    throw new HttpsError('invalid-argument', 'Explica los cambios que requiere el acta.');
+  }
+  if (decision === 'ACCEPT' && acceptedTerms !== true) {
+    throw new HttpsError('failed-precondition', 'Debes confirmar la declaración de aceptación.');
+  }
+
+  const firestore = getFirestore();
+  const userRef = firestore.collection('users').doc(request.auth.uid);
+  const orderRef = firestore.collection('orders').doc(orderId);
+  const actRef = firestore.collection('closingActs').doc(actId);
+  const [userSnapshot, orderSnapshot, actSnapshot] = await Promise.all([
+    userRef.get(),
+    orderRef.get(),
+    actRef.get(),
+  ]);
+  const user = userSnapshot.data() ?? {};
+  const order = orderSnapshot.data() ?? {};
+  const act = actSnapshot.data() ?? {};
+
+  if (user['role'] !== 'VIEWER' || !user['clientId']) {
+    throw new HttpsError('permission-denied', 'Solo un usuario cliente puede revisar el acta.');
+  }
+  if (!orderSnapshot.exists || order['clientId'] !== user['clientId']) {
+    throw new HttpsError('permission-denied', 'La orden no pertenece a tu empresa.');
+  }
+  if (
+    !actSnapshot.exists ||
+    act['orderId'] !== orderId ||
+    order['closingActId'] !== actId
+  ) {
+    throw new HttpsError('not-found', 'El acta no existe o no es la vigente para esta orden.');
+  }
+  if (order['status'] !== 'APPROVED' || act['status'] !== 'APPROVED') {
+    throw new HttpsError('failed-precondition', 'El acta ya no está pendiente de tu decisión.');
+  }
+
+  const decidedAt = Timestamp.now();
+  const clientDecision = decision === 'ACCEPT' ? 'ACCEPTED' : 'CHANGES_REQUESTED';
+  const decisionRecord = {
+    decision: clientDecision,
+    representativeName: cleanRepresentativeName,
+    representativeRole: cleanRepresentativeRole,
+    comment: cleanComment,
+    decidedAt,
+    decidedBy: request.auth.uid,
+    version: Number(act['version'] ?? 1),
+  };
+  const decisionFields = {
+    clientDecision,
+    clientDecisionComment: cleanComment,
+    clientDecisionAt: decidedAt,
+    clientDecisionBy: request.auth.uid,
+    clientDecisionByName: cleanRepresentativeName,
+    clientDecisionByRole: cleanRepresentativeRole,
+    clientAcceptanceStatementVersion: 'client-acceptance-v1',
+    clientDecisions: FieldValue.arrayUnion(decisionRecord),
+    updatedAt: decidedAt,
+    updatedBy: request.auth.uid,
+  };
+  const orderNumber = order['orderNumber'] ?? orderId;
+  const eventAction: OrderEventAction =
+    decision === 'ACCEPT' ? 'CLIENT_ACCEPTED_ACT' : 'CLIENT_REQUESTED_ACT_CHANGES';
+  const eventDescription =
+    decision === 'ACCEPT'
+      ? `Cliente aceptó el acta de la orden ${orderNumber}`
+      : `Cliente solicitó cambios al acta de la orden ${orderNumber}`;
+
+  let pdfPath = act['pdfPath'] as string | undefined;
+  let pdfUrl = act['pdfUrl'] as string | undefined;
+  if (decision === 'ACCEPT' && act['source'] !== 'UPLOADED') {
+    const pdfBuffer = await buildClosingActPdf({ ...act, ...decisionFields }, order);
+    pdfPath = `closing-acts/${actId}/acta-${orderNumber}.pdf`;
+    const downloadToken = randomUUID();
+    const bucket = getStorage().bucket();
+    await bucket.file(pdfPath).save(pdfBuffer, {
+      contentType: 'application/pdf',
+      metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+    });
+    pdfUrl = buildDownloadUrl(bucket.name, pdfPath, downloadToken);
+  }
+  if (decision === 'ACCEPT' && (!pdfPath || !pdfUrl)) {
+    throw new HttpsError('failed-precondition', 'El acta no tiene un documento PDF válido.');
+  }
+
+  const batch = firestore.batch();
+  batch.update(
+    actRef,
+    {
+      ...decisionFields,
+      status: decision === 'ACCEPT' ? 'FINAL' : 'CHANGES_REQUESTED',
+      ...(decision === 'ACCEPT' ? { pdfPath, pdfUrl } : {}),
+    },
+    { lastUpdateTime: actSnapshot.updateTime! },
+  );
+  batch.update(
+    orderRef,
+    {
+      status: decision === 'ACCEPT' ? 'CLOSED' : 'CORRECTION_REQUIRED',
+      updatedAt: decidedAt,
+      updatedBy: request.auth.uid,
+    },
+    { lastUpdateTime: orderSnapshot.updateTime! },
+  );
+  const decisionEventData = buildOrderEventData(
+    {
+      orderId,
+      action: eventAction,
+      description: eventDescription,
+      metadata: {
+        actId,
+        actVersion: decisionRecord.version,
+        decision: clientDecision,
+        comment: cleanComment,
+        representativeName: cleanRepresentativeName,
+        representativeRole: cleanRepresentativeRole,
+      },
+      createdBy: request.auth.uid,
+    },
+    decidedAt,
+  );
+  batch.set(firestore.collection('auditEvents').doc(), decisionEventData);
+  batch.set(orderRef.collection('events').doc(), decisionEventData);
+  batch.set(firestore.collection('notifications').doc(), {
+    type: 'CLOSING_ACT_CLIENT_DECISION',
+    title:
+      decision === 'ACCEPT'
+        ? `Acta aceptada por ${order['clientBusinessName'] ?? 'el cliente'}`
+        : `Cambios solicitados por ${order['clientBusinessName'] ?? 'el cliente'}`,
+    description: cleanComment || `Orden ${orderNumber}`,
+    entityType: 'ORDER',
+    entityId: orderId,
+    createdBy: request.auth.uid,
+    readBy: [],
+    dismissedBy: [],
+    createdAt: decidedAt,
+  });
+  await batch.commit();
+
+  return { decision: clientDecision, ...(pdfUrl ? { pdfUrl } : {}) };
+});
 
 /**
  * Cierre definitivo (CLAUDE.md §11.6/§23.7): genera el PDF final del acta

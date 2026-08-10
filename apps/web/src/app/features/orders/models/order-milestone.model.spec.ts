@@ -45,6 +45,20 @@ describe('deriveOrderMilestones', () => {
     expect(milestones[1].state).toBe('pending');
   });
 
+  it('shows the assignment to a client even if the administrative status is still SCHEDULED', () => {
+    const milestones = deriveOrderMilestones(
+      order({
+        status: 'SCHEDULED',
+        assignedTechnicianIds: ['tech-1'],
+        assignedTechnicianNames: ['Andrés Morales'],
+      }),
+      [],
+    );
+
+    expect(milestones[0].state).toBe('current');
+    expect(milestones.slice(1).every((milestone) => milestone.state === 'pending')).toBe(true);
+  });
+
   it('marks assigned and execution-started as done, and in-progress as current, while IN_PROGRESS', () => {
     const milestones = deriveOrderMilestones(
       order({

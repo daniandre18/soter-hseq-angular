@@ -25,6 +25,18 @@
         </div>
       }
     </div>
+  } @else if (technicianNames().length > 0) {
+    <div class="team-list">
+      @for (technicianName of technicianNames(); track technicianName) {
+        <div class="team-member">
+          <app-avatar [name]="technicianName" size="md" />
+          <div class="team-member-info">
+            <p class="team-member-name">{{ technicianName }}</p>
+            <p class="team-member-role">{{ 'orders.page.team.assignedTechnician' | transloco }}</p>
+          </div>
+        </div>
+      }
+    </div>
   } @else {
     <p class="muted-text">{{ 'orders.unassigned' | transloco }}</p>
   }

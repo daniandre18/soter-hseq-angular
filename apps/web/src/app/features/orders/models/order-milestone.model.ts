@@ -44,11 +44,23 @@ function latestEventAt(events: OrderEvent[], predicate: (event: OrderEvent) => b
  * (CLAUDE.md §9.5: servicios genéricos, no checklists fijos).
  */
 export function deriveOrderMilestones(order: ServiceOrder, events: OrderEvent[]): OrderMilestone[] {
-  const stageIndex =
+  const statusStageIndex =
     STAGE_INDEX_BY_STATUS[order.status] ??
     (order.status === 'CANCELLED'
       ? (order.actualStart ? 2 : order.assignedTechnicianIds.length > 0 ? 0 : -1)
       : -1);
+  // Los hitos muestran hechos verificables aunque un estado administrativo
+  // haya quedado atrasado. Esto es especialmente importante para VIEWER:
+  // no puede consultar `users`, pero sí ve la asignación denormalizada en
+  // su orden y el timeline no debe aparecer completamente vacío.
+  const factualStageIndex = order.actualEnd
+    ? 3
+    : order.actualStart
+      ? 2
+      : order.assignedTechnicianIds.length > 0
+        ? 0
+        : -1;
+  const stageIndex = Math.max(statusStageIndex, factualStageIndex);
   const reachedFinal = order.status === 'CLOSED';
   const isCancelled = order.status === 'CANCELLED';
 

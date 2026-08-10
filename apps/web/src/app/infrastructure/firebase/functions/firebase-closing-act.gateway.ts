@@ -1,7 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { httpsCallable } from 'firebase/functions';
 import type { ClosingActGateway } from '../../../features/orders/domain/closing-act.gateway';
-import type { ClosingActContent } from '../../../features/orders/models/closing-act.model';
+import type {
+  ClientActDecisionInput,
+  ClosingActContent,
+} from '../../../features/orders/models/closing-act.model';
 import { environment } from '../../../../environments/environment';
 import { FIREBASE_FUNCTIONS } from '../firebase.tokens';
 
@@ -16,6 +19,11 @@ interface CloseOrderResponse {
 
 interface ClosingActMutationResponse {
   closingActId: string;
+}
+
+interface ClientActDecisionResponse {
+  decision: 'ACCEPTED' | 'CHANGES_REQUESTED';
+  pdfUrl?: string;
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -83,6 +91,19 @@ export class FirebaseClosingActGateway implements ClosingActGateway {
       fileBase64,
     });
     onProgress?.(100);
+  }
+
+  async reviewAsClient(
+    orderId: string,
+    actId: string,
+    input: ClientActDecisionInput,
+  ): Promise<string | undefined> {
+    const reviewClosingActAsClient = httpsCallable<
+      { orderId: string; actId: string } & ClientActDecisionInput,
+      ClientActDecisionResponse
+    >(this.functions, 'reviewClosingActAsClient');
+    const { data } = await reviewClosingActAsClient({ orderId, actId, ...input });
+    return data.pdfUrl;
   }
 
   async closeOrder(orderId: string, actId: string): Promise<string> {

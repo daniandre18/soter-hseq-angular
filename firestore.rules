@@ -250,6 +250,9 @@ service cloud.firestore {
       // cerrada la orden, ni admin ni coordinador pueden reescribir el acta
       // desde el cliente (CLAUDE.md §23.7) — solo `closeOrder` la marca así.
       allow create: if hasRole(['ADMIN', 'COORDINATOR']);
+      // El VIEWER nunca escribe su decisión directamente: la callable
+      // `reviewClosingActAsClient` valida empresa, orden, acta vigente y
+      // estado antes de registrar la aceptación o solicitud de cambios.
       allow update: if hasRole(['ADMIN', 'COORDINATOR']) && resource.data.status != 'FINAL';
       allow delete: if false;
     }
