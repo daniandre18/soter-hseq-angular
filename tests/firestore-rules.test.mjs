@@ -5,7 +5,19 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getCountFromServer,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 
 const projectId = 'demo-soter-hseq';
 let testEnvironment;
@@ -84,6 +96,22 @@ beforeEach(async () => {
         status: 'ACTIVE',
         tags: [],
       }),
+      setDoc(doc(firestore, 'orders', 'order-1'), {
+        clientId: 'client-1',
+        status: 'SCHEDULED',
+        scheduledStart: new Date('2026-08-11T13:00:00Z'),
+        scheduledEnd: new Date('2026-08-11T14:00:00Z'),
+        createdAt: new Date('2026-08-01T12:00:00Z'),
+      }),
+      setDoc(doc(firestore, 'quotes', 'quote-1'), {
+        clientId: 'client-1',
+        status: 'SENT',
+      }),
+      setDoc(doc(firestore, 'dashboardMetrics', 'current'), {
+        schemaVersion: 1,
+        orderStatusCounts: { SCHEDULED: 1 },
+        quoteStatusCounts: { SENT: 1 },
+      }),
     ]);
   });
 });
@@ -147,6 +175,60 @@ test('portal accounts and their client linkage cannot be created directly from t
   await assertSucceeds(
     updateDoc(doc(firestore, 'clients', 'client-1'), {
       businessName: 'Cliente Uno SAS',
+    }),
+  );
+});
+
+test('an internal user can execute the limited dashboard queries', async () => {
+  const firestore = testEnvironment.authenticatedContext('coordinator').firestore();
+  const orders = collection(firestore, 'orders');
+  const quotes = collection(firestore, 'quotes');
+  const openStatuses = [
+    'SCHEDULED',
+    'ASSIGNED',
+    'IN_PROGRESS',
+    'EVIDENCE_PENDING',
+    'UNDER_REVIEW',
+    'CORRECTION_REQUIRED',
+  ];
+
+  await Promise.all([
+    assertSucceeds(getCountFromServer(query(orders, where('status', '==', 'SCHEDULED')))),
+    assertSucceeds(getCountFromServer(query(quotes, where('status', '==', 'SENT')))),
+    assertSucceeds(
+      getCountFromServer(
+        query(
+          orders,
+          where('status', 'in', openStatuses),
+          where('scheduledEnd', '<', new Date('2026-08-12T00:00:00Z')),
+        ),
+      ),
+    ),
+    assertSucceeds(getDocs(query(orders, orderBy('createdAt', 'desc'), limit(5)))),
+    assertSucceeds(
+      getDocs(
+        query(
+          orders,
+          where('status', 'in', openStatuses),
+          where('scheduledStart', '>=', new Date('2026-08-10T00:00:00Z')),
+          orderBy('scheduledStart', 'asc'),
+          limit(5),
+        ),
+      ),
+    ),
+  ]);
+});
+
+test('only internal dashboard roles can read metrics and browsers cannot write them', async () => {
+  const coordinator = testEnvironment.authenticatedContext('coordinator').firestore();
+  const viewer = testEnvironment.authenticatedContext('viewer').firestore();
+  const admin = testEnvironment.authenticatedContext('admin').firestore();
+
+  await assertSucceeds(getDoc(doc(coordinator, 'dashboardMetrics', 'current')));
+  await assertFails(getDoc(doc(viewer, 'dashboardMetrics', 'current')));
+  await assertFails(
+    updateDoc(doc(admin, 'dashboardMetrics', 'current'), {
+      overdueOrderCount: 999,
     }),
   );
 });

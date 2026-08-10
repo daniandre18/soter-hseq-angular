@@ -3,6 +3,10 @@ import { AuthFacade } from '../../auth/facades/auth.facade';
 import { SETTINGS_REPOSITORY } from '../../../core/repositories/settings.repository';
 import { LOGO_UPLOAD_GATEWAY } from '../domain/logo-upload.gateway';
 import { DEFAULT_APP_SETTINGS, type AppSettings } from '../../../core/models/app-settings.model';
+import {
+  ReferenceCountedListener,
+  type ReleaseListener,
+} from '../../../shared/utils/reference-counted-listener';
 
 type GeneralInfo = Pick<AppSettings, 'businessName' | 'tagline' | 'email' | 'phone' | 'address'>;
 type AppearanceInfo = Pick<AppSettings, 'logoDesktopSize' | 'logoMobileSize' | 'logoAlignment'>;
@@ -19,7 +23,7 @@ export class SettingsFacade {
   private readonly logoGateway = inject(LOGO_UPLOAD_GATEWAY);
   private readonly authFacade = inject(AuthFacade);
 
-  private watching = false;
+  private readonly listener = new ReferenceCountedListener();
   private readonly loadedSettings = signal<AppSettings | null>(null);
   private readonly loadingSignal = signal(true);
   private readonly errorSignal = signal<string | null>(null);
@@ -33,20 +37,21 @@ export class SettingsFacade {
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
 
-  init(): void {
-    if (this.watching) {
-      return;
-    }
-    this.watching = true;
-    this.repository.watch().subscribe({
-      next: (settings) => {
-        this.loadedSettings.set(settings);
-        this.loadingSignal.set(false);
-      },
-      error: (error: Error) => {
-        this.errorSignal.set(error.message);
-        this.loadingSignal.set(false);
-      },
+  init(): ReleaseListener {
+    return this.listener.acquire(() => {
+      this.loadingSignal.set(true);
+      return this.repository.watch().subscribe({
+        next: (settings) => {
+          this.loadedSettings.set(settings);
+          this.errorSignal.set(null);
+          this.loadingSignal.set(false);
+        },
+        error: (error: Error) => {
+          this.errorSignal.set(error.message);
+          this.loadingSignal.set(false);
+          this.listener.markDisconnected();
+        },
+      });
     });
   }
 

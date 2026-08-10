@@ -4,6 +4,7 @@ import { ServiceCategoriesQuery } from '../state/service-categories.query';
 import { ServiceCategoriesService } from '../state/service-categories.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
 import type { NewServiceCategory, ServiceCategory } from '../models/service-category.model';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 /** Único punto de contacto entre la UI y el catálogo de categorías de servicio. */
 @Injectable({ providedIn: 'root' })
@@ -15,8 +16,8 @@ export class ServiceCategoriesFacade {
   readonly categories = toSignal(this.query.categories$, { initialValue: [] });
   readonly loading = toSignal(this.query.loading$, { initialValue: false });
 
-  init(): void {
-    this.service.watchCategories();
+  init(): ReleaseListener {
+    return this.service.watchCategories();
   }
 
   byId(id: string): ServiceCategory | undefined {

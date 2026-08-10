@@ -10,6 +10,7 @@ import type { ServiceOrder } from '../../models/order.model';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LocalizedDatePipe } from '../../../../shared/pipes/localized-date.pipe';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 const ACTIVE_STATUSES = new Set<ServiceOrder['status']>(['ASSIGNED', 'IN_PROGRESS']);
 
@@ -53,7 +54,7 @@ export class MyOrders {
   );
 
   constructor() {
-    this.ordersFacade.init();
+    releaseOnDestroy(this.ordersFacade.init());
   }
 
   protected statusLabel(status: ServiceOrder['status']): string {

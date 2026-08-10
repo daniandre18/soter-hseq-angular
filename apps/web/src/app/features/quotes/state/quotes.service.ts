@@ -1,8 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { QUOTE_REPOSITORY } from '../domain/quote.repository';
 import { QuotesStore } from './quotes.store';
 import type { NewQuote, NewQuoteItem, QuoteItem, QuoteStatus } from '../models/quote.model';
+import {
+  ReferenceCountedListener,
+  type ReleaseListener,
+} from '../../../shared/utils/reference-counted-listener';
 
 /**
  * Mantiene el QuotesStore de Akita sincronizado con `QuoteRepository`
@@ -14,34 +18,29 @@ export class QuotesService {
   private readonly store = inject(QuotesStore);
   private readonly repository = inject(QUOTE_REPOSITORY);
 
-  private quotesSubscription: Subscription | null = null;
+  private readonly listener = new ReferenceCountedListener();
   private quotesRetriedAfterError = false;
 
-  watchQuotes(clientId?: string): void {
-    if (this.quotesSubscription) {
-      return;
-    }
-
-    this.store.setLoading(true);
-    this.quotesSubscription = this.repository.watchAll(clientId).subscribe({
-      next: (quotes) => {
-        this.quotesRetriedAfterError = false;
-        this.store.setError(null);
-        this.store.set(quotes);
-        this.store.setLoading(false);
-      },
-      error: (error: Error & { code?: string }) => {
-        this.store.setError(error.message);
-        this.store.setLoading(false);
-        // Ver el mismo comentario en OrdersService.watchOrders: sin limpiar
-        // el guard, un permission-denied transitorio justo tras el login
-        // deja el listener atascado hasta recargar la página.
-        this.quotesSubscription = null;
-        if (error.code === 'permission-denied' && !this.quotesRetriedAfterError) {
-          this.quotesRetriedAfterError = true;
-          setTimeout(() => this.watchQuotes(clientId), 1000);
-        }
-      },
+  watchQuotes(clientId?: string): ReleaseListener {
+    return this.listener.acquire(() => {
+      this.store.setLoading(true);
+      return this.repository.watchAll(clientId).subscribe({
+        next: (quotes) => {
+          this.quotesRetriedAfterError = false;
+          this.store.setError(null);
+          this.store.set(quotes);
+          this.store.setLoading(false);
+        },
+        error: (error: Error & { code?: string }) => {
+          this.store.setError(error.message);
+          this.store.setLoading(false);
+          this.listener.markDisconnected();
+          if (error.code === 'permission-denied' && !this.quotesRetriedAfterError) {
+            this.quotesRetriedAfterError = true;
+            this.listener.retryAfter(1000);
+          }
+        },
+      });
     });
   }
 

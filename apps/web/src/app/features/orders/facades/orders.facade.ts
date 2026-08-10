@@ -21,6 +21,7 @@ import type {
 } from '../models/closing-act.model';
 import type { OrderEvent } from '../models/order-event.model';
 import type { PieSlice } from '../../../shared/components/pie-chart/pie-chart';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 const OPEN_STATUSES = new Set<ServiceOrder['status']>([
   'SCHEDULED',
@@ -198,15 +199,25 @@ export class OrdersFacade {
     }));
   });
 
-  init(): void {
+  init(): ReleaseListener {
     // Igual que QuotesFacade: no depender del valor inicial del Signal para
     // elegir el alcance de una consulta protegida por Rules.
-    this.authFacade.resolveCurrentUser$().subscribe((user) => {
-      this.service.watchOrders(
+    let releaseListener: ReleaseListener | null = null;
+    let released = false;
+    const authSubscription = this.authFacade.resolveCurrentUser$().subscribe((user) => {
+      if (released) {
+        return;
+      }
+      releaseListener = this.service.watchOrders(
         user?.role === 'TECHNICIAN' ? user.id : undefined,
         user?.role === 'VIEWER' ? (user.clientId ?? '__without-client__') : undefined,
       );
     });
+    return () => {
+      released = true;
+      authSubscription.unsubscribe();
+      releaseListener?.();
+    };
   }
 
   byId(id: string): ServiceOrder | undefined {

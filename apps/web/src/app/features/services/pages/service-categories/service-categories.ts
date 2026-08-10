@@ -5,6 +5,7 @@ import { Icon } from '../../../../shared/components/icon/icon';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
 import { ServicesFacade } from '../../facades/services.facade';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 import {
   SERVICE_CATEGORY_COLOR_PALETTE,
   SERVICE_CATEGORY_ICON_OPTIONS,
@@ -47,8 +48,8 @@ export class ServiceCategories {
   });
 
   constructor() {
-    this.categoriesFacade.init();
-    this.servicesFacade.init();
+    releaseOnDestroy(this.categoriesFacade.init());
+    releaseOnDestroy(this.servicesFacade.init());
   }
 
   protected openCreateForm(): void {

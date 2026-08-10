@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { httpsCallable } from 'firebase/functions';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import type {
   CreateUserInput,
@@ -11,7 +10,8 @@ import type {
   UserManagementGateway,
 } from '../../../features/users/domain/user-management.gateway';
 import type { UserStatus } from '../../../core/models/app-user.model';
-import { FIREBASE_AUTH, FIREBASE_FUNCTIONS } from '../firebase.tokens';
+import { FIREBASE_AUTH } from '../firebase.tokens';
+import { firebaseCallable } from './firebase-callable';
 
 interface CreateUserResponse {
   uid: string;
@@ -25,21 +25,16 @@ interface DeleteUserResponse {
  *  `createUser`/`deleteUser` (Admin SDK — ver `functions/src/index.ts`). */
 @Injectable({ providedIn: 'root' })
 export class FirebaseUserManagementGateway implements UserManagementGateway {
-  private readonly functions = inject(FIREBASE_FUNCTIONS);
   private readonly auth = inject(FIREBASE_AUTH);
 
   async createUser(data: CreateUserInput): Promise<string> {
-    const createUser = httpsCallable<CreateUserInput, CreateUserResponse>(
-      this.functions,
-      'createUser',
-    );
+    const createUser = await firebaseCallable<CreateUserInput, CreateUserResponse>('createUser');
     const { data: response } = await createUser(data);
     return response.uid;
   }
 
   async inviteInternalUser(data: InviteInternalUserInput): Promise<string> {
-    const inviteUser = httpsCallable<InviteInternalUserInput, CreateUserResponse>(
-      this.functions,
+    const inviteUser = await firebaseCallable<InviteInternalUserInput, CreateUserResponse>(
       'inviteInternalUser',
     );
     const { data: response } = await inviteUser(data);
@@ -47,16 +42,14 @@ export class FirebaseUserManagementGateway implements UserManagementGateway {
   }
 
   async updateInternalUser(data: UpdateInternalUserInput): Promise<void> {
-    const updateUser = httpsCallable<UpdateInternalUserInput, { uid: string }>(
-      this.functions,
+    const updateUser = await firebaseCallable<UpdateInternalUserInput, { uid: string }>(
       'updateInternalUser',
     );
     await updateUser(data);
   }
 
   async inviteClientUser(data: InviteClientUserInput): Promise<string> {
-    const inviteUser = httpsCallable<InviteClientUserInput, CreateUserResponse>(
-      this.functions,
+    const inviteUser = await firebaseCallable<InviteClientUserInput, CreateUserResponse>(
       'inviteClientUser',
     );
     const { data: response } = await inviteUser(data);
@@ -64,8 +57,7 @@ export class FirebaseUserManagementGateway implements UserManagementGateway {
   }
 
   async replaceClientUser(data: ReplaceClientUserInput): Promise<string> {
-    const replaceUser = httpsCallable<ReplaceClientUserInput, CreateUserResponse>(
-      this.functions,
+    const replaceUser = await firebaseCallable<ReplaceClientUserInput, CreateUserResponse>(
       'replaceClientUser',
     );
     const { data: response } = await replaceUser(data);
@@ -73,18 +65,18 @@ export class FirebaseUserManagementGateway implements UserManagementGateway {
   }
 
   async setClientUserStatus(data: SetClientUserStatusInput): Promise<void> {
-    const setStatus = httpsCallable<SetClientUserStatusInput, { uid: string; status: UserStatus }>(
-      this.functions,
-      'setClientUserStatus',
-    );
+    const setStatus = await firebaseCallable<
+      SetClientUserStatusInput,
+      { uid: string; status: UserStatus }
+    >('setClientUserStatus');
     await setStatus(data);
   }
 
   async setUserStatus(uid: string, status: UserStatus): Promise<void> {
-    const setStatus = httpsCallable<{ uid: string; status: UserStatus }, { uid: string }>(
-      this.functions,
-      'setUserStatus',
-    );
+    const setStatus = await firebaseCallable<
+      { uid: string; status: UserStatus },
+      { uid: string }
+    >('setUserStatus');
     await setStatus({ uid, status });
   }
 
@@ -93,10 +85,7 @@ export class FirebaseUserManagementGateway implements UserManagementGateway {
   }
 
   async deleteUser(uid: string): Promise<void> {
-    const deleteUser = httpsCallable<{ uid: string }, DeleteUserResponse>(
-      this.functions,
-      'deleteUser',
-    );
+    const deleteUser = await firebaseCallable<{ uid: string }, DeleteUserResponse>('deleteUser');
     await deleteUser({ uid });
   }
 }

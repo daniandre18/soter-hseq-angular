@@ -4,6 +4,7 @@ import { ClientTagsQuery } from '../state/client-tags.query';
 import { ClientTagsService } from '../state/client-tags.service';
 import { AuthFacade } from '../../auth/facades/auth.facade';
 import type { ClientTag, NewClientTag } from '../models/client-tag.model';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 /** Único punto de contacto entre la UI y el catálogo de etiquetas de cliente. */
 @Injectable({ providedIn: 'root' })
@@ -15,8 +16,8 @@ export class ClientTagsFacade {
   readonly tags = toSignal(this.query.tags$, { initialValue: [] });
   readonly loading = toSignal(this.query.loading$, { initialValue: false });
 
-  init(): void {
-    this.service.watchTags();
+  init(): ReleaseListener {
+    return this.service.watchTags();
   }
 
   byId(id: string): ClientTag | undefined {

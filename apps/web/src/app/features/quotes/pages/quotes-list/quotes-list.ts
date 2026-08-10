@@ -22,6 +22,7 @@ import {
   type RowMenuAction,
   type RowMenuActionSelection,
 } from '../../../../shared/components/row-actions-menu/row-actions-menu';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 type StatusFilterOption = 'all' | QuoteStatus;
 const QUOTE_ROW_ACTIONS: readonly RowMenuAction[] = [
@@ -113,9 +114,9 @@ export class QuotesList {
   });
 
   constructor() {
-    this.quotesFacade.init();
+    releaseOnDestroy(this.quotesFacade.init());
     if (this.canManageQuotes()) {
-      this.clientsFacade.init();
+      releaseOnDestroy(this.clientsFacade.init());
     }
 
     // Espera a que `quotes()` traiga la cotización pedida (puede llegar

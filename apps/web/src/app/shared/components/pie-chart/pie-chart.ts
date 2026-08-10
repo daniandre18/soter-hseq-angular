@@ -1,6 +1,13 @@
 import { Component, computed, input } from '@angular/core';
-import type { ChartConfiguration, ChartData } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
+import {
+  ArcElement,
+  Legend,
+  PieController,
+  Tooltip,
+  type ChartConfiguration,
+  type ChartData,
+} from 'chart.js';
+import { BaseChartDirective, provideCharts } from 'ng2-charts';
 
 export interface PieSlice {
   key: string;
@@ -16,6 +23,7 @@ interface RenderedSlice extends PieSlice {
 @Component({
   selector: 'app-pie-chart',
   imports: [BaseChartDirective],
+  providers: [provideCharts({ registerables: [PieController, ArcElement, Tooltip, Legend] })],
   templateUrl: './pie-chart.html',
   styleUrl: './pie-chart.scss',
 })

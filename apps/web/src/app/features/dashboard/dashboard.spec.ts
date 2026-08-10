@@ -2,9 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal, type WritableSignal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { Dashboard } from './dashboard';
-import { OrdersFacade } from '../orders/facades/orders.facade';
-import { ClientsFacade } from '../clients/facades/clients.facade';
-import { QuotesFacade } from '../quotes/facades/quotes.facade';
+import { DashboardFacade } from './facades/dashboard.facade';
 import type { ServiceOrder } from '../orders/models/order.model';
 
 describe('Dashboard', () => {
@@ -19,51 +17,26 @@ describe('Dashboard', () => {
       providers: [
         provideRouter([]),
         {
-          provide: OrdersFacade,
+          provide: DashboardFacade,
           useValue: {
-            orders: signal([]),
-            loading: signal(false),
             error: signal(null),
-            assignedCount: signal(0),
-            inProgressCount: signal(0),
-            underReviewCount: signal(0),
-            closedCount: signal(0),
+            ordersTotal: signal(0),
             openCount: signal(0),
             overdueCount: signal(0),
-            overdueOrders: signal([]),
-            correctionRequiredOrders: signal([]),
+            correctionRequiredCount: signal(0),
             pendingCount: signal(0),
             todayVisitsCount: signal(0),
             visitsThisWeekCount: signal(0),
             techniciansInFieldCount: signal(0),
-            technicians: signal([]),
+            technicianCount: signal(0),
             recentOrders: signal([]),
             upcomingVisits,
             statusBreakdown: signal([]),
-            init: () => undefined,
-            technicianName: () => 'Andrés Morales',
-          },
-        },
-        {
-          provide: ClientsFacade,
-          useValue: {
-            clients: signal([]),
-            loading: signal(false),
-            activeCount: signal(0),
-            init: () => undefined,
-          },
-        },
-        {
-          provide: QuotesFacade,
-          useValue: {
-            quotes: signal([]),
-            loading: signal(false),
-            error: signal(null),
-            statusBreakdown: signal([]),
-            convertedCount: signal(0),
             conversionRate: signal(0),
+            quotesTotal: signal(0),
             funnelCounts: signal({ sent: 0, approved: 0, converted: 0 }),
             init: () => undefined,
+            technicianNameFor: () => 'Andrés Morales',
           },
         },
       ],

@@ -85,6 +85,10 @@
                     class="evidence-thumb"
                     [src]="item.evidence.downloadUrl"
                     [alt]="item.evidence.fileName"
+                    width="256"
+                    height="96"
+                    loading="lazy"
+                    decoding="async"
                   />
                 } @else {
                   <div class="evidence-thumb evidence-thumb--file">

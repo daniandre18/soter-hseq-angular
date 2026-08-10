@@ -10,6 +10,12 @@ import PDFDocument from 'pdfkit';
 
 initializeApp();
 
+export {
+  syncDashboardOnOrderWrite,
+  syncDashboardOnQuoteWrite,
+  syncDashboardOnUserWrite,
+} from './dashboard-metrics';
+
 type Role = 'ADMIN' | 'COMMERCIAL' | 'COORDINATOR' | 'TECHNICIAN' | 'VIEWER';
 
 /**

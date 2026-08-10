@@ -25,6 +25,7 @@ import { OrderClientContactCard } from '../../components/order-client-contact-ca
 import { ORDER_STATUS_CONFIG } from '../../models/order-status-config';
 import { ORDER_PRIORITY_CONFIG } from '../../models/order-priority-config';
 import type { ServiceOrder } from '../../models/order.model';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 const SCHEDULABLE_STATUSES = new Set<ServiceOrder['status']>(['DRAFT', 'SCHEDULED']);
 const ASSIGNABLE_STATUSES = new Set<ServiceOrder['status']>(['SCHEDULED', 'ASSIGNED']);
@@ -300,11 +301,12 @@ export class OrderDetail {
   });
 
   constructor() {
+    releaseOnDestroy(this.ordersFacade.init(), this.destroyRef);
     // Igual guardia que `orders-list.ts`: `firestore.rules` no deja leer
     // `clients/{id}` a TECHNICIAN/VIEWER, así que solo se pide si el rol
     // puede — nunca se intenta y se descarta el error.
     if (this.canManage()) {
-      this.clientsFacade.init();
+      releaseOnDestroy(this.clientsFacade.init(), this.destroyRef);
     }
 
     const onMobileQueryChange = (event: MediaQueryListEvent): void => this.isMobile.set(event.matches);

@@ -1,12 +1,11 @@
-import { Injectable, inject } from '@angular/core';
-import { httpsCallable } from 'firebase/functions';
+import { Injectable } from '@angular/core';
 import type { ClosingActGateway } from '../../../features/orders/domain/closing-act.gateway';
 import type {
   ClientActDecisionInput,
   ClosingActContent,
 } from '../../../features/orders/models/closing-act.model';
 import { environment } from '../../../../environments/environment';
-import { FIREBASE_FUNCTIONS } from '../firebase.tokens';
+import { firebaseCallable } from './firebase-callable';
 
 interface GenerateClosingActResponse {
   closingActId: string;
@@ -45,22 +44,20 @@ function fileToBase64(file: File): Promise<string> {
  */
 @Injectable({ providedIn: 'root' })
 export class FirebaseClosingActGateway implements ClosingActGateway {
-  private readonly functions = inject(FIREBASE_FUNCTIONS);
-
   async generateDraft(orderId: string, notes: string): Promise<void> {
-    const generateClosingAct = httpsCallable<
+    const generateClosingAct = await firebaseCallable<
       { orderId: string; notes: string },
       GenerateClosingActResponse
-    >(this.functions, 'generateClosingAct');
+    >('generateClosingAct');
 
     await generateClosingAct({ orderId, notes });
   }
 
   async createManualDraft(orderId: string, content: ClosingActContent): Promise<void> {
-    const createClosingAct = httpsCallable<
+    const createClosingAct = await firebaseCallable<
       { orderId: string; content: ClosingActContent },
       ClosingActMutationResponse
-    >(this.functions, 'createClosingAct');
+    >('createClosingAct');
     await createClosingAct({ orderId, content });
   }
 
@@ -75,7 +72,7 @@ export class FirebaseClosingActGateway implements ClosingActGateway {
     onProgress?.(10);
     const fileBase64 = await fileToBase64(file);
     onProgress?.(60);
-    const uploadClosingAct = httpsCallable<
+    const uploadClosingAct = await firebaseCallable<
       {
         orderId: string;
         fileName: string;
@@ -83,7 +80,7 @@ export class FirebaseClosingActGateway implements ClosingActGateway {
         fileBase64: string;
       },
       ClosingActMutationResponse
-    >(this.functions, 'uploadClosingAct');
+    >('uploadClosingAct');
     await uploadClosingAct({
       orderId,
       fileName: file.name,
@@ -98,19 +95,19 @@ export class FirebaseClosingActGateway implements ClosingActGateway {
     actId: string,
     input: ClientActDecisionInput,
   ): Promise<string | undefined> {
-    const reviewClosingActAsClient = httpsCallable<
+    const reviewClosingActAsClient = await firebaseCallable<
       { orderId: string; actId: string } & ClientActDecisionInput,
       ClientActDecisionResponse
-    >(this.functions, 'reviewClosingActAsClient');
+    >('reviewClosingActAsClient');
     const { data } = await reviewClosingActAsClient({ orderId, actId, ...input });
     return data.pdfUrl;
   }
 
   async closeOrder(orderId: string, actId: string): Promise<string> {
-    const closeOrder = httpsCallable<{ orderId: string; actId: string }, CloseOrderResponse>(
-      this.functions,
-      'closeOrder',
-    );
+    const closeOrder = await firebaseCallable<
+      { orderId: string; actId: string },
+      CloseOrderResponse
+    >('closeOrder');
     const { data } = await closeOrder({ orderId, actId });
     return data.pdfUrl;
   }

@@ -22,6 +22,7 @@ import {
   type RowMenuAction,
   type RowMenuActionSelection,
 } from '../../../../shared/components/row-actions-menu/row-actions-menu';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 type StatusFilterOption = 'all' | 'active' | 'closed' | OrderStatus;
 
@@ -109,9 +110,9 @@ export class OrdersList {
   );
 
   constructor() {
-    this.ordersFacade.init();
+    releaseOnDestroy(this.ordersFacade.init());
     if (this.canManage()) {
-      this.clientsFacade.init();
+      releaseOnDestroy(this.clientsFacade.init());
     }
     // Acceso directo desde el acceso rápido "+ Nueva Orden" del dashboard
     // (`?crear=1`) — abre el mismo modal que el botón "Nueva orden" de esta

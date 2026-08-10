@@ -9,6 +9,10 @@ import type {
 } from '../models/internal-user.model';
 import { isInternalUser } from '../models/internal-user.model';
 import { InternalUsersStore } from './internal-users.store';
+import {
+  ReferenceCountedListener,
+  type ReleaseListener,
+} from '../../../shared/utils/reference-counted-listener';
 
 /** Casos de uso de cuentas administrativas; la UI nunca llama Firebase directamente. */
 @Injectable({ providedIn: 'root' })
@@ -16,22 +20,23 @@ export class InternalUsersService {
   private readonly store = inject(InternalUsersStore);
   private readonly usersRepository = inject(USERS_REPOSITORY);
   private readonly managementGateway = inject(USER_MANAGEMENT_GATEWAY);
-  private watching = false;
+  private readonly listener = new ReferenceCountedListener();
 
-  watchUsers(): void {
-    if (this.watching) return;
-    this.watching = true;
-    this.store.setLoading(true);
-    this.usersRepository.watchAll().subscribe({
-      next: (users) => {
-        this.store.set(users.filter(isInternalUser));
-        this.store.setError(null);
-        this.store.setLoading(false);
-      },
-      error: (error: Error) => {
-        this.store.setError(error.message);
-        this.store.setLoading(false);
-      },
+  watchUsers(): ReleaseListener {
+    return this.listener.acquire(() => {
+      this.store.setLoading(true);
+      return this.usersRepository.watchAll().subscribe({
+        next: (users) => {
+          this.store.set(users.filter(isInternalUser));
+          this.store.setError(null);
+          this.store.setLoading(false);
+        },
+        error: (error: Error) => {
+          this.store.setError(error.message);
+          this.store.setLoading(false);
+          this.listener.markDisconnected();
+        },
+      });
     });
   }
 

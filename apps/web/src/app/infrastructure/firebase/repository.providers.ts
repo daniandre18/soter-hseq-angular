@@ -13,6 +13,7 @@ import { ORDER_REPOSITORY } from '../../features/orders/domain/order.repository'
 import { EVIDENCE_UPLOAD_GATEWAY } from '../../features/orders/domain/evidence-upload.gateway';
 import { CLOSING_ACT_GATEWAY } from '../../features/orders/domain/closing-act.gateway';
 import { LOGO_UPLOAD_GATEWAY } from '../../features/settings/domain/logo-upload.gateway';
+import { DASHBOARD_REPOSITORY } from '../../features/dashboard/domain/dashboard.repository';
 import { FirebaseAuthRepository } from './auth/firebase-auth.repository';
 import { FirebaseUsersRepository } from './repositories/firebase-users.repository';
 import { FirebaseSettingsRepository } from './repositories/firebase-settings.repository';
@@ -27,6 +28,7 @@ import { FirebaseUserManagementGateway } from './functions/firebase-user-managem
 import { FirebaseEvidenceUploadGateway } from './functions/firebase-evidence-upload.gateway';
 import { FirebaseClosingActGateway } from './functions/firebase-closing-act.gateway';
 import { FirebaseLogoUploadGateway } from './functions/firebase-logo-upload.gateway';
+import { FirebaseDashboardRepository } from './repositories/firebase-dashboard.repository';
 
 /**
  * Enlaza cada puerto (`*_REPOSITORY`/`*_GATEWAY`, definidos junto a su
@@ -51,4 +53,5 @@ export const repositoryProviders: Provider[] = [
   { provide: CLOSING_ACT_GATEWAY, useClass: FirebaseClosingActGateway },
   { provide: SETTINGS_REPOSITORY, useClass: FirebaseSettingsRepository },
   { provide: LOGO_UPLOAD_GATEWAY, useClass: FirebaseLogoUploadGateway },
+  { provide: DASHBOARD_REPOSITORY, useClass: FirebaseDashboardRepository },
 ];

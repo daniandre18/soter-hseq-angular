@@ -12,6 +12,7 @@ import type {
   NewClientContact,
   NewClientSite,
 } from '../models/client.model';
+import type { ReleaseListener } from '../../../shared/utils/reference-counted-listener';
 
 @Injectable({ providedIn: 'root' })
 export class ClientsFacade {
@@ -27,8 +28,8 @@ export class ClientsFacade {
     () => this.clients().filter((client) => client.status === 'ACTIVE').length,
   );
 
-  init(): void {
-    this.service.watchClients();
+  init(): ReleaseListener {
+    return this.service.watchClients();
   }
 
   async addClient(data: NewClient): Promise<string> {

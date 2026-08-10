@@ -14,6 +14,7 @@ import {
   type RowMenuAction,
   type RowMenuActionSelection,
 } from '../../../../shared/components/row-actions-menu/row-actions-menu';
+import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
 
 const PAGE_SIZE = 10;
 const TECHNICIAN_ROW_ACTIONS: readonly RowMenuAction[] = [
@@ -66,7 +67,7 @@ export class TechniciansList {
   );
 
   constructor() {
-    this.techniciansFacade.init();
+    releaseOnDestroy(this.techniciansFacade.init());
   }
 
   protected onSearchInput(event: Event): void {
