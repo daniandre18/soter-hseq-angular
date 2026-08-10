@@ -1,3 +1,14 @@
+.dashboard-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+
+  app-icon {
+    --icon-size: 1rem;
+  }
+}
+
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -5,7 +16,7 @@
   margin-bottom: 1.5rem;
 
   @media (min-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -18,14 +29,25 @@
   margin-bottom: 1.5rem;
 }
 
-.dashboard-grid {
+// 65/35 — gestión operativa a la izquierda, agenda y contexto a la derecha
+// (ver la instrucción de diseño). `minmax(0, ...)` evita que una tabla o
+// texto largo dentro de la columna fuerce el grid a desbordar.
+.dashboard-columns {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+  align-items: start;
 
   @media (min-width: 1280px) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);
   }
+}
+
+.dashboard-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
 }
 
 .dashboard-card {
@@ -120,7 +142,20 @@
 
   &:hover {
     background: var(--color-gray-50);
+
+    .list-row-chevron {
+      color: var(--color-gray-600);
+      transform: translateX(2px);
+    }
   }
+}
+
+.list-row-chevron {
+  flex-shrink: 0;
+  color: var(--color-gray-300);
+  transition:
+    color 150ms,
+    transform 150ms;
 }
 
 .list-row-side {
@@ -187,34 +222,106 @@
   }
 }
 
-.visit-date {
+// Timeline vertical — "Agenda & Próximas Visitas". Cada fila trae su propia
+// fecha en un badge sobre el eje, con la línea del eje continuando hacia
+// la siguiente fila (se corta en la última con `:last-child`).
+.timeline {
+  display: flex;
+  flex-direction: column;
+  padding: 0 1.5rem 0.25rem;
+}
+
+.timeline-row {
+  display: flex;
+  gap: 0.875rem;
+  padding: 0 0 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-md);
+  transition: background-color 150ms;
+
+  &:hover {
+    background: var(--color-gray-50);
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+
+    .timeline-line {
+      display: none;
+    }
+  }
+}
+
+.timeline-marker {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 3rem;
-  height: 3rem;
-  border-radius: var(--radius-lg);
+  width: 3.25rem;
+}
+
+.timeline-date {
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
   background: var(--color-brand-50);
   color: var(--color-brand-700);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
 
-  .visit-day {
-    font-size: 0.75rem;
-    font-weight: 700;
-    line-height: 1;
-  }
+.timeline-line {
+  flex: 1;
+  width: 2px;
+  margin-top: 0.375rem;
+  background: var(--color-gray-100);
+}
 
-  .visit-month {
-    font-size: 0.6875rem;
-    color: var(--color-brand-400);
-    line-height: 1.2;
-  }
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0.125rem;
+}
+
+.timeline-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.timeline-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.1875rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-icon {
+  flex-shrink: 0;
+  --icon-size: 0.8125rem;
+  color: var(--color-gray-400);
 }
 
 @media (max-width: 767px) {
   .dashboard {
     min-width: 0;
+  }
+
+  .dashboard-actions-row {
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+
+    app-button {
+      flex: 1;
+    }
   }
 
   .kpi-row {
@@ -233,7 +340,11 @@
     font-size: 0.75rem;
   }
 
-  .dashboard-grid {
+  .dashboard-columns {
+    gap: 0.75rem;
+  }
+
+  .dashboard-column {
     gap: 0.75rem;
   }
 
@@ -299,9 +410,24 @@
     }
   }
 
-  .visit-date {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: var(--radius-md);
+  .timeline {
+    padding: 0 0.875rem 0.25rem;
+  }
+
+  .timeline-marker {
+    width: 2.75rem;
+  }
+
+  .timeline-date {
+    font-size: 0.625rem;
+    padding: 0.1875rem 0.4375rem;
+  }
+
+  .timeline-title {
+    font-size: 0.8125rem;
+  }
+
+  .timeline-subtitle {
+    font-size: 0.6875rem;
   }
 }

@@ -8,6 +8,12 @@ import { QUOTE_STATUS_CONFIG } from '../models/quote-status-config';
 import type { NewQuote, NewQuoteItem, QuoteItem, QuoteStatus } from '../models/quote.model';
 import type { BarListItem } from '../../../shared/components/bar-list/bar-list';
 
+export interface QuoteFunnelCounts {
+  sent: number;
+  approved: number;
+  converted: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class QuotesFacade {
   private readonly query = inject(QuotesQuery);
@@ -38,6 +44,36 @@ export class QuotesFacade {
       value,
       color: QUOTE_STATUS_CONFIG[status].hex,
     }));
+  });
+
+  readonly convertedCount = computed(
+    () => this.quotes().filter((quote) => quote.status === 'CONVERTED').length,
+  );
+
+  /** Para el KPI "Conversión Comercial" del dashboard: % de cotizaciones
+   *  que terminaron convertidas en orden, sobre el total registrado. */
+  readonly conversionRate = computed(() => {
+    const total = this.quotes().length;
+    if (total === 0) {
+      return 0;
+    }
+    return Math.round((this.convertedCount() / total) * 100);
+  });
+
+  /** Para el widget "Embudo Comercial": cada etapa cuenta las cotizaciones
+   *  que llegaron *al menos* hasta ahí, no solo las que están hoy en ese
+   *  estado exacto — por eso `sent` incluye cualquier estado distinto de
+   *  `DRAFT` (incluidas rechazadas/expiradas) y `approved` incluye las ya
+   *  convertidas, para que las barras nunca crezcan de una etapa a la
+   *  siguiente. */
+  readonly funnelCounts = computed<QuoteFunnelCounts>(() => {
+    const quotes = this.quotes();
+    return {
+      sent: quotes.filter((quote) => quote.status !== 'DRAFT').length,
+      approved: quotes.filter((quote) => quote.status === 'APPROVED' || quote.status === 'CONVERTED')
+        .length,
+      converted: quotes.filter((quote) => quote.status === 'CONVERTED').length,
+    };
   });
 
   init(): void {

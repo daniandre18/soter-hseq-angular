@@ -1,0 +1,48 @@
+.funnel-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.funnel-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.funnel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: width 300ms ease;
+}
+
+.funnel-value {
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.funnel-label {
+  color: var(--color-gray-500);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+@media (max-width: 767px) {
+  .funnel-bar {
+    height: 2rem;
+  }
+
+  .funnel-value {
+    font-size: 0.8125rem;
+  }
+
+  .funnel-label {
+    font-size: 0.6875rem;
+  }
+}

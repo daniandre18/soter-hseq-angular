@@ -1,0 +1,23 @@
+@if (renderedItems().length === 0) {
+  <p class="segmented-bar-empty">{{ emptyMessage() }}</p>
+} @else {
+  <div class="segmented-bar-track">
+    @for (item of renderedItems(); track item.key) {
+      <div
+        class="segmented-bar-segment"
+        [style.width.%]="item.percentage"
+        [style.background]="item.color"
+        [title]="item.label + ': ' + item.value + ' ' + unit() + ' (' + item.percentage + '%)'"
+      ></div>
+    }
+  </div>
+  <div class="segmented-bar-legend">
+    @for (item of renderedItems(); track item.key) {
+      <div class="segmented-bar-legend-item">
+        <span class="segmented-bar-legend-dot" [style.background]="item.color"></span>
+        <span class="segmented-bar-legend-label">{{ item.label }}</span>
+        <span class="segmented-bar-legend-value">{{ item.percentage }}% · {{ item.value }} {{ unit() }}</span>
+      </div>
+    }
+  </div>
+}

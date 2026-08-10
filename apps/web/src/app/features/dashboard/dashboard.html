@@ -1,67 +1,48 @@
 <section class="dashboard">
+  <div class="dashboard-actions-row">
+    <!-- 'accent' (índigo), no 'primary' (rojo marca): el rojo se reserva
+         para alertas/vencidos/incidentes — ver el badge "N Vencidas" de la
+         primera KPI card. Una acción de creación no debe competir visualmente
+         con esa semántica de alerta. -->
+    <app-button variant="accent" (click)="goToCreateOrder()">
+      <app-icon name="plus" />
+      {{ 'dashboard.newOrderAction' | transloco }}
+    </app-button>
+    <app-button variant="outline" (click)="goToScheduleVisit()">
+      <app-icon name="calendar-days" />
+      {{ 'dashboard.scheduleVisitAction' | transloco }}
+    </app-button>
+  </div>
+
   <div class="kpi-row">
-    <app-stat-card
-      [label]="'dashboard.kpi.overdue' | transloco"
-      [value]="ordersFacade.overdueCount()"
-      icon="triangle-alert"
-      [color]="ordersFacade.overdueCount() > 0 ? 'red' : 'neutral'"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.openOrders' | transloco"
-      [value]="ordersFacade.openCount()"
+    <app-kpi-card
+      [title]="'dashboard.kpi.activeOrdersTitle' | transloco"
+      [value]="activeOrdersCount()"
+      [subtitle]="activeOrdersSubtitle()"
+      [alertText]="overdueAlertText()"
       icon="clipboard-list"
-      color="neutral"
-      [compact]="true"
+      color="brand"
     />
-    <app-stat-card
-      [label]="'dashboard.kpi.inProgress' | transloco"
-      [value]="ordersFacade.inProgressCount()"
-      icon="clock"
-      color="orange"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.pendingOrders' | transloco"
-      [value]="ordersFacade.pendingCount()"
-      icon="file-text"
-      color="neutral"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.underReview' | transloco"
-      [value]="ordersFacade.underReviewCount()"
-      icon="eye"
-      [color]="ordersFacade.underReviewCount() > 0 ? 'purple' : 'neutral'"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.closedOrders' | transloco"
-      [value]="ordersFacade.closedCount()"
-      icon="circle-check-big"
-      color="green"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.activeClients' | transloco"
-      [value]="clientsFacade.activeCount()"
-      icon="building-2"
-      color="blue"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.visitsToday' | transloco"
-      [value]="ordersFacade.todayVisitsCount()"
-      icon="calendar-days"
-      color="purple"
-      [compact]="true"
-    />
-    <app-stat-card
-      [label]="'dashboard.kpi.techniciansInField' | transloco"
+    <app-kpi-card
+      [title]="'dashboard.kpi.fieldResourcesTitle' | transloco"
       [value]="ordersFacade.techniciansInFieldCount()"
+      [subtitle]="fieldResourcesSubtitle()"
       icon="hard-hat"
       color="orange"
-      [compact]="true"
+    />
+    <app-kpi-card
+      [title]="'dashboard.kpi.visitsTodayTitle' | transloco"
+      [value]="ordersFacade.todayVisitsCount()"
+      [subtitle]="visitsWeekSubtitle()"
+      icon="calendar-days"
+      color="purple"
+    />
+    <app-kpi-card
+      [title]="'dashboard.kpi.conversionTitle' | transloco"
+      [value]="conversionValue()"
+      [subtitle]="conversionSubtitle()"
+      icon="chart-pie"
+      color="green"
     />
   </div>
 
@@ -105,95 +86,107 @@
     </div>
   }
 
-  <div class="dashboard-grid">
-    <div class="dashboard-card">
-      <div class="dashboard-card-header">
-        <h2>{{ 'dashboard.ordersByStatus' | transloco }}</h2>
-        <p>{{ (ordersFacade.orders().length === 1 ? 'dashboard.ordersTotalOne' : 'dashboard.ordersTotalOther') | transloco: { count: ordersFacade.orders().length } }}</p>
+  <div class="dashboard-columns">
+    <div class="dashboard-column dashboard-column--main">
+      <div class="dashboard-card">
+        <div class="dashboard-card-header">
+          <h2>{{ 'dashboard.pipelineTitle' | transloco }}</h2>
+          <p>{{ (ordersFacade.orders().length === 1 ? 'dashboard.ordersTotalOne' : 'dashboard.ordersTotalOther') | transloco: { count: ordersFacade.orders().length } }}</p>
+        </div>
+        <app-segmented-bar
+          [items]="translatedStatusBreakdown()"
+          [unit]="'dashboard.ordersUnit' | transloco"
+          [emptyMessage]="'dashboard.noOrders' | transloco"
+        />
       </div>
-      <app-bar-list
-        [items]="translatedStatusBreakdown()"
-        [unit]="'dashboard.ordersUnit' | transloco"
-        [emptyMessage]="'dashboard.noOrders' | transloco"
-        [showValue]="true"
-      />
-    </div>
 
-    <div class="dashboard-card">
-      <div class="dashboard-card-header">
-        <h2>{{ 'dashboard.quotesByStatus' | transloco }}</h2>
-        <p>{{ (quotesFacade.quotes().length === 1 ? 'dashboard.quotesTotalOne' : 'dashboard.quotesTotalOther') | transloco: { count: quotesFacade.quotes().length } }}</p>
-      </div>
-      <app-bar-list
-        [items]="translatedQuoteBreakdown()"
-        [unit]="'dashboard.quotesUnit' | transloco"
-        [emptyMessage]="'dashboard.noQuotes' | transloco"
-        [showValue]="true"
-      />
-    </div>
-
-    <div class="dashboard-card dashboard-card--flush">
-      <div class="dashboard-card-header dashboard-card-header--actions">
-        <h2>{{ 'dashboard.recentOrders' | transloco }}</h2>
-        <a routerLink="/ordenes">{{ 'dashboard.viewAllOrders' | transloco }}</a>
-      </div>
-      @if (ordersFacade.recentOrders().length === 0) {
-        <p class="dashboard-empty">{{ 'dashboard.noRecentOrders' | transloco }}</p>
-      } @else {
-        <div class="list">
-          @for (order of ordersFacade.recentOrders(); track order.id) {
-            <a class="list-row" [routerLink]="['/ordenes', order.id]">
-              <div class="list-row-main">
-                <p class="list-row-title">
-                  {{ order.title || order.serviceSummary || order.orderNumber }}
-                </p>
-                <p class="list-row-subtitle">
-                  {{ order.clientBusinessName }} · {{ order.orderNumber }}
-                </p>
-              </div>
-              <div class="list-row-side">
-                <app-status-badge
-                  [label]="statusLabel(order.status)"
-                  [color]="statusColor(order.status)"
-                />
-                @if (statusProgress(order) > 0) {
-                  <app-progress-bar [value]="statusProgress(order)" class="list-row-progress" />
-                } @else {
-                  <span class="list-row-not-started">{{ 'dashboard.notStarted' | transloco }}</span>
+      <div class="dashboard-card dashboard-card--flush">
+        <div class="dashboard-card-header dashboard-card-header--actions">
+          <h2>{{ 'dashboard.recentOrders' | transloco }}</h2>
+          <a routerLink="/ordenes">{{ 'dashboard.viewAllOrders' | transloco }}</a>
+        </div>
+        @if (ordersFacade.recentOrders().length === 0) {
+          <p class="dashboard-empty">{{ 'dashboard.noRecentOrders' | transloco }}</p>
+        } @else {
+          <div class="list">
+            @for (order of ordersFacade.recentOrders(); track order.id) {
+              <a class="list-row" [routerLink]="['/ordenes', order.id]">
+                @if (technicianNameFor(order); as technician) {
+                  <app-avatar [name]="technician" size="sm" />
                 }
-              </div>
-            </a>
-          }
-        </div>
-      }
+                <div class="list-row-main">
+                  <p class="list-row-title">
+                    {{ order.title || order.serviceSummary || order.orderNumber }}
+                  </p>
+                  <p class="list-row-subtitle">
+                    {{ order.clientBusinessName }} · {{ order.orderNumber }}
+                  </p>
+                </div>
+                <div class="list-row-side">
+                  <app-status-badge
+                    [label]="statusLabel(order.status)"
+                    [color]="statusColor(order.status)"
+                  />
+                  @if (statusProgress(order) > 0) {
+                    <app-progress-bar [value]="statusProgress(order)" class="list-row-progress" />
+                  } @else {
+                    <span class="list-row-not-started">{{ recentOrderScheduleLabel(order) }}</span>
+                  }
+                </div>
+                <app-icon name="chevron-right" class="list-row-chevron" />
+              </a>
+            }
+          </div>
+        }
+      </div>
     </div>
 
-    <div class="dashboard-card dashboard-card--flush">
-      <div class="dashboard-card-header dashboard-card-header--actions">
-        <h2>{{ 'dashboard.upcomingVisits' | transloco }}</h2>
-        <a routerLink="/agenda">{{ 'dashboard.viewSchedule' | transloco }}</a>
-      </div>
-      @if (ordersFacade.upcomingVisits().length === 0) {
-        <p class="dashboard-empty">{{ 'dashboard.noUpcomingVisits' | transloco }}</p>
-      } @else {
-        <div class="list">
-          @for (order of ordersFacade.upcomingVisits(); track order.id) {
-            <a class="list-row" [routerLink]="['/ordenes', order.id]">
-              <div class="visit-date">
-                <span class="visit-day">{{ formatVisitDay(order.scheduledStart!) }}</span>
-                <span class="visit-month">{{ formatVisitMonth(order.scheduledStart!) }}</span>
-              </div>
-              <div class="list-row-main">
-                <p class="list-row-title">{{ order.serviceSummary || order.orderNumber }}</p>
-                <p class="list-row-subtitle">
-                  {{ formatVisitTime(order.scheduledStart!) }} · {{ order.clientBusinessName }} ·
-                  {{ ordersFacade.technicianName(order.assignedTechnicianIds[0] ?? '') }}
-                </p>
-              </div>
-            </a>
-          }
+    <div class="dashboard-column dashboard-column--side">
+      <div class="dashboard-card dashboard-card--flush">
+        <div class="dashboard-card-header dashboard-card-header--actions">
+          <h2>{{ 'dashboard.upcomingVisits' | transloco }}</h2>
+          <a routerLink="/agenda">{{ 'dashboard.viewSchedule' | transloco }}</a>
         </div>
-      }
+        @if (ordersFacade.upcomingVisits().length === 0) {
+          <p class="dashboard-empty">{{ 'dashboard.noUpcomingVisits' | transloco }}</p>
+        } @else {
+          <div class="timeline">
+            @for (order of ordersFacade.upcomingVisits(); track order.id) {
+              <a class="timeline-row" [routerLink]="['/ordenes', order.id]">
+                <div class="timeline-marker">
+                  <span class="timeline-date">
+                    {{ formatVisitDay(order.scheduledStart!) }} {{ formatVisitMonth(order.scheduledStart!) }}
+                  </span>
+                  <span class="timeline-line"></span>
+                </div>
+                <div class="timeline-content">
+                  <p class="timeline-title">{{ order.serviceSummary || order.orderNumber }}</p>
+                  <p class="timeline-subtitle">
+                    <app-icon name="clock" class="timeline-icon" />
+                    {{ formatVisitTime(order.scheduledStart!) }}
+                  </p>
+                  <p class="timeline-subtitle">
+                    <app-icon name="building-2" class="timeline-icon" />
+                    {{ order.clientBusinessName }}
+                  </p>
+                  <p class="timeline-subtitle">
+                    <app-icon name="hard-hat" class="timeline-icon" />
+                    {{ ordersFacade.technicianName(order.assignedTechnicianIds[0] ?? '') }}
+                  </p>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="dashboard-card">
+        <div class="dashboard-card-header">
+          <h2>{{ 'dashboard.funnelTitle' | transloco }}</h2>
+          <p>{{ 'dashboard.funnelSubtitle' | transloco }}</p>
+        </div>
+        <app-funnel-chart [stages]="funnelStages()" />
+      </div>
     </div>
   </div>
 </section>

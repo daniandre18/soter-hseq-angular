@@ -1,0 +1,10 @@
+<div class="funnel-chart">
+  @for (stage of renderedStages(); track stage.key) {
+    <div class="funnel-stage">
+      <div class="funnel-bar" [style.width.%]="stage.widthPercentage" [style.background]="stage.gradient">
+        <span class="funnel-value">{{ stage.value }}</span>
+      </div>
+      <span class="funnel-label">{{ stage.label }}</span>
+    </div>
+  }
+</div>

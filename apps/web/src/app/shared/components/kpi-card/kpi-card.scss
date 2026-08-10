@@ -1,0 +1,151 @@
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-gray-200);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 200ms;
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.kpi-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.kpi-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--ring-color, var(--color-brand-100));
+  background: var(--bg-color, var(--color-brand-50));
+  color: var(--icon-color, var(--color-brand-600));
+
+  app-icon {
+    --icon-size: 1.375rem;
+  }
+}
+
+.kpi-card-icon--brand {
+  --bg-color: var(--color-brand-50);
+  --ring-color: var(--color-brand-100);
+  --icon-color: var(--color-brand-600);
+}
+.kpi-card-icon--green {
+  --bg-color: var(--color-green-50);
+  --ring-color: var(--color-green-100);
+  --icon-color: var(--color-safety-green);
+}
+.kpi-card-icon--red {
+  --bg-color: var(--color-red-50);
+  --ring-color: var(--color-red-400);
+  --icon-color: var(--color-red-600);
+}
+.kpi-card-icon--orange {
+  --bg-color: var(--color-orange-50);
+  --ring-color: var(--color-orange-100);
+  --icon-color: var(--color-orange-600);
+}
+.kpi-card-icon--blue {
+  --bg-color: var(--color-blue-50);
+  --ring-color: var(--color-blue-100);
+  --icon-color: var(--color-blue-600);
+}
+.kpi-card-icon--purple {
+  --bg-color: var(--color-purple-50);
+  --ring-color: var(--color-purple-100);
+  --icon-color: var(--color-purple-600);
+}
+.kpi-card-icon--neutral {
+  --bg-color: var(--color-gray-100);
+  --ring-color: var(--color-gray-200);
+  --icon-color: var(--color-gray-500);
+}
+
+.kpi-card-alert {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-red-50);
+  color: var(--color-red-700);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+// Orden de lectura: título → valor → subtexto (ver kpi-card.html). El
+// título va primero porque responde "¿qué estoy viendo?" antes que el
+// número — sin él, un "11" o un "100%" grande no dice nada por sí solo.
+.kpi-card-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-gray-600);
+  // Reserva el alto de 2 líneas siempre — en el grid 2x2 de móvil, un
+  // título más largo que envuelve a 2 líneas (p. ej. "Conversión
+  // Comercial") empujaba el valor hacia abajo solo en esa tarjeta,
+  // descuadrando su alineación con las demás dentro de la misma fila.
+  // `em` en vez de `rem`: escala junto con el `font-size` más chico del
+  // media query de móvil, sin duplicar el valor ahí.
+  min-height: 2.6em;
+}
+
+.kpi-card-value {
+  margin: 0.25rem 0 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--color-gray-900);
+}
+
+.kpi-card-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  opacity: 0.85;
+}
+
+@media (max-width: 767px) {
+  .kpi-card {
+    padding: 1rem;
+  }
+
+  .kpi-card-top {
+    margin-bottom: 0.625rem;
+  }
+
+  .kpi-card-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+
+    app-icon {
+      --icon-size: 1.125rem;
+    }
+  }
+
+  .kpi-card-value {
+    font-size: 1.75rem;
+  }
+
+  .kpi-card-title {
+    font-size: 0.8125rem;
+  }
+
+  .kpi-card-subtitle {
+    font-size: 0.6875rem;
+  }
+}

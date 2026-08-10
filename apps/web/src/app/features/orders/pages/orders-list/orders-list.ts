@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
@@ -35,6 +35,7 @@ export class OrdersList {
   private readonly authFacade = inject(AuthFacade);
   private readonly clientsFacade = inject(ClientsFacade);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
 
@@ -103,6 +104,13 @@ export class OrdersList {
     this.ordersFacade.init();
     if (this.canManage()) {
       this.clientsFacade.init();
+    }
+    // Acceso directo desde el acceso rápido "+ Nueva Orden" del dashboard
+    // (`?crear=1`) — abre el mismo modal que el botón "Nueva orden" de esta
+    // página, sin duplicar su lógica.
+    if (this.canManage() && this.route.snapshot.queryParamMap.get('crear') === '1') {
+      this.openCreate();
+      void this.router.navigate([], { queryParams: {}, replaceUrl: true });
     }
   }
 
