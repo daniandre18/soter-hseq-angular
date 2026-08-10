@@ -28,8 +28,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: apps/web/package-lock.json
-      # Una unica instalacion de dependencias para tests y build.
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            functions/package-lock.json
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm ci
+      - name: Build Functions
+        working-directory: functions
+        run: npm run build
+      # Una unica instalacion web para tests y build.
       - name: Install dependencies
         working-directory: apps/web
         run: npm ci
