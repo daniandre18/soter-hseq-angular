@@ -8,6 +8,7 @@ import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { ServicesFacade } from '../../../services/facades/services.facade';
 import { QuotesFacade } from '../../facades/quotes.facade';
 import type { NewQuoteItem, Quote } from '../../models/quote.model';
+import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
 
 interface QuoteItemRow {
   serviceId: string;
@@ -43,7 +44,8 @@ function emptyModel(): QuoteFormModel {
 
 @Component({
   selector: 'app-quote-form-modal',
-  imports: [Modal, Button, FormField, LocalizedCurrencyPipe],
+  imports: [Modal, Button, FormField, LocalizedCurrencyPipe, TranslocoPipe],
+  providers: [...provideTranslocoScope('quotes')],
   templateUrl: './quote-form-modal.html',
   styleUrl: './quote-form-modal.scss',
 })
@@ -68,11 +70,11 @@ export class QuoteFormModal {
   protected readonly model = signal<QuoteFormModel>(emptyModel());
 
   protected readonly quoteForm = form(this.model, (schemaPath) => {
-    required(schemaPath.clientId, { message: 'Selecciona un cliente.' });
-    required(schemaPath.validUntil, { message: 'La fecha de vigencia es obligatoria.' });
+    required(schemaPath.clientId, { message: 'quotes.form.validation.clientRequired' });
+    required(schemaPath.validUntil, { message: 'quotes.form.validation.validUntilRequired' });
     applyEach(schemaPath.items, (item) => {
-      required(item.serviceId, { message: 'Selecciona un servicio.' });
-      min(item.quantity, 1, { message: 'La cantidad debe ser mayor a 0.' });
+      required(item.serviceId, { message: 'quotes.form.validation.serviceRequired' });
+      min(item.quantity, 1, { message: 'quotes.form.validation.quantityMin' });
     });
   });
 

@@ -1,23 +1,23 @@
-<app-modal [open]="open()" title="Administrar Etiquetas" size="sm" (closeRequested)="close()">
+<app-modal [open]="open()" [title]="'clients.tagManager.title' | transloco" size="sm" (closeRequested)="close()">
   @if (!creating()) {
     <button type="button" class="new-tag-btn" (click)="openCreateForm()">
       <app-icon name="tag" />
-      Nueva etiqueta
+      {{ 'clients.tagManager.new' | transloco }}
     </button>
   } @else {
     <div class="create-form">
       <div class="create-row">
         <input
           type="text"
-          placeholder="Nombre de etiqueta..."
+          [placeholder]="'clients.tagManager.placeholder' | transloco"
           [value]="newLabel()"
           (input)="newLabel.set($any($event.target).value)"
           (keydown.enter)="saveNewTag()"
         />
         <app-button size="sm" (click)="saveNewTag()" [disabled]="saving() || !newLabel().trim()">
-          {{ saving() ? 'Guardando…' : 'Guardar' }}
+          {{ (saving() ? 'clients.tagManager.saving' : 'common.save') | transloco }}
         </app-button>
-        <app-button variant="outline" size="sm" (click)="cancelCreate()">Cancelar</app-button>
+        <app-button variant="outline" size="sm" (click)="cancelCreate()">{{ 'common.cancel' | transloco }}</app-button>
       </div>
       <div class="color-grid">
         @for (color of palette; track color) {
@@ -26,7 +26,7 @@
             class="color-swatch"
             [class.color-swatch--selected]="selectedColor() === color"
             [style.background]="color"
-            [attr.aria-label]="'Elegir color ' + color"
+            [attr.aria-label]="'clients.tagManager.chooseColor' | transloco: { color }"
             (click)="selectColor(color)"
           ></button>
         }
@@ -39,7 +39,7 @@
 
   <div class="tags-list">
     @if (tags().length === 0) {
-      <p class="empty-hint">Todavía no hay etiquetas creadas.</p>
+      <p class="empty-hint">{{ 'clients.tagManager.empty' | transloco }}</p>
     }
     @for (tag of tags(); track tag.id) {
       <div class="tag-row">
@@ -50,8 +50,8 @@
           class="delete-tag-btn"
           [disabled]="deletingId() === tag.id"
           (click)="deleteTag(tag.id)"
-          [attr.aria-label]="'Eliminar etiqueta ' + tag.label"
-          title="Eliminar"
+          [attr.aria-label]="'clients.tagManager.delete' | transloco: { name: tag.label }"
+          [title]="'common.delete' | transloco"
         >
           <app-icon name="trash-2" />
         </button>

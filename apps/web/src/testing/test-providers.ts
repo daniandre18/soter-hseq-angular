@@ -5,7 +5,7 @@ import { of, type Observable } from 'rxjs';
 const GLOBAL_ES: Translation = {
   languages: { selectorLabel: 'Seleccionar idioma', spanish: 'Español', english: 'English' },
   common: {
-    total: 'Total', cancel: 'Cancelar', edit: 'Editar', delete: 'Eliminar',
+    total: 'Total', save: 'Guardar', cancel: 'Cancelar', edit: 'Editar', delete: 'Eliminar',
     combobox: { searchPlaceholder: 'Buscar...', clearSelection: 'Limpiar selección', noResults: 'Sin resultados' },
     phone: {
       country: 'País', countryAriaLabel: 'País del teléfono', label: 'Teléfono',
@@ -91,7 +91,23 @@ const SCOPES_ES: Record<string, Translation> = {
     inactiveOne: '{{count}} inactivo', inactiveOther: '{{count}} inactivos',
     sites: 'Sedes', sitesAndContacts: 'Sedes y responsables',
     manageSites: 'Administrar sedes de {{name}}',
+    form: {
+      createTitle: 'Nuevo cliente', editTitle: 'Editar cliente', businessName: 'Razón social',
+      businessNamePlaceholder: 'Empresa S.A.S.', taxId: 'NIT', email: 'Correo', phone: 'Teléfono',
+      address: 'Dirección', status: 'Estado', active: 'Activo', inactive: 'Inactivo',
+      sitesTitle: 'Sedes y responsables', sitesOptional: 'Opcional',
+      responsibleSummary: 'Responsable: {{name}} · {{phone}}', editSite: 'Editar sede {{name}}',
+      deleteSite: 'Eliminar sede {{name}}', closeSiteForm: 'Cerrar formulario de sede',
+      addSiteTitle: 'Agregar sede', editSiteTitle: 'Editar sede', siteName: 'Nombre de la sede',
+      siteNamePlaceholder: 'Ej. Sede Norte', responsible: 'Responsable',
+      fullNamePlaceholder: 'Nombre completo', position: 'Cargo', positionPlaceholder: 'Ej. Coordinador HSEQ',
+      addSite: 'Agregar sede', saveChanges: 'Guardar cambios', addFirstSite: 'Agregar una sede',
+      addAnotherSite: 'Agregar otra sede', manageSitesHelp: 'Administra {{name}}',
+      manageSites: 'Administrar sedes', saving: 'Guardando…',
+    },
   },
+  services: { form: {} },
+  users: { form: {} },
   notifications: {
     title: 'Notificaciones', markAllRead: 'Marcar todo leído', empty: 'Sin notificaciones.',
     dismiss: 'Eliminar notificación', dismissWithTitle: 'Eliminar notificación: {{title}}',

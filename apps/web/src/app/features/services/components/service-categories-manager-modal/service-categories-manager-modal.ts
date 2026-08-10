@@ -7,15 +7,18 @@ import {
   SERVICE_CATEGORY_COLOR_PALETTE,
   SERVICE_CATEGORY_ICON_OPTIONS,
 } from '../../models/service-category.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-service-categories-manager-modal',
-  imports: [Modal, Button, Icon],
+  imports: [Modal, Button, Icon, TranslocoPipe],
+  providers: [...provideTranslocoScope('services')],
   templateUrl: './service-categories-manager-modal.html',
   styleUrl: './service-categories-manager-modal.scss',
 })
 export class ServiceCategoriesManagerModal {
   private readonly categoriesFacade = inject(ServiceCategoriesFacade);
+  private readonly transloco = inject(TranslocoService);
 
   readonly open = input(false);
   readonly closeRequested = output<void>();
@@ -73,7 +76,9 @@ export class ServiceCategoriesManagerModal {
       this.creating.set(false);
     } catch (error) {
       this.saveError.set(
-        error instanceof Error ? error.message : 'No fue posible guardar la categoría.',
+        error instanceof Error
+          ? error.message
+          : this.transloco.translate('services.categoryManager.saveError'),
       );
     } finally {
       this.saving.set(false);

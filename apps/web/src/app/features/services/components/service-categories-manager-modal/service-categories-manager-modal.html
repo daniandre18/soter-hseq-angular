@@ -1,15 +1,15 @@
-<app-modal [open]="open()" title="Administrar Categorías" size="sm" (closeRequested)="close()">
+<app-modal [open]="open()" [title]="'services.categoryManager.title' | transloco" size="sm" (closeRequested)="close()">
   @if (!creating()) {
     <button type="button" class="new-category-btn" (click)="openCreateForm()">
       <app-icon name="tag" />
-      Nueva categoría
+      {{ 'services.categoryManager.new' | transloco }}
     </button>
   } @else {
     <div class="create-form">
       <div class="create-row">
         <input
           type="text"
-          placeholder="Nombre de categoría..."
+          [placeholder]="'services.categoryManager.placeholder' | transloco"
           [value]="newLabel()"
           (input)="newLabel.set($any($event.target).value)"
           (keydown.enter)="saveNewCategory()"
@@ -19,12 +19,12 @@
           (click)="saveNewCategory()"
           [disabled]="saving() || !newLabel().trim()"
         >
-          {{ saving() ? 'Guardando…' : 'Guardar' }}
+          {{ (saving() ? 'services.categoryManager.saving' : 'common.save') | transloco }}
         </app-button>
-        <app-button variant="outline" size="sm" (click)="cancelCreate()">Cancelar</app-button>
+        <app-button variant="outline" size="sm" (click)="cancelCreate()">{{ 'common.cancel' | transloco }}</app-button>
       </div>
 
-      <p class="field-hint">Ícono (opcional)</p>
+      <p class="field-hint">{{ 'services.categoryManager.icon' | transloco }}</p>
       <div class="icon-grid">
         @for (icon of iconOptions; track icon) {
           <button
@@ -38,7 +38,7 @@
         }
       </div>
 
-      <p class="field-hint">Color</p>
+      <p class="field-hint">{{ 'services.categoryManager.color' | transloco }}</p>
       <div class="color-grid">
         @for (color of palette; track color) {
           <button
@@ -46,7 +46,7 @@
             class="color-swatch"
             [class.color-swatch--selected]="selectedColor() === color"
             [style.background]="color"
-            [attr.aria-label]="'Elegir color ' + color"
+            [attr.aria-label]="'services.categoryManager.chooseColor' | transloco: { color }"
             (click)="selectColor(color)"
           ></button>
         }
@@ -59,7 +59,7 @@
 
   <div class="categories-list">
     @if (categories().length === 0) {
-      <p class="empty-hint">Todavía no hay categorías creadas.</p>
+      <p class="empty-hint">{{ 'services.categoryManager.empty' | transloco }}</p>
     }
     @for (category of categories(); track category.id) {
       <div class="category-row">
@@ -73,8 +73,8 @@
           class="delete-category-btn"
           [disabled]="deletingId() === category.id"
           (click)="deleteCategory(category.id)"
-          [attr.aria-label]="'Eliminar categoría ' + category.label"
-          title="Eliminar"
+          [attr.aria-label]="'services.categoryManager.delete' | transloco: { name: category.label }"
+          [title]="'common.delete' | transloco"
         >
           <app-icon name="trash-2" />
         </button>

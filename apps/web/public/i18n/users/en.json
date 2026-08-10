@@ -1,0 +1,27 @@
+{
+  "form": {
+    "createTitle": "New technician",
+    "editTitle": "Edit technician",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "E.g. Andrew Morales",
+    "email": "Email",
+    "password": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "phone": "Phone (optional)",
+    "specialty": "Specialty (optional)",
+    "specialtyPlaceholder": "E.g. Industrial safety",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "create": "Create technician",
+    "validation": {
+      "nameRequired": "Name is required.",
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "passwordRequired": "Password is required.",
+      "passwordMin": "Must contain at least 6 characters."
+    },
+    "created": "Technician created successfully.",
+    "updated": "Technician updated successfully.",
+    "saveError": "The technician could not be saved."
+  }
+}

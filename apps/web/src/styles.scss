@@ -78,6 +78,9 @@
   --operational-alert-border: rgb(254 202 202 / 60%);
   --operational-alert-text: var(--color-gray-800);
   --operational-alert-action: var(--color-red-700);
+  --kpi-alert-bg: rgb(255 107 107 / 14%);
+  --kpi-alert-border: rgb(239 68 68 / 35%);
+  --kpi-alert-text: #a3241c;
   --notification-panel-bg: var(--color-surface);
   --notification-panel-border: var(--color-gray-200);
   --notification-panel-shadow: 0 8px 24px rgb(0 0 0 / 12%);
@@ -179,6 +182,9 @@
   --operational-alert-border: rgb(248 113 113 / 32%);
   --operational-alert-text: #f6f5fc;
   --operational-alert-action: #f87171;
+  --kpi-alert-bg: rgb(220 38 38 / 16%);
+  --kpi-alert-border: rgb(239 68 68 / 65%);
+  --kpi-alert-text: #f87171;
   --notification-panel-bg: #211d3a;
   --notification-panel-border: #3c3856;
   --notification-panel-shadow: 0 16px 40px rgb(3 2 15 / 55%);

@@ -1,0 +1,27 @@
+{
+  "form": {
+    "createTitle": "Nuevo técnico",
+    "editTitle": "Editar técnico",
+    "fullName": "Nombre completo",
+    "fullNamePlaceholder": "Ej. Andrés Morales",
+    "email": "Correo",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Mínimo 6 caracteres",
+    "phone": "Teléfono (opcional)",
+    "specialty": "Especialidad (opcional)",
+    "specialtyPlaceholder": "Ej. Seguridad industrial",
+    "saving": "Guardando…",
+    "saveChanges": "Guardar cambios",
+    "create": "Crear técnico",
+    "validation": {
+      "nameRequired": "El nombre es obligatorio.",
+      "emailRequired": "El correo es obligatorio.",
+      "emailInvalid": "Ingresa un correo válido.",
+      "passwordRequired": "La contraseña es obligatoria.",
+      "passwordMin": "Debe tener al menos 6 caracteres."
+    },
+    "created": "Técnico creado correctamente.",
+    "updated": "Técnico actualizado correctamente.",
+    "saveError": "No se pudo guardar el técnico."
+  }
+}

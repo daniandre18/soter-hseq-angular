@@ -5,6 +5,7 @@ import { Button } from '../../../../shared/components/button/button';
 import { ServicesFacade } from '../../facades/services.facade';
 import { ServiceCategoriesFacade } from '../../facades/service-categories.facade';
 import type { Service } from '../../models/service.model';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 // `status` como string-union (no `active: boolean`) a propósito: un
 // `<select>` nativo siempre emite string, y Signal Forms no coerciona el
@@ -31,13 +32,15 @@ const EMPTY_MODEL: ServiceFormModel = {
 
 @Component({
   selector: 'app-service-form-modal',
-  imports: [Modal, Button, FormField],
+  imports: [Modal, Button, FormField, TranslocoPipe],
+  providers: [...provideTranslocoScope('services')],
   templateUrl: './service-form-modal.html',
   styleUrl: './service-form-modal.scss',
 })
 export class ServiceFormModal {
   private readonly servicesFacade = inject(ServicesFacade);
   private readonly categoriesFacade = inject(ServiceCategoriesFacade);
+  private readonly transloco = inject(TranslocoService);
 
   readonly open = input(false);
   readonly editingService = input<Service | null>(null);
@@ -50,14 +53,14 @@ export class ServiceFormModal {
   protected readonly categories = this.categoriesFacade.categories;
 
   protected readonly serviceForm = form(this.model, (schemaPath) => {
-    required(schemaPath.name, { message: 'El nombre del servicio es obligatorio.' });
-    required(schemaPath.category, { message: 'Selecciona una categoría.' });
-    required(schemaPath.unit, { message: 'Indica la unidad de cobro.' });
-    min(schemaPath.price, 0, { message: 'El precio no puede ser negativo.' });
+    required(schemaPath.name, { message: 'services.form.validation.nameRequired' });
+    required(schemaPath.category, { message: 'services.form.validation.categoryRequired' });
+    required(schemaPath.unit, { message: 'services.form.validation.unitRequired' });
+    min(schemaPath.price, 0, { message: 'services.form.validation.priceMin' });
   });
 
   protected readonly title = computed(() =>
-    this.editingService() ? 'Editar Servicio' : 'Nuevo Servicio',
+    this.editingService() ? 'services.form.editTitle' : 'services.form.createTitle',
   );
 
   constructor() {
@@ -110,7 +113,7 @@ export class ServiceFormModal {
         this.close();
       } catch (error) {
         this.saveError.set(
-          error instanceof Error ? error.message : 'No fue posible guardar el servicio.',
+          error instanceof Error ? error.message : this.transloco.translate('services.form.saveError'),
         );
       } finally {
         this.saving.set(false);

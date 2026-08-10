@@ -1,0 +1,32 @@
+{
+  "categoryManager": {
+    "title": "Administrar categorías", "new": "Nueva categoría", "placeholder": "Nombre de categoría…",
+    "saving": "Guardando…", "icon": "Ícono (opcional)", "color": "Color",
+    "chooseColor": "Elegir color {{color}}", "empty": "Todavía no hay categorías creadas.",
+    "delete": "Eliminar categoría {{name}}", "saveError": "No fue posible guardar la categoría."
+  },
+  "form": {
+    "createTitle": "Nuevo servicio",
+    "editTitle": "Editar servicio",
+    "name": "Nombre",
+    "namePlaceholder": "Capacitación SST - Trabajo en alturas",
+    "category": "Categoría",
+    "selectCategory": "Seleccionar categoría…",
+    "unit": "Unidad",
+    "unitPlaceholder": "visita, hora, empleado…",
+    "price": "Precio",
+    "status": "Estado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "description": "Descripción (opcional)",
+    "descriptionPlaceholder": "Alcance, requisitos, entregables…",
+    "saving": "Guardando…",
+    "validation": {
+      "nameRequired": "El nombre del servicio es obligatorio.",
+      "categoryRequired": "Selecciona una categoría.",
+      "unitRequired": "Indica la unidad de cobro.",
+      "priceMin": "El precio no puede ser negativo."
+    },
+    "saveError": "No fue posible guardar el servicio."
+  }
+}

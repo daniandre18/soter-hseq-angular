@@ -102,13 +102,14 @@
   display: inline-flex;
   align-items: center;
   padding: 0.3125rem 0.5rem 0.1875rem;
+  border: 1px solid var(--kpi-alert-border);
   border-radius: 9999px;
   // Coral suave, no el rojo saturado de antes — sigue leyéndose como
   // alerta sin chocar con el resto de la paleta lavanda/morada. El texto
   // necesita quedarse bastante más oscuro que el fondo para pasar
   // contraste mínimo sobre un lavado tan claro.
-  background: rgba(255, 107, 107, 0.14);
-  color: #a3241c;
+  background: var(--kpi-alert-bg);
+  color: var(--kpi-alert-text);
   font-size: 0.6875rem;
   font-weight: 700;
   white-space: nowrap;

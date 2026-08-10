@@ -1,0 +1,32 @@
+{
+  "categoryManager": {
+    "title": "Manage categories", "new": "New category", "placeholder": "Category name…",
+    "saving": "Saving…", "icon": "Icon (optional)", "color": "Color",
+    "chooseColor": "Choose color {{color}}", "empty": "No categories have been created yet.",
+    "delete": "Delete category {{name}}", "saveError": "The category could not be saved."
+  },
+  "form": {
+    "createTitle": "New service",
+    "editTitle": "Edit service",
+    "name": "Name",
+    "namePlaceholder": "Occupational safety training",
+    "category": "Category",
+    "selectCategory": "Select category…",
+    "unit": "Unit",
+    "unitPlaceholder": "visit, hour, employee…",
+    "price": "Price",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "Scope, requirements, deliverables…",
+    "saving": "Saving…",
+    "validation": {
+      "nameRequired": "Service name is required.",
+      "categoryRequired": "Select a category.",
+      "unitRequired": "Enter the billing unit.",
+      "priceMin": "Price cannot be negative."
+    },
+    "saveError": "The service could not be saved."
+  }
+}
