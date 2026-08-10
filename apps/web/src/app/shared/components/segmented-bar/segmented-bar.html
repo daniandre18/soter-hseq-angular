@@ -5,7 +5,7 @@
     @for (item of renderedItems(); track item.key) {
       <div
         class="segmented-bar-segment"
-        [style.width.%]="item.percentage"
+        [style.--segment-width.%]="item.percentage"
         [style.background]="item.color"
         [title]="item.label + ': ' + item.value + ' ' + unit() + ' (' + item.percentage + '%)'"
       ></div>

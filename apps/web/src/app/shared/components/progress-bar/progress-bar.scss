@@ -12,13 +12,13 @@
   }
 
   &::-webkit-progress-value {
-    background: var(--color-brand-600);
+    background: var(--gradient-accent);
     border-radius: 9999px;
     transition: width 300ms ease;
   }
 
   &::-moz-progress-bar {
-    background: var(--color-brand-600);
+    background: var(--gradient-accent);
     border-radius: 9999px;
   }
 }

@@ -13,12 +13,38 @@
   background: var(--color-gray-100);
 }
 
+// El "to" de la animación lee la custom property, no un valor fijo — cada
+// segmento tiene su propio ancho real (`--segment-width`, puesto inline
+// desde segmented-bar.html), así que todos crecen desde 0% en paralelo
+// hasta su porcentaje real al montarse, en vez de aparecer ya llenos.
+@keyframes segmented-bar-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--segment-width, 0%);
+  }
+}
+
 .segmented-bar-segment {
   height: 100%;
+  // Declaración estática además de la animación: cuando cambian los datos
+  // (nuevas órdenes vía Firestore) después del montaje inicial, la
+  // animación de una sola vez ya terminó — esta regla, junto con la
+  // `transition` de abajo, es la que sigue reaccionando a un
+  // `--segment-width` distinto.
+  width: var(--segment-width, 0%);
   transition: width 300ms ease;
+  animation: segmented-bar-fill 600ms cubic-bezier(0, 0, 0.2, 1) both;
 
   &:not(:last-child) {
     border-right: 2px solid var(--color-surface);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented-bar-segment {
+    animation: none;
   }
 }
 

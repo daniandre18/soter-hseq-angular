@@ -4,11 +4,11 @@
          para alertas/vencidos/incidentes — ver el badge "N Vencidas" de la
          primera KPI card. Una acción de creación no debe competir visualmente
          con esa semántica de alerta. -->
-    <app-button variant="accent" (click)="goToCreateOrder()">
+    <app-button variant="accent" size="sm" (click)="goToCreateOrder()">
       <app-icon name="plus" />
       {{ 'dashboard.newOrderAction' | transloco }}
     </app-button>
-    <app-button variant="outline" (click)="goToScheduleVisit()">
+    <app-button variant="outline" size="sm" (click)="goToScheduleVisit()">
       <app-icon name="calendar-days" />
       {{ 'dashboard.scheduleVisitAction' | transloco }}
     </app-button>
@@ -16,6 +16,7 @@
 
   <div class="kpi-row">
     <app-kpi-card
+      style="--stagger-delay: 0ms"
       [title]="'dashboard.kpi.activeOrdersTitle' | transloco"
       [value]="activeOrdersCount()"
       [subtitle]="activeOrdersSubtitle()"
@@ -24,6 +25,7 @@
       color="brand"
     />
     <app-kpi-card
+      style="--stagger-delay: 50ms"
       [title]="'dashboard.kpi.fieldResourcesTitle' | transloco"
       [value]="ordersFacade.techniciansInFieldCount()"
       [subtitle]="fieldResourcesSubtitle()"
@@ -31,6 +33,7 @@
       color="orange"
     />
     <app-kpi-card
+      style="--stagger-delay: 100ms"
       [title]="'dashboard.kpi.visitsTodayTitle' | transloco"
       [value]="ordersFacade.todayVisitsCount()"
       [subtitle]="visitsWeekSubtitle()"
@@ -38,6 +41,7 @@
       color="purple"
     />
     <app-kpi-card
+      style="--stagger-delay: 150ms"
       [title]="'dashboard.kpi.conversionTitle' | transloco"
       [value]="conversionValue()"
       [subtitle]="conversionSubtitle()"

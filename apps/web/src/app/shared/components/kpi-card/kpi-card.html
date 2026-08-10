@@ -1,12 +1,10 @@
 <div class="kpi-card">
-  <div class="kpi-card-top">
-    <div class="kpi-card-icon" [class]="'kpi-card-icon--' + color()">
-      <app-icon [name]="icon()" />
-    </div>
-    @if (alertText(); as text) {
-      <span class="kpi-card-alert">{{ text }}</span>
-    }
+  <div class="kpi-card-icon" [class]="'kpi-card-icon--' + color()">
+    <app-icon [name]="icon()" />
   </div>
+  @if (alertText(); as text) {
+    <span class="kpi-card-alert">{{ text }}</span>
+  }
   <p class="kpi-card-title">{{ title() }}</p>
   <p class="kpi-card-value">{{ value() }}</p>
   @if (subtitle()) {

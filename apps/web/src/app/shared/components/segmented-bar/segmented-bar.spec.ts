@@ -39,6 +39,10 @@ describe('SegmentedBar', () => {
       '.segmented-bar-segment',
     );
     expect(segments).toHaveLength(3);
-    expect(segments[0].style.width).toBe('75%');
+    // El ancho real ya no es un inline `style.width` — lo pone la hoja de
+    // estilos vía `width: var(--segment-width)` (ver segmented-bar.scss),
+    // para poder animar el llenado desde 0% al montarse. Lo único que el
+    // componente escribe inline es la custom property con el porcentaje.
+    expect(segments[0].style.getPropertyValue('--segment-width')).toBe('75%');
   });
 });

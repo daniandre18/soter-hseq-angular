@@ -3,8 +3,9 @@
   width: 100%;
   background: var(--color-surface);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-gray-200);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  // Sin borde de 1px — la sombra suave (`--shadow-soft`, ver styles.scss)
+  // ya define el borde de la tarjeta contra el lienzo lavanda del re-skin.
+  box-shadow: var(--shadow-soft);
   text-align: left;
   font-family: inherit;
 }
@@ -14,7 +15,7 @@
   transition: box-shadow 150ms;
 
   &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 14px 34px rgba(82, 55, 236, 0.1);
   }
 
   &:focus-visible {

@@ -1,110 +1,135 @@
-.kpi-card {
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-gray-200);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 200ms;
-
-  &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+@keyframes kpi-card-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.kpi-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.875rem;
+// Grid con áreas nombradas, no flex-column: en escritorio el ícono y el
+// badge comparten la fila de arriba ("icon badge"), título/valor/subtexto
+// van cada uno en su propia fila. En móvil (ver el media query) se
+// redefinen las MISMAS áreas para que título y badge compartan la fila de
+// arriba en su lugar — sin duplicar ningún elemento del template, cada
+// pieza solo cambia de casillero.
+.kpi-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'icon badge'
+    'title title'
+    'value value'
+    'subtitle subtitle';
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+  // El retraso del stagger lo decide el padre (dashboard.html, vía
+  // `style="--stagger-delay: …"` en cada `<app-kpi-card>`): las custom
+  // properties sí heredan a través del host aunque `Button` (no `KpiCard`)
+  // sea `display: contents` — a diferencia de una clase interna como
+  // `.btn`, esto no choca con el encapsulamiento de vistas de Angular.
+  animation: kpi-card-fade-in-up 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--stagger-delay, 0ms);
+
+  &:hover {
+    transform: scale(1.01);
+    box-shadow: 0 14px 34px rgba(82, 55, 236, 0.1);
+  }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card {
+    animation: none;
+  }
+}
+
+// Homogeneizado al morado primario — antes cada `color()` (brand/green/
+// red/orange/blue/purple/neutral) pintaba un ícono distinto; el re-skin
+// "monocromático" pide un solo tratamiento (círculo suave del color
+// primario) para las 4 KPI cards, dejando que el badge de alerta y el
+// texto lleven la señal de estado, no el ícono. El input `color()` del
+// componente se mantiene (por si vuelve a hacer falta variar), pero ya
+// no tiene ningún selector `--kpi-card-icon--*` que lo lea.
 .kpi-card-icon {
+  grid-area: icon;
+  justify-self: start;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: var(--radius-md);
-  box-shadow: inset 0 0 0 1px var(--ring-color, var(--color-brand-100));
-  background: var(--bg-color, var(--color-brand-50));
-  color: var(--icon-color, var(--color-brand-600));
+  margin-bottom: 0.875rem;
+  border-radius: 9999px;
+  background: rgba(93, 95, 239, 0.1);
+  color: var(--color-brand-600);
 
   app-icon {
     --icon-size: 1.375rem;
   }
 }
 
-.kpi-card-icon--brand {
-  --bg-color: var(--color-brand-50);
-  --ring-color: var(--color-brand-100);
-  --icon-color: var(--color-brand-600);
-}
-.kpi-card-icon--green {
-  --bg-color: var(--color-green-50);
-  --ring-color: var(--color-green-100);
-  --icon-color: var(--color-safety-green);
-}
-.kpi-card-icon--red {
-  --bg-color: var(--color-red-50);
-  --ring-color: var(--color-red-400);
-  --icon-color: var(--color-red-600);
-}
-.kpi-card-icon--orange {
-  --bg-color: var(--color-orange-50);
-  --ring-color: var(--color-orange-100);
-  --icon-color: var(--color-orange-600);
-}
-.kpi-card-icon--blue {
-  --bg-color: var(--color-blue-50);
-  --ring-color: var(--color-blue-100);
-  --icon-color: var(--color-blue-600);
-}
-.kpi-card-icon--purple {
-  --bg-color: var(--color-purple-50);
-  --ring-color: var(--color-purple-100);
-  --icon-color: var(--color-purple-600);
-}
-.kpi-card-icon--neutral {
-  --bg-color: var(--color-gray-100);
-  --ring-color: var(--color-gray-200);
-  --icon-color: var(--color-gray-500);
+// Pulso lento en opacidad (no parpadeo brusco): 2.4s es deliberadamente
+// más lento que las transiciones de interacción (150-300ms) de arriba —
+// esto es una señal ambiental de fondo, no una respuesta a una acción.
+@keyframes kpi-card-alert-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .kpi-card-alert {
+  grid-area: badge;
+  justify-self: end;
+  align-self: start;
   display: inline-flex;
   align-items: center;
-  padding: 0.1875rem 0.5rem;
+  padding: 0.3125rem 0.5rem 0.1875rem;
   border-radius: 9999px;
-  background: var(--color-red-50);
-  color: var(--color-red-700);
+  // Coral suave, no el rojo saturado de antes — sigue leyéndose como
+  // alerta sin chocar con el resto de la paleta lavanda/morada. El texto
+  // necesita quedarse bastante más oscuro que el fondo para pasar
+  // contraste mínimo sobre un lavado tan claro.
+  background: rgba(255, 107, 107, 0.14);
+  color: #a3241c;
   font-size: 0.6875rem;
   font-weight: 700;
   white-space: nowrap;
+  animation: kpi-card-alert-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card-alert {
+    animation: none;
+  }
 }
 
 // Orden de lectura: título → valor → subtexto (ver kpi-card.html). El
 // título va primero porque responde "¿qué estoy viendo?" antes que el
 // número — sin él, un "11" o un "100%" grande no dice nada por sí solo.
 .kpi-card-title {
+  grid-area: title;
   margin: 0;
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.3;
   color: var(--color-gray-600);
-  // Reserva el alto de 2 líneas siempre — en el grid 2x2 de móvil, un
-  // título más largo que envuelve a 2 líneas (p. ej. "Conversión
-  // Comercial") empujaba el valor hacia abajo solo en esa tarjeta,
-  // descuadrando su alineación con las demás dentro de la misma fila.
-  // `em` en vez de `rem`: escala junto con el `font-size` más chico del
-  // media query de móvil, sin duplicar el valor ahí.
-  min-height: 2.6em;
 }
 
 .kpi-card-value {
+  grid-area: value;
   margin: 0.25rem 0 0;
   font-size: 2.25rem;
   font-weight: 700;
@@ -113,36 +138,83 @@
 }
 
 .kpi-card-subtitle {
+  grid-area: subtitle;
   margin: 0.25rem 0 0;
   font-size: 0.75rem;
-  color: var(--color-gray-500);
-  opacity: 0.85;
+  // gray-600, no gray-500 con opacity: la combinación anterior (gray-500 al
+  // 85%) quedaba más clara que el propio gray-500, poco legible sobre todo
+  // en la tarjeta compacta de móvil.
+  color: var(--color-gray-600);
 }
 
 @media (max-width: 767px) {
+  // Densidad de móvil: tarjeta angosta de ancho fijo dentro de una fila con
+  // scroll horizontal (ver `.kpi-row` en dashboard.scss). Reusa el mismo
+  // breakpoint que el resto del panel (767px, no 640px) para no crear un
+  // rango intermedio (641-767px) donde la fila ya haría scroll horizontal
+  // pero las tarjetas todavía se verían como las de escritorio.
   .kpi-card {
-    padding: 1rem;
-  }
+    // Título y badge comparten la fila de arriba (en vez de ícono+badge);
+    // sin fila de ícono, el resto se recorre una casilla hacia arriba.
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'title badge'
+      'value value'
+      'subtitle subtitle';
+    align-items: center;
+    width: 10.3125rem;
+    // Alto fijo, no `min-height`: dentro de `.kpi-row` (scroll horizontal),
+    // el `align-items: stretch` de flexbox no estaba emparejando el alto de
+    // las tarjetas de forma confiable (una tarjeta con subtítulo de 2
+    // líneas, como "Recursos en Campo", quedaba más alta que el resto) —
+    // un alto fijo es más simple y confiable que depurar por qué el
+    // stretch fallaba ahí.
+    height: 7.75rem;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 0.75rem 0.875rem;
+    // Micro-borde casi imperceptible — el resto de las tarjetas del re-skin
+    // quedaron sin borde (solo sombra), pero a esta escala tan compacta un
+    // filo sutil ayuda a separar la tarjeta del lienzo lavanda sin verse
+    // como un borde "duro".
+    border: 1px solid var(--color-gray-100);
+    // Sombra propia, más ceñida que `--shadow-soft` (pensada para tarjetas
+    // grandes) — a este tamaño una sombra muy difusa se ve desproporcionada.
+    box-shadow: 0 4px 20px rgba(93, 95, 239, 0.05);
 
-  .kpi-card-top {
-    margin-bottom: 0.625rem;
-  }
-
-  .kpi-card-icon {
-    width: 2.25rem;
-    height: 2.25rem;
-
-    app-icon {
-      --icon-size: 1.125rem;
+    // Barra de acento de 3px en el borde superior — coherencia visual entre
+    // las 4 tarjetas del carrusel, sin depender del ícono (oculto acá).
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      background: #5d5fef;
     }
   }
 
-  .kpi-card-value {
-    font-size: 1.75rem;
+  .kpi-card-icon {
+    display: none;
+  }
+
+  // Título y badge comparten fila: un badge más chico (micro, `text-[10px]`)
+  // le deja más ancho disponible al título antes de recortarlo con "…".
+  .kpi-card-alert {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.625rem;
   }
 
   .kpi-card-title {
-    font-size: 0.8125rem;
+    margin-bottom: 0.375rem;
+    font-size: 0.6875rem;
+    line-height: 1.25;
+  }
+
+  .kpi-card-value {
+    font-size: 1.5rem;
   }
 
   .kpi-card-subtitle {
