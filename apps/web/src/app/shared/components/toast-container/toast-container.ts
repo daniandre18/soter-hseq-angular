@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Icon } from '../icon/icon';
-import { ToastService } from '../../services/toast.service';
+import { ToastService, type ToastAction } from '../../services/toast.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
@@ -14,5 +14,10 @@ export class ToastContainer {
 
   protected dismiss(id: number): void {
     this.toast.dismiss(id);
+  }
+
+  protected runAction(id: number, action: ToastAction): void {
+    action.onClick();
+    this.dismiss(id);
   }
 }

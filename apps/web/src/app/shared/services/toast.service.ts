@@ -2,10 +2,16 @@ import { Injectable, signal } from '@angular/core';
 
 export type ToastType = 'success' | 'error' | 'info';
 
+export interface ToastAction {
+  readonly label: string;
+  readonly onClick: () => void;
+}
+
 export interface ToastMessage {
   id: number;
   message: string;
   type: ToastType;
+  action?: ToastAction;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,6 +29,14 @@ export class ToastService {
 
   info(message: string): void {
     this.show(message, 'info');
+  }
+
+  /** Toast sin auto-descarte, con un botón de acción — para avisos que el
+   *  usuario debe decidir atender (ej. "nueva versión disponible"), no algo
+   *  que deba desaparecer solo mientras todavía es relevante. */
+  action(message: string, action: ToastAction): void {
+    const id = ++this.nextId;
+    this.messages.update((messages) => [...messages, { id, message, type: 'info', action }]);
   }
 
   dismiss(id: number): void {

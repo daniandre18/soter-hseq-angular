@@ -15,6 +15,7 @@ import { firebaseProviders } from './infrastructure/firebase/firebase.providers'
 import { repositoryProviders } from './infrastructure/firebase/repository.providers';
 import { i18nProviders } from './core/i18n/i18n.providers';
 import { PushNotificationsService } from './features/push-notifications/state/push-notifications.service';
+import { AppUpdateService } from './shared/services/app-update.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -35,5 +36,6 @@ export const appConfig: ApplicationConfig = {
       registrationStrategy: 'registerWhenStable:30000',
     }),
     provideAppInitializer(() => inject(PushNotificationsService).listenForClicks()),
+    provideAppInitializer(() => inject(AppUpdateService).init()),
   ],
 };

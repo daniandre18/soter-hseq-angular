@@ -30,6 +30,10 @@
     "total": "Total",
     "deleting": "Eliminando…",
     "dismissMessage": "Cerrar mensaje",
+    "appUpdate": {
+      "message": "Hay una nueva versión disponible.",
+      "reload": "Actualizar"
+    },
     "backToDashboard": "Volver al panel",
     "combobox": {
       "searchPlaceholder": "Buscar...",

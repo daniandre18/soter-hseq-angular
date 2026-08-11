@@ -11,6 +11,11 @@
         <app-icon [name]="toast.type === 'success' ? 'circle-check-big' : toast.type === 'error' ? 'triangle-alert' : 'bell'" />
       </span>
       <p>{{ toast.message }}</p>
+      @if (toast.action; as action) {
+        <button type="button" class="toast-action" (click)="runAction(toast.id, action)">
+          {{ action.label }}
+        </button>
+      }
       <button type="button" class="toast-close" (click)="dismiss(toast.id)" [attr.aria-label]="'common.dismissMessage' | transloco">
         <app-icon name="x" />
       </button>

@@ -30,6 +30,10 @@
     "total": "Total",
     "deleting": "Deleting…",
     "dismissMessage": "Dismiss message",
+    "appUpdate": {
+      "message": "A new version is available.",
+      "reload": "Reload"
+    },
     "backToDashboard": "Back to dashboard",
     "combobox": {
       "searchPlaceholder": "Search...",
