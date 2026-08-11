@@ -29,4 +29,7 @@ export interface AppEnvironment {
    * región usada en `functions/src/index.ts`).
    */
   functionsRegion: string;
+  /** Clave pública VAPID para Web Push — no es secreta, se envía tal cual
+   *  al navegador (la privada solo vive en Cloud Functions). */
+  vapidPublicKey: string;
 }

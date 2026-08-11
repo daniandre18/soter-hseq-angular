@@ -14,6 +14,7 @@ import { EVIDENCE_UPLOAD_GATEWAY } from '../../features/orders/domain/evidence-u
 import { CLOSING_ACT_GATEWAY } from '../../features/orders/domain/closing-act.gateway';
 import { LOGO_UPLOAD_GATEWAY } from '../../features/settings/domain/logo-upload.gateway';
 import { DASHBOARD_REPOSITORY } from '../../features/dashboard/domain/dashboard.repository';
+import { PUSH_NOTIFICATIONS_GATEWAY } from '../../features/push-notifications/domain/push-notifications.gateway';
 import { FirebaseAuthRepository } from './auth/firebase-auth.repository';
 import { FirebaseUsersRepository } from './repositories/firebase-users.repository';
 import { FirebaseSettingsRepository } from './repositories/firebase-settings.repository';
@@ -29,6 +30,7 @@ import { FirebaseEvidenceUploadGateway } from './functions/firebase-evidence-upl
 import { FirebaseClosingActGateway } from './functions/firebase-closing-act.gateway';
 import { FirebaseLogoUploadGateway } from './functions/firebase-logo-upload.gateway';
 import { FirebaseDashboardRepository } from './repositories/firebase-dashboard.repository';
+import { FirebasePushNotificationsGateway } from './functions/firebase-push-notifications.gateway';
 
 /**
  * Enlaza cada puerto (`*_REPOSITORY`/`*_GATEWAY`, definidos junto a su
@@ -54,4 +56,5 @@ export const repositoryProviders: Provider[] = [
   { provide: SETTINGS_REPOSITORY, useClass: FirebaseSettingsRepository },
   { provide: LOGO_UPLOAD_GATEWAY, useClass: FirebaseLogoUploadGateway },
   { provide: DASHBOARD_REPOSITORY, useClass: FirebaseDashboardRepository },
+  { provide: PUSH_NOTIFICATIONS_GATEWAY, useClass: FirebasePushNotificationsGateway },
 ];

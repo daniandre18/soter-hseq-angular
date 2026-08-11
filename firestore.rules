@@ -85,6 +85,13 @@ service cloud.firestore {
                         && request.resource.data.role == resource.data.role
                         && request.resource.data.status == resource.data.status);
       allow delete: if false; // se eliminan desde la Cloud Function `deleteUser` (borra Auth + Firestore juntos)
+
+      // Suscripciones de Web Push del propio dispositivo — nadie más las lee;
+      // el envío lo hace el Admin SDK desde Cloud Functions, que ignora Rules.
+      match /pushSubscriptions/{subscriptionId} {
+        allow read, create, delete: if isSignedIn() && request.auth.uid == userId;
+        allow update: if false; // se borra y se vuelve a crear, no se edita
+      }
     }
 
     match /clients/{clientId} {

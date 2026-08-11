@@ -142,6 +142,22 @@
       </div>
     }
 
+    @if (pushSupported) {
+      <button
+        type="button"
+        class="sidebar-action"
+        [class.sidebar-action--active]="pushEnabled()"
+        [disabled]="pushEnabling()"
+        (click)="togglePushNotifications()"
+        [title]="isCollapsed() ? (pushEnabled() ? ('layout.pushNotifications.disable' | transloco) : ('layout.pushNotifications.enable' | transloco)) : null"
+      >
+        <app-icon [name]="pushEnabled() ? 'bell' : 'bell-off'" class="sidebar-action-icon" />
+        @if (!isCollapsed()) {
+          <span>{{ (pushEnabled() ? 'layout.pushNotifications.disable' : 'layout.pushNotifications.enable') | transloco }}</span>
+        }
+      </button>
+    }
+
     <button
       type="button"
       class="sidebar-logout"

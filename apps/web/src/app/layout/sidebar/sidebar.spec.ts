@@ -5,6 +5,16 @@ import { provideRouter } from '@angular/router';
 import { Sidebar } from './sidebar';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
 import { SettingsFacade } from '../../features/settings/facades/settings.facade';
+import { PushNotificationsFacade } from '../../features/push-notifications/facades/push-notifications.facade';
+
+const pushFacadeStub = {
+  supported: false,
+  enabled: signal(false),
+  enabling: signal(false),
+  error: signal<string | null>(null),
+  enable: async () => undefined,
+  disable: async () => undefined,
+};
 
 const settingsFacadeStub = {
   settings: signal({
@@ -38,6 +48,7 @@ describe('Sidebar', () => {
           },
         },
         { provide: SettingsFacade, useValue: settingsFacadeStub },
+        { provide: PushNotificationsFacade, useValue: pushFacadeStub },
       ],
     }).compileComponents();
 
@@ -76,6 +87,7 @@ describe('Sidebar', () => {
           },
         },
         { provide: SettingsFacade, useValue: settingsFacadeStub },
+        { provide: PushNotificationsFacade, useValue: pushFacadeStub },
       ],
     }).compileComponents();
 
@@ -128,6 +140,7 @@ describe('Sidebar', () => {
           },
         },
         { provide: SettingsFacade, useValue: settingsFacadeStub },
+        { provide: PushNotificationsFacade, useValue: pushFacadeStub },
       ],
     }).compileComponents();
 

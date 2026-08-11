@@ -19,6 +19,7 @@ export type IconName =
   | 'chevron-right'
   | 'menu'
   | 'bell'
+  | 'bell-off'
   | 'globe'
   | 'layout-dashboard'
   | 'log-out'
