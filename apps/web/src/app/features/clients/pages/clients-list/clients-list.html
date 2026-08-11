@@ -579,7 +579,7 @@
             </button>
             <button type="button" class="load-more-btn" (click)="showAll()">
               <app-icon name="chevrons-down" />
-              {{ 'clients.showAll' | transloco: { count: filtered().length } }}
+              {{ 'clients.showAll' | transloco: { count: totalFilteredCount() } }}
             </button>
           }
         </div>

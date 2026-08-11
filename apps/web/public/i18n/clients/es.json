@@ -73,6 +73,13 @@
   "deleteTitleOther": "¿Eliminar {{count}} clientes?",
   "deleteConfirmationOne": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con este cliente conservan su nombre, pero ya no vas a poder abrir su ficha.",
   "deleteConfirmationOther": "Esta acción no se puede deshacer. Las cotizaciones y órdenes ya creadas con estos clientes conservan su nombre, pero ya no vas a poder abrir sus fichas.",
+  "messages": {
+    "created": "Cliente creado correctamente",
+    "updated": "Cliente actualizado correctamente",
+    "deletedOne": "Cliente eliminado correctamente",
+    "deletedOther": "{{count}} clientes eliminados correctamente",
+    "deleteError": "No se pudo eliminar el cliente. Inténtalo nuevamente."
+  },
   "bulk": {
     "assignTag": "Asignar etiqueta",
     "changeStatus": "Cambiar estado",

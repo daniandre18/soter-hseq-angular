@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormField, email, form, required, submit } from '@angular/forms/signals';
-import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Button } from '../../../../shared/components/button/button';
 import { Icon } from '../../../../shared/components/icon/icon';
@@ -9,6 +9,7 @@ import { PhoneInput } from '../../../../shared/components/phone-input/phone-inpu
 import { ClientsFacade } from '../../facades/clients.facade';
 import type { Client, NewClientSite } from '../../models/client.model';
 import { normalizeUniqueName } from '../../../../shared/utils/normalize-unique-value';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 interface ClientFormModel {
   businessName: string;
@@ -63,6 +64,8 @@ const EMPTY_SITE_DRAFT: SiteDraftFormModel = {
 })
 export class ClientFormModal {
   private readonly clientsFacade = inject(ClientsFacade);
+  private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly open = input(false);
   readonly editingClient = input<Client | null>(null);
@@ -247,6 +250,9 @@ export class ClientFormModal {
         } else {
           await this.clientsFacade.addClientWithSites(data, this.draftSites());
         }
+        this.toast.success(
+          this.transloco.translate(editing ? 'clients.messages.updated' : 'clients.messages.created'),
+        );
         this.saved.emit();
         this.close();
       } catch (error) {

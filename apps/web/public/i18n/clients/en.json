@@ -73,6 +73,13 @@
   "deleteTitleOther": "Delete {{count}} clients?",
   "deleteConfirmationOne": "This action cannot be undone. Existing quotes and orders keep this client's name, but you will no longer be able to open the client record.",
   "deleteConfirmationOther": "This action cannot be undone. Existing quotes and orders keep these clients' names, but you will no longer be able to open their records.",
+  "messages": {
+    "created": "Client created successfully",
+    "updated": "Client updated successfully",
+    "deletedOne": "Client deleted successfully",
+    "deletedOther": "{{count}} clients deleted successfully",
+    "deleteError": "Couldn't delete the client. Please try again."
+  },
   "bulk": {
     "assignTag": "Assign tag",
     "changeStatus": "Change status",

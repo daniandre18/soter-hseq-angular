@@ -15,7 +15,8 @@ import { ClientTagsManagerModal } from '../../components/client-tags-manager-mod
 import { CLIENT_TAG_COLOR_PALETTE } from '../../models/client-tag.model';
 import type { Client } from '../../models/client.model';
 import { normalizeUniqueName } from '../../../../shared/utils/normalize-unique-value';
-import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import {
   RowActionsMenu,
@@ -55,6 +56,8 @@ export class ClientsList {
   protected readonly tagsFacade = inject(ClientTagsFacade);
   private readonly authFacade = inject(AuthFacade);
   private readonly language = inject(LanguageService);
+  private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilter>('all');
@@ -148,10 +151,17 @@ export class ClientsList {
       Number(this.tagFilter() !== 'all'),
   );
   protected readonly hasActiveFilters = computed(() => this.activeFilterCount() > 0);
-  /** Búsqueda libre, ciudad y etiquetas aún necesitan el directorio completo
-   * para no ocultar coincidencias fuera de la página cargada. */
+  /** Búsqueda libre, ciudad, etiquetas y estado aún necesitan el directorio
+   * completo para no ocultar coincidencias fuera de la página descargada —
+   * `pagination` solo trae páginas de "todos los estados" en orden de
+   * creación, así que filtrar por estado ahí ocultaría clientes que existen
+   * pero viven en una página todavía no pedida. */
   private readonly usesFullDirectory = computed(
-    () => !!this.search().trim() || this.cityFilter() !== 'all' || this.tagFilter() !== 'all',
+    () =>
+      !!this.search().trim() ||
+      this.cityFilter() !== 'all' ||
+      this.tagFilter() !== 'all' ||
+      this.statusFilter() !== 'all',
   );
   private fullDirectoryRelease: ReleaseListener | null = null;
   private readonly listedClients = computed(() =>
@@ -215,8 +225,22 @@ export class ClientsList {
       (!this.usesFullDirectory() && this.pagination.hasMore()),
   );
   protected readonly hasCollapsed = computed(() => this.visibleCount() > PAGE_SIZE);
-  protected readonly nextBatchSize = computed(() =>
-    Math.min(PAGE_SIZE, this.filtered().length - this.visibleCount()),
+  /** En modo paginado, `filtered().length` solo refleja lo ya descargado
+   *  (que siempre coincide con `visibleCount` hasta el próximo clic), así
+   *  que esa resta siempre da 0 justo antes de pedir la página siguiente.
+   *  `pagination.total()` viene de `count()` — conoce el total real sin
+   *  depender de cuánto se haya descargado todavía. */
+  protected readonly nextBatchSize = computed(() => {
+    const remaining = this.usesFullDirectory()
+      ? this.filtered().length - this.visibleCount()
+      : this.pagination.total() - this.visibleCount();
+    return Math.max(0, Math.min(PAGE_SIZE, remaining));
+  });
+  /** El botón "Mostrar todas (N)" — mismo motivo que `nextBatchSize`: en
+   *  modo paginado sin filtros activos, `filtered().length` todavía no
+   *  conoce el total real hasta que se hayan pedido todas las páginas. */
+  protected readonly totalFilteredCount = computed(() =>
+    this.usesFullDirectory() ? this.filtered().length : this.pagination.total(),
   );
 
   protected readonly selectedCount = computed(() => this.selectedIds().size);
@@ -239,6 +263,7 @@ export class ClientsList {
 
   protected onStatusChange(event: Event): void {
     this.statusFilter.set((event.target as HTMLSelectElement).value as StatusFilter);
+    this.syncDirectoryMode();
     this.resetFilteredView();
   }
 
@@ -340,11 +365,17 @@ export class ClientsList {
     this.editingClient.set(null);
   }
 
+  protected onClientSaved(): void {
+    this.refreshPaginationAfterMutation();
+  }
+
   /** El directorio completo (`clientsFacade`) es realtime y se entera solo;
    *  `pagination` es una lectura puntual (`getDocs`) sin listener, así que
-   *  crear o editar un cliente en modo paginado no aparecería hasta que
-   *  algo la vuelva a pedir explícitamente. */
-  protected onClientSaved(): void {
+   *  CUALQUIER escritura (crear, editar, etiquetar, cambiar estado, borrar)
+   *  en modo paginado no se vería hasta que algo la vuelva a pedir
+   *  explícitamente. Único punto de refresco — todas las mutaciones de
+   *  cliente en este componente deben pasar por aquí después de escribir. */
+  private refreshPaginationAfterMutation(): void {
     if (this.usesFullDirectory()) {
       return;
     }
@@ -393,6 +424,7 @@ export class ClientsList {
   protected async toggleTag(client: Client, tagId: string, event: Event): Promise<void> {
     event.stopPropagation();
     await this.clientsFacade.setTag(client.id, tagId, !this.hasTag(client, tagId));
+    this.refreshPaginationAfterMutation();
   }
 
   /** "Buscar o crear etiqueta": si el texto no matchea ninguna existente,
@@ -409,6 +441,7 @@ export class ClientsList {
     const newTagId = await this.tagsFacade.addTag({ label, color });
     await this.clientsFacade.setTag(client.id, newTagId, true);
     this.tagSearch.set('');
+    this.refreshPaginationAfterMutation();
   }
 
   protected openManager(event: Event): void {
@@ -553,6 +586,15 @@ export class ClientsList {
       await Promise.all(ids.map((id) => this.clientsFacade.deleteClient(id)));
       this.deletingIds.set(null);
       this.clearSelection();
+      this.refreshPaginationAfterMutation();
+      this.toast.success(
+        this.transloco.translate(
+          ids.length > 1 ? 'clients.messages.deletedOther' : 'clients.messages.deletedOne',
+          { count: ids.length },
+        ),
+      );
+    } catch {
+      this.toast.error(this.transloco.translate('clients.messages.deleteError'));
     } finally {
       this.deleting.set(false);
     }
@@ -569,6 +611,7 @@ export class ClientsList {
     try {
       await Promise.all(clientIds.map(action));
       this.clearSelection();
+      this.refreshPaginationAfterMutation();
     } catch {
       this.bulkActionFailed.set(true);
     } finally {
