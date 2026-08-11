@@ -1,4 +1,5 @@
 <button
+  #trigger
   type="button"
   class="row-actions-trigger"
   aria-haspopup="menu"
@@ -10,8 +11,8 @@
   <app-icon name="ellipsis-vertical" />
 </button>
 
-@if (open()) {
-  <div class="row-actions-popover" role="menu">
+@if (open() && position(); as pos) {
+  <div class="row-actions-popover" role="menu" [style.top.px]="pos.top" [style.right.px]="pos.right">
     @for (action of actions(); track action.id) {
       <button
         type="button"

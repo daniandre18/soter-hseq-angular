@@ -36,10 +36,12 @@
 }
 
 .row-actions-popover {
-  position: absolute;
+  // `fixed` con `top`/`right` calculados en JS (ver row-actions-menu.ts) —
+  // `absolute` quedaba recortado por `.table-scroll` (`overflow-x: auto`)
+  // en cualquier fila que no tuviera espacio vertical libre debajo dentro
+  // del propio contenedor de la tabla.
+  position: fixed;
   z-index: 40;
-  top: calc(100% + 0.375rem);
-  right: 0;
   width: max-content;
   min-width: 12rem;
   overflow: hidden;
