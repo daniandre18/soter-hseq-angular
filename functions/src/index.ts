@@ -7,6 +7,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { GoogleGenAI } from '@google/genai';
 import PDFDocument from 'pdfkit';
+import webpush from 'web-push';
 
 initializeApp();
 
@@ -141,7 +142,149 @@ async function notifyAdmins(input: NotificationInput): Promise<void> {
     dismissedBy: [],
     createdAt: FieldValue.serverTimestamp(),
   });
+
+  // El inbox de arriba es lo único que debe garantizarse: un problema con el
+  // push (índice compuesto faltante, cuota, red) nunca puede tumbar el
+  // trigger que llamó a `notifyAdmins` (CLAUDE.md §23.6 — mismo criterio
+  // que un fallo de IA no bloqueando el cierre).
+  try {
+    const admins = await firestore
+      .collection('users')
+      .where('role', 'in', ['ADMIN', 'COORDINATOR'])
+      .where('status', '==', 'ACTIVE')
+      .get();
+    await Promise.all(
+      admins.docs.map((doc) =>
+        sendPushToUser(doc.id, {
+          title: input.title,
+          body: input.description,
+          url: entityRoute(input.entityType, input.entityId),
+        }),
+      ),
+    );
+  } catch (error) {
+    console.error('No se pudo enviar el push a ADMIN/COORDINATOR', error);
+  }
 }
+
+function entityRoute(entityType: 'ORDER' | 'QUOTE', entityId: string): string {
+  return entityType === 'ORDER' ? `/ordenes/${entityId}` : `/cotizaciones/${entityId}`;
+}
+
+interface PushSubscriptionRecord {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+}
+
+interface PushPayload {
+  title: string;
+  body: string;
+  url: string;
+}
+
+/** Id determinístico a partir del endpoint — permite crear/borrar sin
+ *  duplicar la suscripción si el navegador la renueva con el mismo endpoint. */
+function subscriptionIdFor(endpoint: string): string {
+  return Buffer.from(endpoint).toString('base64url').slice(0, 200);
+}
+
+/**
+ * Envía un push a todas las suscripciones activas de un usuario. Un fallo de
+ * push nunca debe tumbar el flujo que lo dispara (CLAUDE.md §23.6: igual que
+ * un fallo de IA no bloquea el cierre) — de ahí el `catch` silencioso por
+ * suscripción; una suscripción vencida (404/410) se borra sola.
+ */
+async function sendPushToUser(uid: string, payload: PushPayload): Promise<void> {
+  const vapidPublicKey = process.env['VAPID_PUBLIC_KEY'];
+  const vapidPrivateKey = process.env['VAPID_PRIVATE_KEY'];
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    console.error('Push no configurado: faltan claves VAPID.');
+    return;
+  }
+  webpush.setVapidDetails('mailto:soporte@soterhseq.com', vapidPublicKey, vapidPrivateKey);
+
+  const firestore = getFirestore();
+  const subscriptionsSnapshot = await firestore
+    .collection('users')
+    .doc(uid)
+    .collection('pushSubscriptions')
+    .get();
+
+  const body = JSON.stringify({
+    notification: {
+      title: payload.title,
+      body: payload.body,
+      icon: 'icons/icon-192x192.png',
+      badge: 'icons/icon-72x72.png',
+      data: { url: payload.url },
+    },
+  });
+
+  await Promise.all(
+    subscriptionsSnapshot.docs.map(async (doc) => {
+      const subscription = doc.data() as PushSubscriptionRecord;
+      try {
+        await webpush.sendNotification(
+          { endpoint: subscription.endpoint, keys: subscription.keys },
+          body,
+        );
+      } catch (error) {
+        const statusCode = (error as { statusCode?: number }).statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          await doc.ref.delete();
+        } else {
+          console.error('Fallo de push', { uid, subscriptionId: doc.id, error });
+        }
+      }
+    }),
+  );
+}
+
+/** El uid siempre sale de `request.auth`, nunca del payload (mismo criterio
+ *  que `requireRole`: no confiar en nada que el cliente diga sobre sí mismo). */
+export const savePushSubscription = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+  }
+  const { endpoint, keys } = (request.data ?? {}) as Partial<PushSubscriptionRecord>;
+  if (!endpoint || !keys?.p256dh || !keys.auth) {
+    throw new HttpsError('invalid-argument', 'Suscripción de push inválida.');
+  }
+
+  const subscriptionId = subscriptionIdFor(endpoint);
+  await getFirestore()
+    .collection('users')
+    .doc(request.auth.uid)
+    .collection('pushSubscriptions')
+    .doc(subscriptionId)
+    .set({
+      endpoint,
+      keys,
+      userAgent: request.rawRequest.headers['user-agent'] ?? 'unknown',
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+  return { id: subscriptionId };
+});
+
+export const deletePushSubscription = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+  }
+  const { endpoint } = (request.data ?? {}) as { endpoint?: string };
+  if (!endpoint) {
+    throw new HttpsError('invalid-argument', 'Falta el endpoint de la suscripción.');
+  }
+
+  await getFirestore()
+    .collection('users')
+    .doc(request.auth.uid)
+    .collection('pushSubscriptions')
+    .doc(subscriptionIdFor(endpoint))
+    .delete();
+
+  return { deleted: true };
+});
 
 /** Nota agregada a una orden (CLAUDE.md §9.7) — la escribe directo Angular, así que se audita por trigger. */
 export const onNoteCreated = onDocumentCreated('orders/{orderId}/notes/{noteId}', async (event) => {
@@ -302,6 +445,19 @@ export const onOrderAssigned = onDocumentUpdated('orders/{orderId}', async (even
       entityId: orderId,
       createdBy: updatedBy,
     }));
+
+    // Push directo al técnico, no al inbox de ADMIN/COORDINATOR: es quien
+    // realmente necesita enterarse desde el celular de que le asignaron
+    // una orden nueva.
+    tasks.push(
+      ...added.map((technicianUid) =>
+        sendPushToUser(technicianUid, {
+          title: 'Nueva orden asignada',
+          body: `Se te asignó la orden ${orderNumber}`,
+          url: `/ordenes/${orderId}`,
+        }),
+      ),
+    );
   }
 
   await Promise.all(tasks);

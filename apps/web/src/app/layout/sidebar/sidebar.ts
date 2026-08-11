@@ -4,9 +4,11 @@ import { AuthFacade } from '../../features/auth/facades/auth.facade';
 import { Avatar } from '../../shared/components/avatar/avatar';
 import { Icon, type IconName } from '../../shared/components/icon/icon';
 import type { UserRole } from '../../core/models/user-role.model';
-import { provideTranslocoScope, TranslocoPipe } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SettingsFacade } from '../../features/settings/facades/settings.facade';
+import { PushNotificationsFacade } from '../../features/push-notifications/facades/push-notifications.facade';
 import { ThemeService } from '../../shared/services/theme.service';
+import { ToastService } from '../../shared/services/toast.service';
 import { releaseOnDestroy } from '../../shared/utils/release-on-destroy';
 
 const DEFAULT_LOGO_DARK = 'soter-hseq-logo-menu.jpeg';
@@ -160,7 +162,10 @@ export class Sidebar {
   private readonly authFacade = inject(AuthFacade);
   private readonly router = inject(Router);
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly pushFacade = inject(PushNotificationsFacade);
   private readonly theme = inject(ThemeService);
+  private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly mobileOpen = input(false);
   readonly closeRequested = output<void>();
@@ -269,5 +274,23 @@ export class Sidebar {
   protected async logout(): Promise<void> {
     await this.authFacade.logout();
     await this.router.navigateByUrl('/login');
+  }
+
+  protected readonly pushSupported = this.pushFacade.supported;
+  protected readonly pushEnabled = this.pushFacade.enabled;
+  protected readonly pushEnabling = this.pushFacade.enabling;
+
+  protected async togglePushNotifications(): Promise<void> {
+    if (this.pushEnabled()) {
+      await this.pushFacade.disable();
+      return;
+    }
+    await this.pushFacade.enable();
+    const error = this.pushFacade.error();
+    if (error) {
+      this.toast.error(this.transloco.translate('layout.pushNotifications.error'));
+    } else {
+      this.toast.success(this.transloco.translate('layout.pushNotifications.enabled'));
+    }
   }
 }

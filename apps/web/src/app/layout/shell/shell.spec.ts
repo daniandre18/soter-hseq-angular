@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Shell } from './shell';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
 import { SettingsFacade } from '../../features/settings/facades/settings.facade';
+import { PushNotificationsFacade } from '../../features/push-notifications/facades/push-notifications.facade';
 
 describe('Shell', () => {
   let component: Shell;
@@ -37,6 +38,17 @@ describe('Shell', () => {
             }),
             loading: signal(false),
             init: () => undefined,
+          },
+        },
+        {
+          provide: PushNotificationsFacade,
+          useValue: {
+            supported: false,
+            enabled: signal(false),
+            enabling: signal(false),
+            error: signal<string | null>(null),
+            enable: async () => undefined,
+            disable: async () => undefined,
           },
         },
       ],

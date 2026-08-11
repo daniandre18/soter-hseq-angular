@@ -368,6 +368,7 @@
   }
 }
 
+.sidebar-action,
 .sidebar-logout {
   display: flex;
   align-items: center;
@@ -385,16 +386,30 @@
     background-color 150ms,
     color 150ms;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--sidebar-hover-bg);
-    color: var(--color-red-400);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
   }
 }
 
+.sidebar-logout:hover {
+  color: var(--color-red-400);
+}
+
+.sidebar-action--active {
+  color: var(--sidebar-active-text);
+}
+
+.sidebar-action-icon,
 .sidebar-logout-icon {
   flex-shrink: 0;
 }
 
+.sidebar--collapsed .sidebar-action,
 .sidebar--collapsed .sidebar-logout {
   justify-content: center;
   padding-left: 0.5rem;

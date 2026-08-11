@@ -6,6 +6,12 @@
   "collapseMenu": "Colapsar menú",
   "mainMenu": "Menú principal",
   "logout": "Cerrar sesión",
+  "pushNotifications": {
+    "enable": "Activar notificaciones",
+    "disable": "Desactivar notificaciones",
+    "enabled": "Notificaciones activadas en este dispositivo",
+    "error": "No se pudo activar: revisa el permiso de notificaciones del navegador"
+  },
   "sections": {
     "primary": "Principal",
     "commercial": "Gestión comercial",

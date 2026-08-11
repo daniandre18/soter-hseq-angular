@@ -25,4 +25,8 @@ export const environment: AppEnvironment = {
     functionsPort: 5001,
   },
   functionsRegion: 'us-central1',
+  // Par de prueba dedicado al Functions Emulator (ver `functions/.env.local`) —
+  // no usar en producción.
+  vapidPublicKey:
+    'BGI-TfyxQdGW1wvRJWQRAQgQLm7iJ70zfS3c6Nj4oHHBYRFn-anHQ9VQQGoJTeNWykHy5iQoYEOfSMdk3Hho-b4',
 };

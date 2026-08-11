@@ -6,6 +6,12 @@
   "collapseMenu": "Collapse menu",
   "mainMenu": "Main menu",
   "logout": "Sign out",
+  "pushNotifications": {
+    "enable": "Enable notifications",
+    "disable": "Disable notifications",
+    "enabled": "Notifications enabled on this device",
+    "error": "Couldn't enable it: check the browser's notification permission"
+  },
   "sections": {
     "primary": "Main",
     "commercial": "Sales management",

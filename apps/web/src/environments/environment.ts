@@ -17,4 +17,6 @@ export const environment: AppEnvironment = {
     appId: '1:725837147231:web:4c24e3fbcf86fc63233fea',
   },
   functionsRegion: 'us-central1',
+  vapidPublicKey:
+    'BDGxmEDYt3vGFKEVdFCq1Gz-6rTAiYhw1vGvug1vWyl7l1oMg11ymqWYKLpdm8MlNBtcHkIb29xuuYitlIkh6xY',
 };
