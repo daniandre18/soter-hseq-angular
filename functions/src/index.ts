@@ -286,41 +286,50 @@ export const deletePushSubscription = onCall(async (request) => {
   return { deleted: true };
 });
 
-/** Nota agregada a una orden (CLAUDE.md §9.7) — la escribe directo Angular, así que se audita por trigger. */
-export const onNoteCreated = onDocumentCreated('orders/{orderId}/notes/{noteId}', async (event) => {
-  const data = event.data?.data();
-  if (!data) {
-    return;
-  }
-  const orderId = event.params.orderId;
-  // `notes` no incluye orderNumber/clientBusinessName del padre — una
-  // lectura acotada (un doc) para que la notificación sea legible.
-  const orderSnapshot = await getFirestore().collection('orders').doc(orderId).get();
-  const orderNumber = orderSnapshot.data()?.['orderNumber'] ?? orderId;
-  const clientBusinessName = orderSnapshot.data()?.['clientBusinessName'] ?? '';
+// Cloud Functions v2 no inyecta un secreto en `process.env` solo porque
+// exista en Secret Manager: cada función que lo necesita debe declararlo
+// aquí explícitamente, o `sendPushToUser` (llamada indirectamente vía
+// `notifyAdmins`) nunca lo vería en runtime aunque el secreto esté configurado.
+const PUSH_SECRETS = ['VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY'];
 
-  await Promise.all([
-    recordOrderEvent({
-      orderId,
-      action: 'NOTE_ADDED',
-      description: `Nota registrada (${data['noteType']})`,
-      metadata: { noteId: event.params.noteId, noteType: data['noteType'] },
-      createdBy: data['createdBy'],
-    }),
-    notifyAdmins({
-      type: 'NOTE_ADDED',
-      title: `Nueva nota en la orden ${orderNumber}`,
-      description: `${clientBusinessName} — nota tipo ${data['noteType']}`,
-      entityType: 'ORDER',
-      entityId: orderId,
-      createdBy: data['createdBy'],
-    }),
-  ]);
-});
+/** Nota agregada a una orden (CLAUDE.md §9.7) — la escribe directo Angular, así que se audita por trigger. */
+export const onNoteCreated = onDocumentCreated(
+  { document: 'orders/{orderId}/notes/{noteId}', secrets: PUSH_SECRETS },
+  async (event) => {
+    const data = event.data?.data();
+    if (!data) {
+      return;
+    }
+    const orderId = event.params.orderId;
+    // `notes` no incluye orderNumber/clientBusinessName del padre — una
+    // lectura acotada (un doc) para que la notificación sea legible.
+    const orderSnapshot = await getFirestore().collection('orders').doc(orderId).get();
+    const orderNumber = orderSnapshot.data()?.['orderNumber'] ?? orderId;
+    const clientBusinessName = orderSnapshot.data()?.['clientBusinessName'] ?? '';
+
+    await Promise.all([
+      recordOrderEvent({
+        orderId,
+        action: 'NOTE_ADDED',
+        description: `Nota registrada (${data['noteType']})`,
+        metadata: { noteId: event.params.noteId, noteType: data['noteType'] },
+        createdBy: data['createdBy'],
+      }),
+      notifyAdmins({
+        type: 'NOTE_ADDED',
+        title: `Nueva nota en la orden ${orderNumber}`,
+        description: `${clientBusinessName} — nota tipo ${data['noteType']}`,
+        entityType: 'ORDER',
+        entityId: orderId,
+        createdBy: data['createdBy'],
+      }),
+    ]);
+  },
+);
 
 /** Evidencia cargada a una orden (CLAUDE.md §9.6) — misma razón que `onNoteCreated`. */
 export const onEvidenceCreated = onDocumentCreated(
-  'orders/{orderId}/evidence/{evidenceId}',
+  { document: 'orders/{orderId}/evidence/{evidenceId}', secrets: PUSH_SECRETS },
   async (event) => {
     const data = event.data?.data();
     if (!data) {
@@ -355,134 +364,143 @@ export const onEvidenceCreated = onDocumentCreated(
 );
 
 /** Cambio de estado de una orden — se dispara y aborta si `status` no cambió. */
-export const onOrderStatusChanged = onDocumentUpdated('orders/{orderId}', async (event) => {
-  const before = event.data?.before.data();
-  const after = event.data?.after.data();
-  if (!before || !after || before['status'] === after['status']) {
-    return;
-  }
-  const orderId = event.params.orderId;
-  const orderNumber = after['orderNumber'] ?? orderId;
-  const updatedBy = after['updatedBy'] ?? 'system';
-  const description = `Estado cambiado de ${before['status']} a ${after['status']}`;
+export const onOrderStatusChanged = onDocumentUpdated(
+  { document: 'orders/{orderId}', secrets: PUSH_SECRETS },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after || before['status'] === after['status']) {
+      return;
+    }
+    const orderId = event.params.orderId;
+    const orderNumber = after['orderNumber'] ?? orderId;
+    const updatedBy = after['updatedBy'] ?? 'system';
+    const description = `Estado cambiado de ${before['status']} a ${after['status']}`;
 
-  await Promise.all([
-    recordOrderEvent({
-      orderId,
-      action: 'ORDER_STATUS_CHANGED',
-      description,
-      metadata: { from: before['status'], to: after['status'] },
-      createdBy: updatedBy,
-    }),
-    notifyAdmins({
-      type: 'ORDER_STATUS_CHANGED',
-      title: `Orden ${orderNumber} actualizada`,
-      description,
-      entityType: 'ORDER',
-      entityId: orderId,
-      createdBy: updatedBy,
-    }),
-  ]);
-});
+    await Promise.all([
+      recordOrderEvent({
+        orderId,
+        action: 'ORDER_STATUS_CHANGED',
+        description,
+        metadata: { from: before['status'], to: after['status'] },
+        createdBy: updatedBy,
+      }),
+      notifyAdmins({
+        type: 'ORDER_STATUS_CHANGED',
+        title: `Orden ${orderNumber} actualizada`,
+        description,
+        entityType: 'ORDER',
+        entityId: orderId,
+        createdBy: updatedBy,
+      }),
+    ]);
+  },
+);
 
 /** Reasignación de técnicos — independiente de `onOrderStatusChanged`.
  * También repara órdenes históricas que tienen ids asignados pero no los
  * nombres denormalizados que necesita el portal cliente (VIEWER no puede
  * leer el directorio global de `users`). */
-export const onOrderAssigned = onDocumentUpdated('orders/{orderId}', async (event) => {
-  const beforeData = event.data?.before.data();
-  const afterData = event.data?.after.data();
-  const before: string[] = beforeData?.['assignedTechnicianIds'] ?? [];
-  const after: string[] = afterData?.['assignedTechnicianIds'] ?? [];
-  const beforeSet = new Set(before);
-  const afterSet = new Set(after);
-  const added = after.filter((id) => !beforeSet.has(id));
-  const removed = before.filter((id) => !afterSet.has(id));
-  const assignmentChanged = added.length > 0 || removed.length > 0;
-  const storedNames: string[] = afterData?.['assignedTechnicianNames'] ?? [];
-  const namesNeedSync =
-    assignmentChanged ||
-    storedNames.length !== after.length ||
-    storedNames.some((name) => !name.trim() || name === 'Técnico');
-  if (!assignmentChanged && !namesNeedSync) {
-    return;
-  }
-  const orderId = event.params.orderId;
-  const orderNumber = afterData?.['orderNumber'] ?? orderId;
-  const updatedBy = afterData?.['updatedBy'] ?? 'system';
-  const tasks: Promise<unknown>[] = [];
+export const onOrderAssigned = onDocumentUpdated(
+  { document: 'orders/{orderId}', secrets: PUSH_SECRETS },
+  async (event) => {
+    const beforeData = event.data?.before.data();
+    const afterData = event.data?.after.data();
+    const before: string[] = beforeData?.['assignedTechnicianIds'] ?? [];
+    const after: string[] = afterData?.['assignedTechnicianIds'] ?? [];
+    const beforeSet = new Set(before);
+    const afterSet = new Set(after);
+    const added = after.filter((id) => !beforeSet.has(id));
+    const removed = before.filter((id) => !afterSet.has(id));
+    const assignmentChanged = added.length > 0 || removed.length > 0;
+    const storedNames: string[] = afterData?.['assignedTechnicianNames'] ?? [];
+    const namesNeedSync =
+      assignmentChanged ||
+      storedNames.length !== after.length ||
+      storedNames.some((name) => !name.trim() || name === 'Técnico');
+    if (!assignmentChanged && !namesNeedSync) {
+      return;
+    }
+    const orderId = event.params.orderId;
+    const orderNumber = afterData?.['orderNumber'] ?? orderId;
+    const updatedBy = afterData?.['updatedBy'] ?? 'system';
+    const tasks: Promise<unknown>[] = [];
 
-  if (namesNeedSync) {
-    const firestore = getFirestore();
-    const userSnapshots = await Promise.all(
-      after.map((uid) => firestore.collection('users').doc(uid).get()),
-    );
-    const resolvedNames = userSnapshots.map(
-      (snapshot, index) =>
-        (snapshot.data()?.['displayName'] as string | undefined) ??
-        storedNames[index] ??
-        'Técnico asignado',
-    );
-    tasks.push(event.data!.after.ref.update({ assignedTechnicianNames: resolvedNames }));
-  }
+    if (namesNeedSync) {
+      const firestore = getFirestore();
+      const userSnapshots = await Promise.all(
+        after.map((uid) => firestore.collection('users').doc(uid).get()),
+      );
+      const resolvedNames = userSnapshots.map(
+        (snapshot, index) =>
+          (snapshot.data()?.['displayName'] as string | undefined) ??
+          storedNames[index] ??
+          'Técnico asignado',
+      );
+      tasks.push(event.data!.after.ref.update({ assignedTechnicianNames: resolvedNames }));
+    }
 
-  if (assignmentChanged) {
-    tasks.push(recordOrderEvent({
-      orderId,
-      action: 'ORDER_ASSIGNED',
-      description: 'Técnicos asignados actualizados',
-      metadata: { added, removed },
-      createdBy: updatedBy,
-    }));
-    tasks.push(notifyAdmins({
-      type: 'ORDER_ASSIGNED',
-      title: `Técnicos actualizados en la orden ${orderNumber}`,
-      description:
-        added.length > 0
-          ? `Se asignaron ${added.length} técnico(s)`
-          : 'Se removieron técnicos asignados',
-      entityType: 'ORDER',
-      entityId: orderId,
-      createdBy: updatedBy,
-    }));
+    if (assignmentChanged) {
+      tasks.push(recordOrderEvent({
+        orderId,
+        action: 'ORDER_ASSIGNED',
+        description: 'Técnicos asignados actualizados',
+        metadata: { added, removed },
+        createdBy: updatedBy,
+      }));
+      tasks.push(notifyAdmins({
+        type: 'ORDER_ASSIGNED',
+        title: `Técnicos actualizados en la orden ${orderNumber}`,
+        description:
+          added.length > 0
+            ? `Se asignaron ${added.length} técnico(s)`
+            : 'Se removieron técnicos asignados',
+        entityType: 'ORDER',
+        entityId: orderId,
+        createdBy: updatedBy,
+      }));
 
-    // Push directo al técnico, no al inbox de ADMIN/COORDINATOR: es quien
-    // realmente necesita enterarse desde el celular de que le asignaron
-    // una orden nueva.
-    tasks.push(
-      ...added.map((technicianUid) =>
-        sendPushToUser(technicianUid, {
-          title: 'Nueva orden asignada',
-          body: `Se te asignó la orden ${orderNumber}`,
-          url: `/ordenes/${orderId}`,
-        }),
-      ),
-    );
-  }
+      // Push directo al técnico, no al inbox de ADMIN/COORDINATOR: es quien
+      // realmente necesita enterarse desde el celular de que le asignaron
+      // una orden nueva.
+      tasks.push(
+        ...added.map((technicianUid) =>
+          sendPushToUser(technicianUid, {
+            title: 'Nueva orden asignada',
+            body: `Se te asignó la orden ${orderNumber}`,
+            url: `/ordenes/${orderId}`,
+          }),
+        ),
+      );
+    }
 
-  await Promise.all(tasks);
-});
+    await Promise.all(tasks);
+  },
+);
 
 /** Cambio de estado de una cotización (CLAUDE.md §9.4) — misma razón que `onOrderStatusChanged`;
  *  sin bitácora por cotización (no existe ni se pidió), solo notifica. */
-export const onQuoteStatusChanged = onDocumentUpdated('quotes/{quoteId}', async (event) => {
-  const before = event.data?.before.data();
-  const after = event.data?.after.data();
-  if (!before || !after || before['status'] === after['status']) {
-    return;
-  }
-  const quoteNumber = after['quoteNumber'] ?? event.params.quoteId;
-  const clientBusinessName = after['clientBusinessName'] ?? '';
+export const onQuoteStatusChanged = onDocumentUpdated(
+  { document: 'quotes/{quoteId}', secrets: PUSH_SECRETS },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after || before['status'] === after['status']) {
+      return;
+    }
+    const quoteNumber = after['quoteNumber'] ?? event.params.quoteId;
+    const clientBusinessName = after['clientBusinessName'] ?? '';
 
-  await notifyAdmins({
-    type: 'QUOTE_STATUS_CHANGED',
-    title: `Cotización ${quoteNumber} actualizada`,
-    description: `${clientBusinessName} — estado cambiado de ${before['status']} a ${after['status']}`,
-    entityType: 'QUOTE',
-    entityId: event.params.quoteId,
-    createdBy: after['updatedBy'] ?? 'system',
-  });
-});
+    await notifyAdmins({
+      type: 'QUOTE_STATUS_CHANGED',
+      title: `Cotización ${quoteNumber} actualizada`,
+      description: `${clientBusinessName} — estado cambiado de ${before['status']} a ${after['status']}`,
+      entityType: 'QUOTE',
+      entityId: event.params.quoteId,
+      createdBy: after['updatedBy'] ?? 'system',
+    });
+  },
+);
 
 const GEMINI_MODEL = 'gemini-1.5-flash';
 const CLOSING_ACT_PROMPT_VERSION = 'closing-act-v1';
