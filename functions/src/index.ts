@@ -171,6 +171,45 @@ function entityRoute(entityType: 'ORDER' | 'QUOTE', entityId: string): string {
   return entityType === 'ORDER' ? `/ordenes/${entityId}` : `/cotizaciones/${entityId}`;
 }
 
+/**
+ * Espejo de `apps/web/src/app/shared/utils/domain-labels.ts` — Cloud
+ * Functions arma textos como "Estado cambiado de SCHEDULED a IN_PROGRESS"
+ * interpolando el código crudo. El inbox in-app traduce esos códigos al
+ * renderizar (Angular sí tiene el catálogo), pero el body de un push nativo
+ * se manda tal cual llega, sin paso de presentación — hay que traducirlo
+ * aquí antes de construir el payload. Mantener ambas copias en sync si se
+ * agregan estados nuevos.
+ */
+const DOMAIN_CODE_LABELS: Record<string, string> = {
+  DRAFT: 'Borrador',
+  SCHEDULED: 'Programada',
+  ASSIGNED: 'Asignada',
+  IN_PROGRESS: 'En ejecución',
+  EVIDENCE_PENDING: 'Evidencia pendiente',
+  UNDER_REVIEW: 'En revisión',
+  CORRECTION_REQUIRED: 'Corrección requerida',
+  APPROVED: 'Aprobada',
+  CLOSED: 'Cerrada',
+  CANCELLED: 'Cancelada',
+  SENT: 'Enviada',
+  REJECTED: 'Rechazada',
+  EXPIRED: 'Vencida',
+  CONVERTED: 'Convertida',
+  GENERAL: 'General',
+  INTERNAL: 'Interna',
+  FINDING: 'Hallazgo',
+  RECOMMENDATION: 'Recomendación',
+  BEFORE: 'Antes',
+  DURING: 'Durante',
+  AFTER: 'Después',
+  DOCUMENT: 'Documento',
+  OTHER: 'Otra',
+};
+
+function translateDomainCodes(text: string): string {
+  return text.replace(/\b[A-Z][A-Z_]{2,}\b/g, (token) => DOMAIN_CODE_LABELS[token] ?? token);
+}
+
 interface PushSubscriptionRecord {
   endpoint: string;
   keys: { p256dh: string; auth: string };
@@ -212,8 +251,8 @@ async function sendPushToUser(uid: string, payload: PushPayload): Promise<void> 
 
   const body = JSON.stringify({
     notification: {
-      title: payload.title,
-      body: payload.body,
+      title: translateDomainCodes(payload.title),
+      body: translateDomainCodes(payload.body),
       icon: 'icons/icon-192x192.png',
       badge: 'icons/icon-72x72.png',
       data: { url: payload.url },
