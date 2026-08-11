@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 
 import { ClientsList } from './clients-list';
 import { ClientsFacade } from '../../facades/clients.facade';
+import { ClientsListPaginationFacade } from '../../facades/clients-list-pagination.facade';
 import { ClientTagsFacade } from '../../facades/client-tags.facade';
 import { OrdersFacade } from '../../../orders/facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
@@ -57,6 +58,17 @@ describe('ClientsList', () => {
             setTag,
             updateClient,
             deleteClient,
+          },
+        },
+        {
+          provide: ClientsListPaginationFacade,
+          useValue: {
+            clients,
+            total: signal(3),
+            activeTotal: signal(2),
+            hasMore: signal(false),
+            loadFirstPage: async () => undefined,
+            loadNextPage: async () => undefined,
           },
         },
         { provide: OrdersFacade, useValue: { orders: signal([]) } },

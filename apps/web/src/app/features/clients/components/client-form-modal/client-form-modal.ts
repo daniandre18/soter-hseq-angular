@@ -68,6 +68,10 @@ export class ClientFormModal {
   readonly editingClient = input<Client | null>(null);
   readonly closeRequested = output<void>();
   readonly manageSitesRequested = output<Client>();
+  /** Distinto de `closeRequested`: solo se emite tras un guardado exitoso,
+   *  para que quien liste clientes en modo paginado (sin listener realtime)
+   *  sepa cuándo debe refrescar — cancelar el modal no dispara esto. */
+  readonly saved = output<void>();
 
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
@@ -243,6 +247,7 @@ export class ClientFormModal {
         } else {
           await this.clientsFacade.addClientWithSites(data, this.draftSites());
         }
+        this.saved.emit();
         this.close();
       } catch (error) {
         this.saveError.set(

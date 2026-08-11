@@ -9,6 +9,17 @@ import type {
   NewClientSite,
 } from '../models/client.model';
 
+/** Cursor serializable del directorio, sin filtrar tipos de Firebase hacia el dominio. */
+export interface ClientPageCursor {
+  createdAt: Date;
+  id: string;
+}
+
+export interface ClientPage {
+  clients: Client[];
+  nextCursor: ClientPageCursor | null;
+}
+
 /**
  * Puerto de acceso a clientes, sus contactos y sedes. `ClientsService`
  * (la capa de sincronización con el store de Akita) depende únicamente de
@@ -16,6 +27,10 @@ import type {
  */
 export interface ClientRepository {
   watchAll(): Observable<Client[]>;
+  /** Página ordenada por fecha de creación. La búsqueda global sigue siendo un
+   * caso separado porque Firestore no implementa búsqueda de texto libre. */
+  listPage(cursor: ClientPageCursor | null, pageSize: number): Promise<ClientPage>;
+  count(status?: Client['status']): Promise<number>;
   addClient(data: NewClient, createdBy: string): Promise<string>;
   addClientWithSites(data: NewClient, sites: NewClientSite[], createdBy: string): Promise<string>;
   updateClient(id: string, changes: Partial<NewClient>, updatedBy: string): Promise<void>;

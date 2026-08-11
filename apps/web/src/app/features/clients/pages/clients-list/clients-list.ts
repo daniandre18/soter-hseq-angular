@@ -1,5 +1,6 @@
 import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { ClientsFacade } from '../../facades/clients.facade';
+import { ClientsListPaginationFacade } from '../../facades/clients-list-pagination.facade';
 import { ClientTagsFacade } from '../../facades/client-tags.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { Card } from '../../../../shared/components/card/card';
@@ -22,6 +23,7 @@ import {
   type RowMenuActionSelection,
 } from '../../../../shared/components/row-actions-menu/row-actions-menu';
 import { releaseOnDestroy } from '../../../../shared/utils/release-on-destroy';
+import type { ReleaseListener } from '../../../../shared/utils/reference-counted-listener';
 
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 type BulkActionMenu = 'tag' | 'status';
@@ -49,6 +51,7 @@ const PAGE_SIZE = 10;
 })
 export class ClientsList {
   protected readonly clientsFacade = inject(ClientsFacade);
+  protected readonly pagination = inject(ClientsListPaginationFacade);
   protected readonly tagsFacade = inject(ClientTagsFacade);
   private readonly authFacade = inject(AuthFacade);
   private readonly language = inject(LanguageService);
@@ -94,19 +97,23 @@ export class ClientsList {
 
   /** Indicadores globales del directorio. Se calculan sobre todos los
    *  clientes, no sobre la búsqueda o filtro temporal de la tabla. */
-  protected readonly totalClients = computed(() => this.clientsFacade.clients().length);
+  protected readonly totalClients = computed(() =>
+    this.usesFullDirectory() ? this.clientsFacade.clients().length : this.pagination.total(),
+  );
   protected readonly activeClients = computed(
-    () => this.clientsFacade.clients().filter((client) => client.status === 'ACTIVE').length,
+    () =>
+      this.usesFullDirectory()
+        ? this.clientsFacade.clients().filter((client) => client.status === 'ACTIVE').length
+        : this.pagination.activeTotal(),
   );
   protected readonly activeClientRate = computed(() => {
-    const total = this.clientsFacade.clients().length;
+    const total = this.totalClients();
     return total === 0 ? '0%' : `${Math.round((this.activeClients() / total) * 100)}%`;
   });
   protected readonly coveredCities = computed(
     () =>
       new Set(
-        this.clientsFacade
-          .clients()
+        this.listedClients()
           .map((client) => normalizeUniqueName(client.city ?? ''))
           .filter(Boolean),
       ).size,
@@ -115,7 +122,7 @@ export class ClientsList {
   protected readonly cityOptions = computed(() => {
     const locale = this.language.currentLocale();
     const cities = new Map<string, string>();
-    for (const client of this.clientsFacade.clients()) {
+    for (const client of this.listedClients()) {
       const label = client.city?.trim();
       const value = normalizeUniqueName(label ?? '');
       if (label && value && !cities.has(value)) {
@@ -141,6 +148,15 @@ export class ClientsList {
       Number(this.tagFilter() !== 'all'),
   );
   protected readonly hasActiveFilters = computed(() => this.activeFilterCount() > 0);
+  /** Búsqueda libre, ciudad y etiquetas aún necesitan el directorio completo
+   * para no ocultar coincidencias fuera de la página cargada. */
+  private readonly usesFullDirectory = computed(
+    () => !!this.search().trim() || this.cityFilter() !== 'all' || this.tagFilter() !== 'all',
+  );
+  private fullDirectoryRelease: ReleaseListener | null = null;
+  private readonly listedClients = computed(() =>
+    this.usesFullDirectory() ? this.clientsFacade.clients() : this.pagination.clients(),
+  );
 
   /** Etiquetas del catálogo que coinciden con el texto de búsqueda del
    *  picker abierto — vacío el texto, muestra todas. */
@@ -165,7 +181,7 @@ export class ClientsList {
     const status = this.statusFilter();
     const city = this.cityFilter();
     const tag = this.tagFilter();
-    return this.clientsFacade.clients().filter((client) => {
+    return this.listedClients().filter((client) => {
       const matchesSearch =
         !term ||
         [
@@ -193,7 +209,11 @@ export class ClientsList {
   /** Paginación "cargar más": solo recorta la lista ya filtrada, sin volver
    *  a consultar Firestore — toda la colección ya vive en el Store. */
   protected readonly visibleClients = computed(() => this.filtered().slice(0, this.visibleCount()));
-  protected readonly hasMore = computed(() => this.visibleCount() < this.filtered().length);
+  protected readonly hasMore = computed(
+    () =>
+      this.visibleCount() < this.filtered().length ||
+      (!this.usesFullDirectory() && this.pagination.hasMore()),
+  );
   protected readonly hasCollapsed = computed(() => this.visibleCount() > PAGE_SIZE);
   protected readonly nextBatchSize = computed(() =>
     Math.min(PAGE_SIZE, this.filtered().length - this.visibleCount()),
@@ -206,12 +226,14 @@ export class ClientsList {
   });
 
   constructor() {
-    releaseOnDestroy(this.clientsFacade.init());
+    void this.pagination.loadFirstPage(PAGE_SIZE);
+    releaseOnDestroy(() => this.fullDirectoryRelease?.());
     releaseOnDestroy(this.tagsFacade.init());
   }
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+    this.syncDirectoryMode();
     this.resetFilteredView();
   }
 
@@ -222,11 +244,13 @@ export class ClientsList {
 
   protected onCityChange(event: Event): void {
     this.cityFilter.set((event.target as HTMLSelectElement).value);
+    this.syncDirectoryMode();
     this.resetFilteredView();
   }
 
   protected onTagFilterChange(event: Event): void {
     this.tagFilter.set((event.target as HTMLSelectElement).value);
+    this.syncDirectoryMode();
     this.resetFilteredView();
   }
 
@@ -235,6 +259,7 @@ export class ClientsList {
     this.statusFilter.set('all');
     this.cityFilter.set('all');
     this.tagFilter.set('all');
+    this.syncDirectoryMode();
     this.resetFilteredView();
   }
 
@@ -242,6 +267,7 @@ export class ClientsList {
     this.statusFilter.set('all');
     this.cityFilter.set('all');
     this.tagFilter.set('all');
+    this.syncDirectoryMode();
     this.resetFilteredView();
   }
 
@@ -258,16 +284,43 @@ export class ClientsList {
     this.selectedIds.set(new Set());
   }
 
-  protected showMore(): void {
+  protected async showMore(): Promise<void> {
+    if (this.visibleCount() < this.filtered().length) {
+      this.visibleCount.update((count) => count + PAGE_SIZE);
+      return;
+    }
+    if (!this.usesFullDirectory()) {
+      await this.pagination.loadNextPage(PAGE_SIZE);
+    }
     this.visibleCount.update((count) => count + PAGE_SIZE);
   }
 
-  protected showAll(): void {
+  /** En modo paginado no hay "el resto" ya cargado en memoria — hay que
+   *  seguir pidiendo páginas hasta agotar el cursor antes de poder mostrar
+   *  todo, a diferencia del directorio completo donde ya vive en el Store. */
+  protected async showAll(): Promise<void> {
+    if (this.usesFullDirectory()) {
+      this.visibleCount.set(this.filtered().length);
+      return;
+    }
+    while (this.pagination.hasMore()) {
+      await this.pagination.loadNextPage(PAGE_SIZE);
+    }
     this.visibleCount.set(this.filtered().length);
   }
 
   protected showLess(): void {
     this.visibleCount.set(PAGE_SIZE);
+  }
+
+  private syncDirectoryMode(): void {
+    if (this.usesFullDirectory()) {
+      this.fullDirectoryRelease ??= this.clientsFacade.init();
+    } else {
+      this.fullDirectoryRelease?.();
+      this.fullDirectoryRelease = null;
+      void this.pagination.loadFirstPage(PAGE_SIZE);
+    }
   }
 
   protected openCreate(): void {
@@ -285,6 +338,18 @@ export class ClientsList {
   protected closeForm(): void {
     this.formOpen.set(false);
     this.editingClient.set(null);
+  }
+
+  /** El directorio completo (`clientsFacade`) es realtime y se entera solo;
+   *  `pagination` es una lectura puntual (`getDocs`) sin listener, así que
+   *  crear o editar un cliente en modo paginado no aparecería hasta que
+   *  algo la vuelva a pedir explícitamente. */
+  protected onClientSaved(): void {
+    if (this.usesFullDirectory()) {
+      return;
+    }
+    this.visibleCount.set(PAGE_SIZE);
+    void this.pagination.loadFirstPage(PAGE_SIZE);
   }
 
   protected openDetail(client: Client, event?: Event): void {

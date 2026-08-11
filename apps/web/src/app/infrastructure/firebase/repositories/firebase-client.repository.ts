@@ -7,15 +7,26 @@ import {
   collection,
   deleteDoc,
   doc,
+  documentId,
   getDoc,
+  getCountFromServer,
   getDocs,
+  limit,
   onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
+  startAfter,
+  where,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
 import { Observable } from 'rxjs';
-import type { ClientRepository } from '../../../features/clients/domain/client.repository';
+import type {
+  ClientPage,
+  ClientPageCursor,
+  ClientRepository,
+} from '../../../features/clients/domain/client.repository';
 import type {
   Client,
   ClientContact,
@@ -101,6 +112,39 @@ export class FirebaseClientRepository implements ClientRepository {
         (error) => subscriber.error(error),
       );
     });
+  }
+
+  async listPage(cursor: ClientPageCursor | null, pageSize: number): Promise<ClientPage> {
+    const clientsRef = collection(this.firestore, 'clients');
+    const constraints = [
+      // `createdAt` existe también en los registros históricos; ordenar por
+      // `businessNameNormalized` omitía los clientes creados antes de que se
+      // añadiera ese campo técnico.
+      orderBy('createdAt', 'desc'),
+      orderBy(documentId(), 'asc'),
+      ...(cursor ? [startAfter(cursor.createdAt, cursor.id)] : []),
+      // Se consulta una fila adicional para saber si hay una página siguiente.
+      limit(pageSize + 1),
+    ];
+    const snapshot = await getDocs(query(clientsRef, ...constraints));
+    const pageDocuments = snapshot.docs.slice(0, pageSize);
+    const lastDocument = pageDocuments.at(-1);
+    return {
+      clients: pageDocuments.map((document) => toClient(document.id, document.data())),
+      nextCursor:
+        snapshot.docs.length > pageSize && lastDocument
+          ? {
+              createdAt: toDateOrDefault(lastDocument.data()['createdAt']),
+              id: lastDocument.id,
+            }
+          : null,
+    };
+  }
+
+  async count(status?: Client['status']): Promise<number> {
+    const clientsRef = collection(this.firestore, 'clients');
+    const clientsQuery = status ? query(clientsRef, where('status', '==', status)) : clientsRef;
+    return (await getCountFromServer(clientsQuery)).data().count;
   }
 
   async addClient(data: NewClient, createdBy: string): Promise<string> {
