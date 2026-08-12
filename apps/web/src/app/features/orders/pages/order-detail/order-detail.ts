@@ -252,6 +252,17 @@ export class OrderDetail {
     const role = this.role();
     return role === 'ADMIN' || role === 'COORDINATOR' || role === 'TECHNICIAN';
   });
+  /** La pestaña móvil "Avances" solo contiene `managementCardTpl` (gate:
+   *  canSchedule/canAssign/canChangeStatusFreely) y `advanceFormTpl` +
+   *  `evidenceCardTpl` (gate: canLog) — a diferencia del layout de
+   *  escritorio, donde esas mismas tarjetas comparten columna con
+   *  infoCard/activityFeed/actaCard que siempre se muestran. En una orden
+   *  CLOSED los cuatro gates dan `false` a la vez, así que sin este check
+   *  la pestaña queda completamente en blanco sin ninguna explicación. */
+  protected readonly advanceTabEmpty = computed(
+    () =>
+      !this.canSchedule() && !this.canAssign() && !this.canChangeStatusFreely() && !this.canLog(),
+  );
   protected readonly canRequestClosure = computed(() => {
     const order = this.order();
     const uid = this.authFacade.currentUser()?.id;

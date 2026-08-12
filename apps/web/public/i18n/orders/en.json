@@ -337,7 +337,8 @@
       "statusNormal": "In progress",
       "statusIncident": "Incident",
       "save": "Save Progress",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "locked": "This order is closed. No progress actions are available."
     },
     "evidence": {
       "title": "Uploaded Evidence",
