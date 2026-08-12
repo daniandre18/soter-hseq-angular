@@ -64,6 +64,7 @@ describe('ClientsList', () => {
           provide: ClientsListPaginationFacade,
           useValue: {
             clients,
+            loading: signal(false),
             total: signal(3),
             activeTotal: signal(2),
             hasMore: signal(false),

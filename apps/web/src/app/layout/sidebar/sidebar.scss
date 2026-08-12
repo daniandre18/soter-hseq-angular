@@ -196,6 +196,34 @@
   margin-top: 1.25rem;
 }
 
+// Tonos propios (ver `--sidebar-skeleton-1/2` en styles.scss): los grises
+// por defecto de `app-skeleton` son invisibles sobre el navy del sidebar
+// en modo oscuro/semi-dark.
+.sidebar-nav-skeleton {
+  --skeleton-color-1: var(--sidebar-skeleton-1);
+  --skeleton-color-2: var(--sidebar-skeleton-2);
+}
+
+.sidebar-nav-skeleton-section + .sidebar-nav-skeleton-section {
+  margin-top: 1.25rem;
+}
+
+.sidebar-nav-skeleton-section app-skeleton[variant='text'] {
+  display: block;
+  margin: 0 0.75rem 0.5rem;
+}
+
+.sidebar-nav-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+
+  app-skeleton[variant='text'] {
+    flex: 1;
+  }
+}
+
 .sidebar-section-title {
   margin: 0 0 0.375rem;
   padding: 0 0.75rem;

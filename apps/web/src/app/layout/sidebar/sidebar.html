@@ -54,7 +54,26 @@
   </button>
 
   <nav class="sidebar-nav" [attr.aria-label]="'layout.mainMenu' | transloco">
-    @for (section of navSections(); track section.id) {
+    @if (!navReady()) {
+      <div class="sidebar-nav-skeleton" aria-hidden="true">
+        @for (rows of [[1, 2, 3, 4], [1, 2, 3], [1, 2, 3]]; track $index) {
+          <div class="sidebar-nav-skeleton-section">
+            @if (!isCollapsed()) {
+              <app-skeleton variant="text" width="40%" height="0.625rem" />
+            }
+            @for (row of rows; track row) {
+              <div class="sidebar-nav-skeleton-row">
+                <app-skeleton variant="circle" width="1.25rem" height="1.25rem" />
+                @if (!isCollapsed()) {
+                  <app-skeleton variant="text" width="70%" />
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      @for (section of navSections(); track section.id) {
       <section
         class="sidebar-nav-section"
         [attr.aria-label]="isCollapsed() ? (section.translationKey | transloco) : null"
@@ -126,6 +145,7 @@
           }
         </ul>
       </section>
+      }
     }
   </nav>
 

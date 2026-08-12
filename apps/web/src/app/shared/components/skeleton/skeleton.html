@@ -1,0 +1,12 @@
+@for (i of items(); track i) {
+  <span
+    class="app-skeleton"
+    [class.app-skeleton--circle]="variant() === 'circle'"
+    [class.app-skeleton--rect]="variant() === 'rect'"
+    [class.app-skeleton--text]="variant() === 'text'"
+    [style.width]="width()"
+    [style.height]="height()"
+    [style.border-radius]="radius()"
+    aria-hidden="true"
+  ></span>
+}

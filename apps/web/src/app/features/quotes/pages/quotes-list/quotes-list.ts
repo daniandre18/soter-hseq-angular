@@ -6,6 +6,7 @@ import { QuotesFacade } from '../../facades/quotes.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { Button } from '../../../../shared/components/button/button';
 import { Card } from '../../../../shared/components/card/card';
+import { Skeleton } from '../../../../shared/components/skeleton/skeleton';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { Modal } from '../../../../shared/components/modal/modal';
@@ -35,6 +36,7 @@ const QUOTE_ROW_ACTIONS: readonly RowMenuAction[] = [
   imports: [
     Button,
     Card,
+    Skeleton,
     StatusBadge,
     Icon,
     Modal,

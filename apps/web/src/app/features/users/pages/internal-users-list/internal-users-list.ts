@@ -5,6 +5,7 @@ import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Button } from '../../../../shared/components/button/button';
 import { Card } from '../../../../shared/components/card/card';
+import { Skeleton } from '../../../../shared/components/skeleton/skeleton';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
@@ -32,6 +33,7 @@ type StatusFilter = 'ALL' | UserStatus;
     Button,
     Card,
     Icon,
+    Skeleton,
     InternalUserFormModal,
     LocalizedDatePipe,
     Modal,

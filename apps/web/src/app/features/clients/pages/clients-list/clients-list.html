@@ -261,7 +261,11 @@
     </div>
   }
 
-  @if (filtered().length === 0) {
+  @if (listLoading()) {
+    <app-card class="list-skeleton" aria-hidden="true">
+      <app-skeleton variant="rect" height="3.25rem" [count]="6" />
+    </app-card>
+  } @else if (filtered().length === 0) {
     <app-card class="empty-card">
       <p>{{ 'clients.empty' | transloco }}</p>
     </app-card>

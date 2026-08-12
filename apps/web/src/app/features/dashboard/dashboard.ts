@@ -1,9 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, switchMap } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { DashboardFacade } from './facades/dashboard.facade';
 import { ORDER_STATUS_CONFIG } from '../orders/models/order-status-config';
 import type { ServiceOrder } from '../orders/models/order.model';
 import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
+import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { SegmentedBar } from '../../shared/components/segmented-bar/segmented-bar';
 import { FunnelChart, type FunnelStage } from '../../shared/components/funnel-chart/funnel-chart';
 import { StatusBadge } from '../../shared/components/status-badge/status-badge';
@@ -19,6 +22,7 @@ import { releaseOnDestroy } from '../../shared/utils/release-on-destroy';
   selector: 'app-dashboard',
   imports: [
     KpiCard,
+    Skeleton,
     SegmentedBar,
     FunnelChart,
     StatusBadge,
@@ -38,6 +42,27 @@ export class Dashboard {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly language = inject(LanguageService);
+
+  /** El scope `dashboard` de Transloco se carga async (ver
+   *  `TranslocoHttpLoader`, un request HTTP por scope): los `computed()` de
+   *  abajo llaman `transloco.translate()` de forma síncrona, así que si se
+   *  renderizan antes de que ese request resuelva, muestran la clave cruda
+   *  en vez del texto. Esta señal solo se vuelve `true` una vez el scope ya
+   *  cargó, para poder tapar las KPI cards con un skeleton hasta entonces
+   *  en vez de dejarlas mostrar "dashboard.kpi.algoOther" un instante.
+   *  `TranslocoService.load()` espera la ruta completa `scope/idioma` (no
+   *  solo el nombre del scope) — de ahí el `switchMap` sobre `langChanges$`,
+   *  el mismo patrón que usa `selectTranslate()` internamente. */
+  private readonly kpiTranslationsReady = toSignal(
+    this.transloco.langChanges$.pipe(
+      switchMap((lang) => this.transloco.load(`dashboard/${lang}`)),
+      map(() => true),
+    ),
+    { initialValue: false },
+  );
+  protected readonly kpiReady = computed(
+    () => this.kpiTranslationsReady() && !this.dashboardFacade.loading(),
+  );
 
   protected readonly translatedStatusBreakdown = computed(() => {
     this.language.currentLanguage();

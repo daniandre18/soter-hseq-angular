@@ -1,6 +1,7 @@
 import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { TechniciansFacade } from '../../facades/technicians.facade';
 import { Card } from '../../../../shared/components/card/card';
+import { Skeleton } from '../../../../shared/components/skeleton/skeleton';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
@@ -24,7 +25,17 @@ const TECHNICIAN_ROW_ACTIONS: readonly RowMenuAction[] = [
 
 @Component({
   selector: 'app-technicians-list',
-  imports: [Card, Button, StatusBadge, Avatar, Icon, Modal, TechnicianFormModal, RowActionsMenu],
+  imports: [
+    Card,
+    Button,
+    Skeleton,
+    StatusBadge,
+    Avatar,
+    Icon,
+    Modal,
+    TechnicianFormModal,
+    RowActionsMenu,
+  ],
   templateUrl: './technicians-list.html',
   styleUrl: './technicians-list.scss',
 })

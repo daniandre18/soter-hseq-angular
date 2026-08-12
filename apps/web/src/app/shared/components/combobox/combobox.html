@@ -35,7 +35,9 @@
     <ul class="combobox-listbox" role="listbox" [id]="listboxId">
       @if (loading()) {
         @for (item of [1, 2, 3]; track item) {
-          <li class="combobox-skeleton" aria-hidden="true"></li>
+          <li class="combobox-skeleton-row" aria-hidden="true">
+            <app-skeleton variant="rect" height="1.75rem" />
+          </li>
         }
       } @else if (filteredOptions().length === 0) {
         <li class="combobox-empty">

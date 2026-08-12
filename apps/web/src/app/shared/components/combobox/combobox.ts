@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Icon } from '../icon/icon';
+import { Skeleton } from '../skeleton/skeleton';
 
 export interface ComboboxOption {
   value: string;
@@ -34,7 +35,7 @@ let nextListboxId = 0;
  */
 @Component({
   selector: 'app-combobox',
-  imports: [Icon, TranslocoPipe],
+  imports: [Icon, Skeleton, TranslocoPipe],
   templateUrl: './combobox.html',
   styleUrl: './combobox.scss',
 })

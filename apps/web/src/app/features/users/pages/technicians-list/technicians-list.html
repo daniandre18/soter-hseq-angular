@@ -33,8 +33,8 @@
   </app-card>
 
   @if (techniciansFacade.loading()) {
-    <app-card class="empty-card">
-      <p>Cargando técnicos…</p>
+    <app-card class="list-skeleton" aria-hidden="true">
+      <app-skeleton variant="rect" height="3.25rem" [count]="6" />
     </app-card>
   } @else if (filtered().length === 0) {
     <app-card class="empty-card">

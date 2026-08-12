@@ -238,9 +238,7 @@
     <a [routerLink]="backRoute()">{{ 'orders.page.backToList' | transloco }}</a>
   </div>
 } @else {
-  <div class="order-detail-loading" aria-hidden="true">
-    <div class="order-detail-skeleton"></div>
-    <div class="order-detail-skeleton"></div>
-    <div class="order-detail-skeleton"></div>
+  <div class="order-detail-loading">
+    <app-skeleton variant="rect" height="8rem" [count]="3" />
   </div>
 }
