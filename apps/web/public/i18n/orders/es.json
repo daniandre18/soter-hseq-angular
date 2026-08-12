@@ -337,7 +337,8 @@
       "statusNormal": "En curso",
       "statusIncident": "Novedad",
       "save": "Guardar Avance",
-      "saving": "Guardando…"
+      "saving": "Guardando…",
+      "locked": "Esta orden está cerrada. No hay acciones de avance disponibles."
     },
     "evidence": {
       "title": "Evidencias Cargadas",

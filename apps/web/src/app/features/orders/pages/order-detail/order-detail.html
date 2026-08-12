@@ -166,9 +166,13 @@
         }
         @case ('advance') {
           <div class="mobile-tab-panel" id="order-tabpanel-advance" role="tabpanel" aria-labelledby="order-tab-advance">
-            <ng-container [ngTemplateOutlet]="managementCardTpl" />
-            <ng-container [ngTemplateOutlet]="advanceFormTpl" />
-            <ng-container [ngTemplateOutlet]="evidenceCardTpl" />
+            @if (advanceTabEmpty()) {
+              <p class="mobile-tab-empty">{{ 'orders.page.advance.locked' | transloco }}</p>
+            } @else {
+              <ng-container [ngTemplateOutlet]="managementCardTpl" />
+              <ng-container [ngTemplateOutlet]="advanceFormTpl" />
+              <ng-container [ngTemplateOutlet]="evidenceCardTpl" />
+            }
           </div>
         }
         @case ('activity') {
