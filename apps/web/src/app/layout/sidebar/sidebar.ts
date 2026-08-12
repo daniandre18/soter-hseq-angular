@@ -1,8 +1,11 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, switchMap } from 'rxjs';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthFacade } from '../../features/auth/facades/auth.facade';
 import { Avatar } from '../../shared/components/avatar/avatar';
 import { Icon, type IconName } from '../../shared/components/icon/icon';
+import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import type { UserRole } from '../../core/models/user-role.model';
 import { provideTranslocoScope, TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SettingsFacade } from '../../features/settings/facades/settings.facade';
@@ -153,7 +156,7 @@ const NAV_SECTIONS: NavSection[] = [
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, Avatar, Icon, TranslocoPipe],
+  imports: [RouterLink, RouterLinkActive, Avatar, Icon, Skeleton, TranslocoPipe],
   providers: [...provideTranslocoScope('layout')],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
@@ -174,6 +177,18 @@ export class Sidebar {
   protected readonly servicesExpanded = signal(this.router.url.startsWith('/servicios'));
   protected readonly currentUser = this.authFacade.currentUser;
   protected readonly isCollapsed = computed(() => this.collapsed() && !this.mobileOpen());
+
+  /** El scope `layout` de Transloco carga async — `TranslocoPipe` arranca
+   *  con `lastValue = ''`, así que las etiquetas del menú se ven en blanco
+   *  hasta que resuelve. Esta señal tapa el nav con un skeleton hasta
+   *  entonces (mismo patrón que `Dashboard.kpiTranslationsReady`). */
+  protected readonly navReady = toSignal(
+    this.transloco.langChanges$.pipe(
+      switchMap((lang) => this.transloco.load(`layout/${lang}`)),
+      map(() => true),
+    ),
+    { initialValue: false },
+  );
 
   protected readonly settings = this.settingsFacade.settings;
   /** `object-position` del logo — reusa el mismo eje que ya usa

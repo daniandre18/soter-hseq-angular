@@ -19,6 +19,7 @@ describe('Dashboard', () => {
         {
           provide: DashboardFacade,
           useValue: {
+            loading: signal(false),
             error: signal(null),
             ordersTotal: signal(0),
             openCount: signal(0),

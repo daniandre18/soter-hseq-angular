@@ -104,6 +104,8 @@
   --sidebar-active-text: var(--color-brand-700);
   --sidebar-accent: var(--color-brand-600);
   --sidebar-logo-chip-bg: var(--color-navy-900);
+  --sidebar-skeleton-1: var(--color-gray-100);
+  --sidebar-skeleton-2: var(--color-gray-200);
 
   // Colores auxiliares usados en StatCard/Badge del demo Next.js
   --color-green-50: #f0fdf4;
@@ -203,6 +205,8 @@
   --sidebar-active-text: #ffffff;
   --sidebar-accent: var(--color-accent-500);
   --sidebar-logo-chip-bg: transparent;
+  --sidebar-skeleton-1: rgb(255 255 255 / 8%);
+  --sidebar-skeleton-2: rgb(255 255 255 / 20%);
 }
 
 @media (prefers-color-scheme: dark) {

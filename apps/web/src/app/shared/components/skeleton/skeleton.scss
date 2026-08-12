@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.app-skeleton {
+  display: block;
+  // Overridable por el contenedor (ver `.sidebar-nav-skeleton`) para
+  // contextos donde el fondo no es la superficie clara de una card — los
+  // tonos por defecto son invisibles sobre el sidebar navy en modo oscuro.
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-color-1, var(--color-gray-100)) 25%,
+    var(--skeleton-color-2, var(--color-gray-200)) 37%,
+    var(--skeleton-color-1, var(--color-gray-100)) 63%
+  );
+  background-size: 400% 100%;
+  border-radius: var(--radius-md);
+  animation: app-skeleton-shimmer 1.4s ease infinite;
+
+  & + & {
+    margin-top: 0.5rem;
+  }
+}
+
+.app-skeleton--text {
+  height: 0.875rem;
+
+  &:last-child:nth-child(n + 2) {
+    width: 70%;
+  }
+}
+
+.app-skeleton--circle {
+  border-radius: 50%;
+}
+
+.app-skeleton--rect {
+  border-radius: var(--radius-lg);
+}
+
+@keyframes app-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-skeleton {
+    animation: none;
+    background: var(--color-gray-100);
+  }
+}

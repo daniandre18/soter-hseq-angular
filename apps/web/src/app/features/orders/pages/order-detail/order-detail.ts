@@ -11,6 +11,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 import { Icon } from '../../../../shared/components/icon/icon';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { Combobox, type ComboboxOption } from '../../../../shared/components/combobox/combobox';
+import { Skeleton } from '../../../../shared/components/skeleton/skeleton';
 import { OrderFormModal } from '../../components/order-form-modal/order-form-modal';
 import { OrderInfoCard } from '../../components/order-info-card/order-info-card';
 import { OrderManagementCard } from '../../components/order-management-card/order-management-card';
@@ -53,6 +54,7 @@ const MOBILE_TAB_ORDER: OrderDetailTab[] = ['detail', 'advance', 'activity'];
     Icon,
     StatusBadge,
     Combobox,
+    Skeleton,
     OrderFormModal,
     OrderInfoCard,
     OrderManagementCard,

@@ -4,6 +4,7 @@ import { OrdersFacade } from '../../facades/orders.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { ClientsFacade } from '../../../clients/facades/clients.facade';
 import { Card } from '../../../../shared/components/card/card';
+import { Skeleton } from '../../../../shared/components/skeleton/skeleton';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
@@ -34,6 +35,7 @@ const CLOSED_ORDER_STATUSES = new Set<OrderStatus>(['CLOSED', 'CANCELLED']);
   imports: [
     Card,
     Button,
+    Skeleton,
     StatusBadge,
     ProgressBar,
     Avatar,

@@ -4,6 +4,7 @@ import { ClientsListPaginationFacade } from '../../facades/clients-list-paginati
 import { ClientTagsFacade } from '../../facades/client-tags.facade';
 import { AuthFacade } from '../../../auth/facades/auth.facade';
 import { Card } from '../../../../shared/components/card/card';
+import { Skeleton } from '../../../../shared/components/skeleton/skeleton';
 import { Button } from '../../../../shared/components/button/button';
 import { StatusBadge } from '../../../../shared/components/status-badge/status-badge';
 import { StatCard } from '../../../../shared/components/stat-card/stat-card';
@@ -36,6 +37,7 @@ const PAGE_SIZE = 10;
   imports: [
     Card,
     Button,
+    Skeleton,
     StatusBadge,
     StatCard,
     Icon,
@@ -166,6 +168,13 @@ export class ClientsList {
   private fullDirectoryRelease: ReleaseListener | null = null;
   private readonly listedClients = computed(() =>
     this.usesFullDirectory() ? this.clientsFacade.clients() : this.pagination.clients(),
+  );
+  /** Solo gatilla el skeleton en la carga inicial de cada modo — no debe
+   *  reaparecer al pedir más páginas con datos ya visibles en pantalla. */
+  protected readonly listLoading = computed(
+    () =>
+      (this.usesFullDirectory() ? this.clientsFacade.loading() : this.pagination.loading()) &&
+      this.listedClients().length === 0,
   );
 
   /** Etiquetas del catálogo que coinciden con el texto de búsqueda del

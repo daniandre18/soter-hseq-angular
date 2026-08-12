@@ -11,39 +11,50 @@
   </div>
 
   <div class="kpi-row">
-    <app-kpi-card
-      style="--stagger-delay: 0ms"
-      [title]="'dashboard.kpi.activeOrdersTitle' | transloco"
-      [value]="activeOrdersCount()"
-      [subtitle]="activeOrdersSubtitle()"
-      [alertText]="overdueAlertText()"
-      icon="clipboard-list"
-      color="brand"
-    />
-    <app-kpi-card
-      style="--stagger-delay: 50ms"
-      [title]="'dashboard.kpi.fieldResourcesTitle' | transloco"
-      [value]="dashboardFacade.techniciansInFieldCount()"
-      [subtitle]="fieldResourcesSubtitle()"
-      icon="hard-hat"
-      color="orange"
-    />
-    <app-kpi-card
-      style="--stagger-delay: 100ms"
-      [title]="'dashboard.kpi.visitsTodayTitle' | transloco"
-      [value]="dashboardFacade.todayVisitsCount()"
-      [subtitle]="visitsWeekSubtitle()"
-      icon="calendar-days"
-      color="purple"
-    />
-    <app-kpi-card
-      style="--stagger-delay: 150ms"
-      [title]="'dashboard.kpi.conversionTitle' | transloco"
-      [value]="conversionValue()"
-      [subtitle]="conversionSubtitle()"
-      icon="chart-pie"
-      color="green"
-    />
+    @if (kpiReady()) {
+      <app-kpi-card
+        style="--stagger-delay: 0ms"
+        [title]="'dashboard.kpi.activeOrdersTitle' | transloco"
+        [value]="activeOrdersCount()"
+        [subtitle]="activeOrdersSubtitle()"
+        [alertText]="overdueAlertText()"
+        icon="clipboard-list"
+        color="brand"
+      />
+      <app-kpi-card
+        style="--stagger-delay: 50ms"
+        [title]="'dashboard.kpi.fieldResourcesTitle' | transloco"
+        [value]="dashboardFacade.techniciansInFieldCount()"
+        [subtitle]="fieldResourcesSubtitle()"
+        icon="hard-hat"
+        color="orange"
+      />
+      <app-kpi-card
+        style="--stagger-delay: 100ms"
+        [title]="'dashboard.kpi.visitsTodayTitle' | transloco"
+        [value]="dashboardFacade.todayVisitsCount()"
+        [subtitle]="visitsWeekSubtitle()"
+        icon="calendar-days"
+        color="purple"
+      />
+      <app-kpi-card
+        style="--stagger-delay: 150ms"
+        [title]="'dashboard.kpi.conversionTitle' | transloco"
+        [value]="conversionValue()"
+        [subtitle]="conversionSubtitle()"
+        icon="chart-pie"
+        color="green"
+      />
+    } @else {
+      @for (i of [0, 1, 2, 3]; track i) {
+        <div class="kpi-card-skeleton" aria-hidden="true">
+          <app-skeleton variant="circle" width="2.75rem" height="2.75rem" />
+          <app-skeleton variant="text" width="60%" />
+          <app-skeleton variant="text" width="40%" height="1.75rem" />
+          <app-skeleton variant="text" width="85%" />
+        </div>
+      }
+    }
   </div>
 
   @if (dashboardFacade.error()) {
