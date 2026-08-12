@@ -4,6 +4,7 @@ import {
   isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter, withHashLocation } from '@angular/router';
@@ -20,6 +21,7 @@ import { AppUpdateService } from './shared/services/app-update.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
     provideRouter(routes, withHashLocation()),
     provideHttpClient(),
     provideQuillConfig({
