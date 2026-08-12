@@ -181,6 +181,29 @@
   flex: 1;
   overflow-y: auto;
   padding: 1.125rem 0.5rem 1rem;
+  // Sin esto, Windows/Chrome dibuja su scrollbar gris por defecto — muy
+  // ancho y visible sobre el navy del sidebar oscuro. `--sidebar-border`
+  // ya se adapta claro/oscuro (ver styles.scss), así que el thumb queda
+  // discreto en ambos temas sin tokens nuevos.
+  scrollbar-width: thin;
+  scrollbar-color: var(--sidebar-border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--sidebar-border);
+    border-radius: 9999px;
+
+    &:hover {
+      background-color: var(--sidebar-text-muted);
+    }
+  }
 
   ul {
     list-style: none;
